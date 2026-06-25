@@ -1,0 +1,203 @@
+{
+  "$schema": "https://ssss.dev/registry/v1",
+  "registry": "core",
+  "spec_version": "0.4",
+  "description": "The canonical SSSS core primitive registry. These 13 document primitives and 5 contract primitives are defined by the SSSS specification (docs/ssss-spec.md §5) and are owned by this standard. Every document primitive declares a portability class (§5.5); the registry also defines the `.ucw` bundle format (§16) and the provisioning contract (§17). A conformant host MUST implement any core primitive it uses according to this registry. Applications extend the core with their own primitives via an extension registry (see registry/README.md); extensions MUST NOT redefine a core type.",
+  "conformance": "A host is core-conformant for a primitive if a file of that type validates exactly when all required_fields are present and non-empty, and (for append_only types) writes only append.",
+
+  "document_primitives": {
+    "memory": {
+      "family": "knowledge",
+      "canonical_filename": null,
+      "filename_convention": "kebab-case slug matching the `slug` field",
+      "append_only": false,
+      "portability": "structural",
+      "required_fields": ["type", "slug", "category", "title", "status", "schema_version"],
+      "required_when": {
+        "schema_version==2": ["confidence", "importance", "modality", "subject", "predicate", "object", "sentiment_polarity"]
+      },
+      "enums": {
+        "category": ["invariants", "patterns", "anti-patterns", "preferences", "decisions", "concepts", "facts", "lore"],
+        "modality": ["must", "must_not", "should", "should_not", "descriptive", "preference"],
+        "sentiment_polarity": ["directive_must", "directive_must_not", "descriptive", "preference"],
+        "priority": ["absolute", "high", "normal", "low"]
+      },
+      "spec_ref": "§5.4 memory"
+    },
+    "skill": {
+      "family": "capability",
+      "canonical_filename": "SKILL.md",
+      "append_only": false,
+      "portability": "structural",
+      "required_fields": ["type", "name", "description"],
+      "notes": "Compatible with the open Agent Skills standard (name + description). The `type: skill` discriminator is REQUIRED for SSSS-managed manifests.",
+      "spec_ref": "§5.4 skill"
+    },
+    "rule": {
+      "family": "governance",
+      "canonical_filename": null,
+      "append_only": false,
+      "portability": "structural",
+      "required_fields": ["type", "name"],
+      "optional_fields": ["description", "scope"],
+      "spec_ref": "§5.4 rule"
+    },
+    "task": {
+      "family": "work",
+      "canonical_filename": null,
+      "append_only": false,
+      "portability": "tenant_private",
+      "required_fields": ["type", "priority", "category", "status"],
+      "optional_fields": ["workflow_id"],
+      "enums": { "status": ["pending", "in_progress", "done", "failed"] },
+      "spec_ref": "§5.4 task"
+    },
+    "assistant": {
+      "family": "actor",
+      "canonical_filename": "ASSISTANT.md",
+      "append_only": false,
+      "portability": "structural",
+      "required_fields": ["type", "name"],
+      "spec_ref": "§5.4 assistant"
+    },
+    "workflow": {
+      "family": "work",
+      "canonical_filename": "WORKFLOW.md",
+      "append_only": false,
+      "portability": "structural",
+      "required_fields": ["type", "name"],
+      "optional_fields": ["triggers"],
+      "spec_ref": "§5.4 workflow"
+    },
+    "model": {
+      "family": "catalog",
+      "canonical_filename": "MODEL.md",
+      "append_only": false,
+      "portability": "structural",
+      "required_fields": ["type", "model_id", "provider"],
+      "spec_ref": "§5.4 model"
+    },
+    "conversation": {
+      "family": "transcript",
+      "canonical_filename": "CONVERSATION.md",
+      "append_only": true,
+      "portability": "tenant_private",
+      "required_fields": ["type", "thread_id"],
+      "spec_ref": "§5.4 conversation"
+    },
+    "run": {
+      "family": "transcript",
+      "canonical_filename": "RUN.md",
+      "append_only": true,
+      "portability": "tenant_private",
+      "required_fields": ["type", "run_id", "workflow_id"],
+      "spec_ref": "§5.4 run"
+    },
+    "conflict": {
+      "family": "meta",
+      "canonical_filename": null,
+      "append_only": false,
+      "portability": "tenant_private",
+      "required_fields": ["type", "conflict_id", "status", "new_slug", "existing_slug", "detected_at"],
+      "enums": { "status": ["pending", "resolved"] },
+      "spec_ref": "§5.4 conflict"
+    },
+    "page": {
+      "family": "capability",
+      "canonical_filename": null,
+      "append_only": false,
+      "portability": "structural",
+      "required_fields": ["type", "slug", "name", "sandbox_entry"],
+      "spec_ref": "§5.4 page"
+    },
+    "migration": {
+      "family": "meta",
+      "canonical_filename": null,
+      "append_only": false,
+      "portability": "structural",
+      "required_fields": ["type", "migration_id", "from_version", "to_version", "status", "description"],
+      "spec_ref": "§5.4 migration"
+    },
+    "release": {
+      "family": "meta",
+      "canonical_filename": null,
+      "append_only": false,
+      "portability": "structural",
+      "required_fields": ["type", "release_id", "version", "schema_version", "summary", "released_at"],
+      "spec_ref": "§5.4 release"
+    }
+  },
+
+  "contract_primitives": {
+    "operation": { "purpose": "Full atomic file write (create or full replace).", "spec_ref": "§6" },
+    "patch": { "purpose": "Partial merge into an existing file.", "spec_ref": "§6" },
+    "event": { "purpose": "Append-only immutable log entry.", "spec_ref": "§6, §8" },
+    "delete": { "purpose": "Tombstoning removal of a replace-type file; rejects append-type targets; emits a deletion event.", "spec_ref": "§6.2" },
+    "lease": { "purpose": "A file-level write lock.", "spec_ref": "§7" }
+  },
+
+  "universal_frontmatter": {
+    "required": ["type", "tags"],
+    "recommended_okf": ["title", "description", "aliases", "timestamp"],
+    "spec_ref": "§4.2"
+  },
+
+  "portability": {
+    "description": "Every document primitive declares a portability class. The class governs whether a primitive may leave the workspace in a given export profile (§5.5). Contract primitives (operation/patch/event/lease) are protocol envelopes, not stored documents, and carry no portability. A file MAY override its type's default class with an `x_portability` frontmatter field; a host MUST honor the most restrictive of (type default, instance override).",
+    "classes": {
+      "structural": "The reusable business model — sellable and templatable. Carries no operator- or customer-specific data. Examples: workflow, assistant, page, skill, model, rule, memory, migration, release.",
+      "tenant_private": "The operator's private operational data — customers, transcripts, runtime work. NEVER leaves the workspace in a template or sale bundle; included only in an encrypted backup. Examples: conversation, run, task, conflict, and (via extension) profile / CRM contact / deal.",
+      "resource_bound": "Requires a real external resource bound at provision time (a domain, phone number, mailbox, API connection). NEVER ships the seller's resource value; ships only a requirement declaration the buyer satisfies. Defined by extension registries (e.g. festech domain / phone_number / integration_connection)."
+    },
+    "export_profiles": {
+      "backup": { "includes": ["structural", "tenant_private", "resource_bound"], "note": "Complete fidelity copy. tenant_private MUST be encrypted at rest." },
+      "template": { "includes": ["structural"], "resource_bound": "requirement_declaration_only", "excludes": ["tenant_private"] },
+      "sale": { "includes": ["structural"], "resource_bound": "requirement_declaration_only", "excludes": ["tenant_private"] }
+    },
+    "conformance": "A host MUST resolve every primitive's portability class from this registry (type default, overridable by `x_portability`). An exporter MUST drop every `tenant_private` primitive from a `template` or `sale` bundle, and MUST reduce every `resource_bound` primitive to a requirement declaration (stripping the seller's bound value) in those profiles. A host MUST reject a `template`/`sale` export that would emit a `tenant_private` primitive.",
+    "spec_ref": "§5.5"
+  },
+
+  "bundle": {
+    "description": "The `.ucw` bundle format (§16): a transportable package of a vault's files plus a manifest declaring what they are and what they need to run. Produced by an export under an export profile (§5.5), consumed by provision/import (§17).",
+    "container": "package.ucw.json",
+    "structure": ["manifest", "branding", "files"],
+    "file_sort": "files MUST be sorted by path (byte order) so equal vault state yields a byte-identical, content-hashable bundle.",
+    "manifest_required_fields": ["name", "description", "version", "exported_at", "ssss_core_version", "required_extensions", "export_profile", "primitive_inventory", "provisioning", "file_count", "provenance"],
+    "manifest_optional_fields": ["parameters", "source_workspace_id", "branding"],
+    "provenance_required_fields": ["content_hash", "exporter"],
+    "provenance_optional_fields": ["signature"],
+    "content_hash": "sha256 over the canonical (path-sorted) serialization of files; importer MUST recompute and reject on mismatch.",
+    "parameter_fields": {
+      "required": ["key", "label", "type", "scope", "source"],
+      "optional": ["required", "description", "defaultValue", "options", "dependsOn"],
+      "source_enum": ["user", "llm", "graph", "system"],
+      "note": "Adopted verbatim from ultrachat WorkspaceTemplateVariableDefinition; resource_bound requirements ship as parameters of source user/system."
+    },
+    "conformance": "A host MUST refuse a bundle whose `ssss_core_version` it does not support or that names a `required_extensions` entry it has not loaded. An exporter MUST NOT emit a file whose resolved portability class is excluded by `export_profile`. `primitive_inventory` MUST count every file by its registry `type`.",
+    "spec_ref": "§16"
+  },
+
+  "provisioning": {
+    "description": "The provisioning contract (§17): the deterministic, idempotent verbs that move a bundle between vaults — export, provision, import.",
+    "verbs": {
+      "export": "vault + profile → bundle. Pure: equal vault state and profile yield a byte-identical bundle.",
+      "provision": "bundle + parameters + target → ordered, replayable plan of Operation Contract envelopes plus resource bindings. Supports dry_run.",
+      "import": "plan + target → replay envelopes through the engine (§6.3); idempotent via each envelope's idempotency_key."
+    },
+    "step_required_fields": ["id", "label", "system", "mode", "required"],
+    "step_optional_fields": ["notes"],
+    "system_enum": ["workspace", "branding", "email", "phone", "domains", "accounts", "deployments", "marketplace", "tabs", "automation"],
+    "mode_enum": ["existing", "provision", "install", "generate", "configure"],
+    "edge_relations": ["uses_brand", "owns_domain", "routes_calls_to", "deploys_to", "has_surface", "contains_page", "installs_pack", "authenticates_account", "runs_workflow", "connects_to"],
+    "install_modes": ["optional", "recommended", "required"],
+    "id_remap": "Provision remaps slugs/workspace ids/links into the target; every internal link that resolved in the source MUST resolve post-import or the provision MUST fail.",
+    "upgrade": "Version steps run through a `migration` primitive plus structural-only `patch` envelopes; MUST NOT touch tenant_private data.",
+    "conformance": "import MUST be idempotent (re-run is a no-op via idempotency_key). A step's `mode` and `system` MUST be drawn from the enums above. Each `resource_bound` primitive (§5.5) declares its binding edge relation.",
+    "spec_ref": "§17"
+  },
+
+  "reserved_keys": ["type", "slug", "schema_version", "status", "feedback", "confidence"],
+  "host_field_prefix": "x_",
+  "spec_ref_reserved": "Appendix A"
+}

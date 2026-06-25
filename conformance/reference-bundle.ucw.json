@@ -1,0 +1,98 @@
+{
+  "manifest": {
+    "name": "Festival in a Box",
+    "description": "A complete music-festival operation as a tradeable SSSS bundle.",
+    "version": "1.0.0",
+    "exported_at": "1970-01-01T00:00:00.000Z",
+    "ssss_core_version": "0.4",
+    "required_extensions": [
+      "festech"
+    ],
+    "export_profile": "sale",
+    "primitive_inventory": {
+      "assistant": 1,
+      "domain": 1,
+      "page": 1,
+      "rule": 1,
+      "workflow": 1
+    },
+    "provisioning": [
+      {
+        "id": "ws",
+        "label": "Create the workspace",
+        "system": "workspace",
+        "mode": "generate",
+        "required": true
+      },
+      {
+        "id": "dom",
+        "label": "Bind the festival domain",
+        "system": "domains",
+        "mode": "provision",
+        "required": true,
+        "notes": "owns_domain — buyer supplies their own domain."
+      },
+      {
+        "id": "mail",
+        "label": "Provision a support mailbox",
+        "system": "email",
+        "mode": "provision",
+        "required": false
+      }
+    ],
+    "parameters": [
+      {
+        "key": "business_name",
+        "label": "Festival name",
+        "type": "string",
+        "scope": "workspace",
+        "source": "user",
+        "required": true
+      },
+      {
+        "key": "domain",
+        "label": "Domain to bind",
+        "type": "string",
+        "scope": "workspace",
+        "source": "user",
+        "required": true,
+        "description": "Satisfies the resource_bound domain requirement (owns_domain)."
+      },
+      {
+        "key": "support_mailbox",
+        "label": "Support mailbox",
+        "type": "string",
+        "scope": "workspace",
+        "source": "user",
+        "required": false
+      }
+    ],
+    "file_count": 5,
+    "provenance": {
+      "content_hash": "sha256:f6dae41b3858cda271651818cb32923e13dd49c2e7245c170d0d0fc74c95d303",
+      "exporter": "@ssss/cli@0.4.0"
+    }
+  },
+  "files": [
+    {
+      "path": "assistants/concierge.md",
+      "content": "---\ntype: assistant\nname: Festival Concierge\nslug: concierge\n---\nAnswer attendee questions about the lineup and venue."
+    },
+    {
+      "path": "domains/festival.md",
+      "content": "---\ntype: domain\ndomain_name: REQUIREMENT\nregistrar: REQUIREMENT\nstatus: required\npayment_status: unbound\nx_portability: resource_bound\n---\nThis festival needs a domain. The buyer binds their own at provision (owns_domain)."
+    },
+    {
+      "path": "pages/lineup.md",
+      "content": "---\ntype: page\nslug: lineup\nname: Lineup\nsandbox_entry: lineup/index.html\n---\nThe festival lineup page."
+    },
+    {
+      "path": "rules/refund-policy.md",
+      "content": "---\ntype: rule\nname: Refund Policy\nslug: refund-policy\n---\nRefunds are available up to 14 days before the event."
+    },
+    {
+      "path": "workflows/box-office.md",
+      "content": "---\ntype: workflow\nname: Box Office\nslug: box-office\n---\nSell tickets, then hand the buyer to [[concierge]] for questions."
+    }
+  ]
+}
