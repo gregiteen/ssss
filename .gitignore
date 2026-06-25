@@ -1,0 +1,21 @@
+# Dependencies
+node_modules/
+
+# Local agent state & personal tooling — not part of the published standard
+.claude/
+.agent/
+.agents/
+.remember/
+.gemini/
+INSTRUCTIONS.md
+CLAUDE.md
+
+# OS / editor cruft
+.DS_Store
+*.swp
+*~
+
+# Generated bundles / scratch (the canonical reference bundle is committed explicitly)
+*.ucw.json
+!conformance/reference-bundle.ucw.json
+.agent/scratch/

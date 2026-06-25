@@ -1,0 +1,274 @@
+{
+  "$schema": "https://ssss.dev/conformance/v1",
+  "version": "1.0.0",
+  "description": "Canonical SSSS Operation Contract conformance fixtures. These define the canonical request/response shapes for the Operation Contract (spec §6) and are the shared test contract every SSSS implementation MUST pass. A host is conformant only if, for every fixture, it produces the expected response and status code (spec §12).",
+  "spec_url": "../docs/ssss-spec.md",
+
+  "operation_types": {
+    "operation": {
+      "description": "Full atomic file write. Creates or fully replaces a VFS file.",
+      "required_fields": ["type", "idempotency_key", "path", "workspace_id", "content"],
+      "optional_fields": ["lease_id", "intent", "dry_run"]
+    },
+    "patch": {
+      "description": "Partial frontmatter or body merge into an existing VFS file.",
+      "required_fields": ["type", "idempotency_key", "path", "workspace_id", "patches"],
+      "optional_fields": ["lease_id", "intent", "dry_run"],
+      "patches_body_key": "__body__"
+    },
+    "event": {
+      "description": "Append-only immutable event. Never overwrites; stored in ssss_events table.",
+      "required_fields": ["type", "idempotency_key", "path", "workspace_id", "content"],
+      "optional_fields": ["intent"],
+      "note": "Content must be a valid JSON string for the event payload."
+    },
+    "delete": {
+      "description": "Deletes a VFS file.",
+      "required_fields": ["type", "idempotency_key", "path", "workspace_id"],
+      "optional_fields": ["intent"]
+    }
+  },
+
+  "idempotency": {
+    "ttl_hours": 24,
+    "key_format": "UUID v4 recommended",
+    "behavior": "If the same idempotency_key + workspace_id is seen within TTL and previously committed=true, the server returns a replay response with the original operation_id without re-applying the mutation."
+  },
+
+  "validation_rules": {
+    "envelope": [
+      "type must be one of: operation, patch, event, delete",
+      "idempotency_key must be a non-empty string (min 8 chars)",
+      "path must be a relative VFS path string (no leading /)",
+      "workspace_id must be a non-empty UUID string",
+      "content is required for type:operation and type:event",
+      "patches (object) is required for type:patch"
+    ],
+    "ssss_content": [
+      "Files in SSSS directories must have YAML frontmatter",
+      "Frontmatter must include a 'type' field matching a known primitive",
+      "Required fields for each primitive type must be present and non-empty",
+      "See /api/v1/ssss/schema for the full type schema definitions"
+    ]
+  },
+
+  "fixtures": [
+    {
+      "id": "fixture-001",
+      "name": "Create assistant — valid operation",
+      "description": "A well-formed operation to create an assistant definition.",
+      "request": {
+        "type": "operation",
+        "idempotency_key": "11111111-1111-1111-1111-111111111111",
+        "path": "assistants/test-bot/ASSISTANT.md",
+        "workspace_id": "TEST_WORKSPACE_ID",
+        "content": "---\ntype: assistant\nname: \"Test Bot\"\ndescription: \"A conformance test assistant.\"\nmodel: \"openai/gpt-4o\"\n---\n\n## Instructions\n\nYou are a conformance test assistant.",
+        "intent": "Conformance fixture: create a valid assistant"
+      },
+      "expected_response": {
+        "success": true,
+        "type": "operation",
+        "path": "assistants/test-bot/ASSISTANT.md",
+        "dry_run": false,
+        "validation": {
+          "valid": true,
+          "type": "assistant",
+          "errors": [],
+          "warnings": []
+        }
+      }
+    },
+    {
+      "id": "fixture-002",
+      "name": "Create assistant — missing required name field",
+      "description": "An operation with a missing 'name' field. Must return 422 with repair feedback.",
+      "request": {
+        "type": "operation",
+        "idempotency_key": "22222222-2222-2222-2222-222222222222",
+        "path": "assistants/bad-bot/ASSISTANT.md",
+        "workspace_id": "TEST_WORKSPACE_ID",
+        "content": "---\ntype: assistant\ndescription: \"Missing the name field.\"\n---\n\n## Instructions\n\nBroken bot.",
+        "intent": "Conformance fixture: missing required name field"
+      },
+      "expected_response": {
+        "success": false,
+        "validation": {
+          "valid": false,
+          "type": "assistant",
+          "errors": ["Missing required field 'name' for type 'assistant' in assistants/bad-bot/ASSISTANT.md."]
+        },
+        "repair": {
+          "field_errors": [
+            {
+              "field": "name",
+              "issue": "Missing required field 'name' for type 'assistant'."
+            }
+          ]
+        }
+      },
+      "expected_http_status": 422
+    },
+    {
+      "id": "fixture-003",
+      "name": "Dry run — valid operation returns success without commit",
+      "description": "A dry_run request must return success: true and committed_at: null.",
+      "request": {
+        "type": "operation",
+        "idempotency_key": "33333333-3333-3333-3333-333333333333",
+        "path": "assistants/dry-run-bot/ASSISTANT.md",
+        "workspace_id": "TEST_WORKSPACE_ID",
+        "content": "---\ntype: assistant\nname: \"Dry Run Bot\"\n---\n\n## Instructions\n\nNot committed.",
+        "dry_run": true,
+        "intent": "Conformance fixture: dry run pre-flight check"
+      },
+      "expected_response": {
+        "success": true,
+        "dry_run": true,
+        "committed_at": null,
+        "validation": {
+          "valid": true,
+          "type": "assistant"
+        }
+      }
+    },
+    {
+      "id": "fixture-004",
+      "name": "Patch operation — update model field",
+      "description": "A patch that updates only the model field of an existing assistant.",
+      "preconditions": ["fixture-001 must be committed first"],
+      "request": {
+        "type": "patch",
+        "idempotency_key": "44444444-4444-4444-4444-444444444444",
+        "path": "assistants/test-bot/ASSISTANT.md",
+        "workspace_id": "TEST_WORKSPACE_ID",
+        "patches": {
+          "model": "anthropic/claude-opus-4-5"
+        },
+        "intent": "Conformance fixture: patch model to Claude Opus"
+      },
+      "expected_response": {
+        "success": true,
+        "type": "patch",
+        "validation": {
+          "valid": true,
+          "type": "assistant"
+        }
+      }
+    },
+    {
+      "id": "fixture-005",
+      "name": "Event — append immutable credit deduction event",
+      "description": "An event operation appending to the immutable event log.",
+      "request": {
+        "type": "event",
+        "idempotency_key": "55555555-5555-5555-5555-555555555555",
+        "path": "events/credit-deducted",
+        "workspace_id": "TEST_WORKSPACE_ID",
+        "content": "{\"event_type\":\"credit_deducted\",\"amount_credits\":150,\"model_id\":\"openai/gpt-4o\",\"timestamp\":\"2026-05-16T00:00:00Z\"}",
+        "intent": "Conformance fixture: log a credit deduction event"
+      },
+      "expected_response": {
+        "success": true,
+        "type": "event",
+        "validation": {
+          "valid": true
+        }
+      }
+    },
+    {
+      "id": "fixture-006",
+      "name": "Idempotency replay — same key returns cached result",
+      "description": "Submitting fixture-001 a second time returns a replay response without re-committing.",
+      "preconditions": ["fixture-001 must be committed first"],
+      "request": {
+        "type": "operation",
+        "idempotency_key": "11111111-1111-1111-1111-111111111111",
+        "path": "assistants/test-bot/ASSISTANT.md",
+        "workspace_id": "TEST_WORKSPACE_ID",
+        "content": "---\ntype: assistant\nname: \"Test Bot V2 — should not apply\"\n---\n\n## Instructions\n\nThis should not overwrite.",
+        "intent": "Conformance fixture: idempotency replay test"
+      },
+      "expected_response": {
+        "success": true,
+        "replay": {}
+      }
+    },
+    {
+      "id": "fixture-007",
+      "name": "Envelope validation — missing type field",
+      "description": "A request with a missing 'type' field must return 422.",
+      "request": {
+        "idempotency_key": "77777777-7777-7777-7777-777777777777",
+        "path": "assistants/missing-type/ASSISTANT.md",
+        "workspace_id": "TEST_WORKSPACE_ID",
+        "content": "---\ntype: assistant\nname: \"Missing Type Bot\"\n---"
+      },
+      "expected_response": {
+        "success": false,
+        "validation": {
+          "valid": false,
+          "errors": ["Invalid or missing 'type'. Must be one of: operation, patch, event, delete."]
+        }
+      },
+      "expected_http_status": 422
+    },
+    {
+      "id": "fixture-008",
+      "name": "Create workflow — valid operation",
+      "description": "A well-formed workflow definition.",
+      "request": {
+        "type": "operation",
+        "idempotency_key": "88888888-8888-8888-8888-888888888888",
+        "path": "workflows/daily-digest/WORKFLOW.md",
+        "workspace_id": "TEST_WORKSPACE_ID",
+        "content": "---\ntype: workflow\nname: \"Daily Digest\"\ndescription: \"Sends a daily summary email.\"\ntriggers:\n  - type: cron\n    cron: \"0 8 * * *\"\nneeds: []\nisActive: true\n---\n\n## Steps\n\n1. Gather unread inbox messages.\n2. Summarize via LLM.\n3. Send digest email.",
+        "intent": "Conformance fixture: create a valid cron workflow"
+      },
+      "expected_response": {
+        "success": true,
+        "type": "operation",
+        "validation": {
+          "valid": true,
+          "type": "workflow",
+          "errors": []
+        }
+      }
+    },
+    {
+      "id": "fixture-009",
+      "name": "Delete assistant — valid delete operation",
+      "description": "A well-formed delete operation to remove an assistant.",
+      "preconditions": ["fixture-001 must be committed first"],
+      "request": {
+        "type": "delete",
+        "idempotency_key": "99999999-9999-9999-9999-999999999999",
+        "path": "assistants/test-bot/ASSISTANT.md",
+        "workspace_id": "TEST_WORKSPACE_ID",
+        "intent": "Conformance fixture: delete test assistant"
+      },
+      "expected_response": {
+        "success": true,
+        "type": "delete",
+        "validation": {
+          "valid": true,
+          "errors": []
+        }
+      }
+    }
+  ],
+
+  "error_codes": {
+    "400": "invalid_request — Invalid parameters, directory traversal, malformed request envelope, or path template mismatch",
+    "401": "unauthorized — Missing or invalid auth token / session",
+    "403": "forbidden — Access denied (workspace membership check failed or system scope isolation violation)",
+    "404": "not_found — The requested file to patch or delete does not exist",
+    "409": "lease_conflict, version_conflict, or idempotency_conflict — Lease locked, out-of-date expected version, or idempotency key replay payload mismatch",
+    "422": "validation_failed — Primitive registry/conformance validation errors (contains validation.errors and repair in body)",
+    "500": "internal_error — Unexpected server error, VFS write failed, or DB transactional RPC error"
+  },
+
+  "implementations": ["festech.live", "ultrachat", "total-recall"],
+  "maintained_by": "SSSS standard (canonical: this repo)",
+  "provenance": "Seeded from the festech.live reference implementation, which authored the original shared contract; canonicalized here as the vendor-neutral source of truth.",
+  "last_updated": "2026-06-24"
+}

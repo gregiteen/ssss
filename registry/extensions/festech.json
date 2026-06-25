@@ -1,0 +1,134 @@
+{
+  "$schema": "https://ssss.dev/registry/v1",
+  "registry": "festech",
+  "extends": "core",
+  "spec_version": "0.3",
+  "description": "Festech extension registry. Defines the host-specific primitives that festech.live layers on top of the SSSS core (registry/core.json). Lifted from festech's docs/ssss/primitive-registry.json and assigned a portability class (§5.5) so a festech workspace can be exported as a backup/template/sale bundle. Core primitives (assistant, workflow, rule, skill, model, memory, task, conversation, run, conflict, page, migration, release) are NOT redefined here — they are governed by core.json. An extension MUST NOT redefine a core type.",
+  "conformance": "A festech-conformant host MUST resolve portability for these primitives from this registry. The `resource_bound` primitives MUST ship only a requirement declaration (never the seller's bound value) in a template/sale export; the `tenant_private` primitives MUST be dropped from template/sale entirely (§5.5).",
+
+  "document_primitives": {
+    "domain": {
+      "family": "resource",
+      "canonical_path": "domains/<domain>.md",
+      "append_only": false,
+      "portability": "resource_bound",
+      "resource": { "kind": "domain", "binds": ["domain_name", "registrar"], "provision_relation": "owns_domain" },
+      "required_fields": ["type", "domain_name", "registrar", "status", "payment_status"],
+      "notes": "The seller's domain is NEVER transferred. In template/sale the bundle declares 'this business needs a domain'; the buyer binds their own at provision (§16)."
+    },
+    "phone_number": {
+      "family": "resource",
+      "canonical_path": "telephony/PHONE_SYSTEM.md",
+      "append_only": false,
+      "portability": "resource_bound",
+      "resource": { "kind": "phone", "binds": ["phone_number", "provider"], "provision_relation": "routes_calls_to" },
+      "required_fields": ["type", "phone_number", "provider", "status"]
+    },
+    "integration_connection": {
+      "family": "resource",
+      "canonical_path": "integrations/<provider>.md",
+      "append_only": false,
+      "portability": "resource_bound",
+      "resource": { "kind": "api_connection", "binds": ["provider"], "provision_relation": "connects_to" },
+      "required_fields": ["type", "provider", "status", "capabilities", "verified_at"],
+      "notes": "Carries credentials/tokens to a third-party provider — the seller's connection value MUST be stripped; the buyer supplies their own at provision."
+    },
+    "legal_policy": {
+      "family": "governance",
+      "canonical_path": "contracts/<id>.md",
+      "append_only": false,
+      "portability": "structural",
+      "required_fields": ["type", "title", "version", "effective_date", "policy_type"]
+    },
+    "extension": {
+      "family": "capability",
+      "canonical_path": "extensions/<id>.md",
+      "append_only": false,
+      "portability": "structural",
+      "required_fields": ["type", "extension", "display_name", "status"],
+      "notes": "Which extensions a workspace has installed is part of the business model and ships in a sale."
+    },
+    "media_asset": {
+      "family": "asset",
+      "canonical_path": "media/assets/<asset-id>.md",
+      "append_only": false,
+      "portability": "structural",
+      "required_fields": ["type", "asset_id", "asset_type", "url"],
+      "notes": "Brand/marketing assets are structural. An asset holding customer-uploaded content SHOULD override with x_portability: tenant_private."
+    },
+    "language_convention": {
+      "family": "localization",
+      "canonical_path": "languages/<locale>/CONVENTION.md",
+      "append_only": false,
+      "portability": "structural",
+      "required_fields": ["type", "locale", "language_name", "keys"]
+    },
+    "knowledge": {
+      "family": "knowledge",
+      "canonical_path": "knowledge/<slug>.md",
+      "append_only": false,
+      "portability": "structural",
+      "required_fields": ["type", "name", "slug"],
+      "notes": "The curated knowledge base is a core sellable asset of the business model."
+    },
+    "knowledge_source": {
+      "family": "knowledge",
+      "canonical_path": "knowledge/<knowledge-slug>/sources/<slug>.md",
+      "append_only": false,
+      "portability": "structural",
+      "required_fields": ["type", "title", "knowledge_base_slug"],
+      "notes": "A source backing a structural knowledge base. A source ingesting private customer documents SHOULD override with x_portability: tenant_private."
+    },
+    "onboarding_state": {
+      "family": "runtime",
+      "canonical_path": "onboarding_state.md",
+      "append_only": false,
+      "portability": "tenant_private",
+      "required_fields": ["type", "state_version", "collective_id", "completed_steps", "deferred_steps", "dismissed"]
+    },
+    "profile": {
+      "family": "actor",
+      "canonical_path": "PROFILE.md",
+      "append_only": false,
+      "portability": "tenant_private",
+      "required_fields": ["type", "user_id", "locale"]
+    },
+    "personalization": {
+      "family": "actor",
+      "canonical_path": "PERSONALIZATION.md",
+      "append_only": false,
+      "portability": "tenant_private",
+      "required_fields": ["type"]
+    },
+    "model-preferences": {
+      "family": "actor",
+      "canonical_path": "models/preferences/MODEL-PREFERENCES.md",
+      "append_only": false,
+      "portability": "tenant_private",
+      "required_fields": ["type", "user_id", "workspace_id"]
+    },
+    "sharing_group": {
+      "family": "actor",
+      "canonical_path": "sharing-groups/<id>.md",
+      "append_only": false,
+      "portability": "tenant_private",
+      "required_fields": ["type", "name", "color", "owner_user_id"]
+    },
+    "settings": {
+      "family": "config",
+      "canonical_path": "SETTINGS.md",
+      "append_only": false,
+      "portability": "structural",
+      "required_fields": ["type"],
+      "notes": "Workspace settings configure the business model (structural). Account-scoped settings SHOULD override with x_portability: tenant_private."
+    },
+    "system_settings": {
+      "family": "config",
+      "canonical_path": "SYSTEM_SETTINGS.md",
+      "append_only": false,
+      "portability": "tenant_private",
+      "required_fields": ["type"],
+      "notes": "Host/operator-level configuration; never transfers to a buyer."
+    }
+  }
+}
