@@ -23,6 +23,9 @@ const TOP_LEVEL_HELP = `@ssss/cli v${VERSION} — Structured Semantic Syntax Sys
 
 Usage: ssss <command> [options]
 
+Scaffold:
+  new <dir>             Scaffold a new SSSS project (--with-total-recall, --install).
+
 Vault → bundle → tenant lifecycle:
   export <vault>        Package a vault into a .ucw bundle (spec §16).
   validate <bundle>     Check a bundle against the schema + portability rules.
@@ -48,6 +51,8 @@ const rest = process.argv.slice(3);
 
 // Commands that export run(argv).
 const MODULES = {
+  new: './cmd-new.mjs',
+  scaffold: './cmd-new.mjs',
   export: './cmd-export.mjs',
   validate: './cmd-validate.mjs',
   inspect: './cmd-inspect.mjs',

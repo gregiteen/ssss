@@ -5,6 +5,18 @@ All notable changes to the SSSS (Structured Semantic Syntax System) spec will be
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.5.0] - 2026-06-25
+### Added
+- **`ssss new <dir>` scaffolder** — bootstrap a fresh SSSS-native repo in one command:
+  a starter `vault/` of core primitives (incl. a `tenant_private` task to demonstrate
+  the sale-drop), a dependency-free conformance test (`node --test`) that replays the
+  canonical fixtures through the engine and round-trips the vault as a `sale` bundle,
+  plus `package.json` (pinned to the matching `@ssss/cli` tag), `CLAUDE.md`, `README`,
+  and `.gitignore`. Flags: `--with-total-recall` (wire the Total Recall memory OS),
+  `--install` (npm install + Total Recall init + verify), `--ref`, `--name`, `--force`,
+  `--no-git`. All shelling-out uses `execFileSync` with fixed argv (no shell). Docs:
+  `ssss help scaffold`.
+
 ## [0.4.0] - 2026-06-24
 ### Added
 - **The `.ucw` bundle format (spec §16, registry `bundle`)** — the canonical transportable

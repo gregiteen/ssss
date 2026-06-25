@@ -33,6 +33,16 @@ npm install @ssss/cli
 
 Requires Node 18+. No runtime dependencies.
 
+## Start a new project
+
+```bash
+ssss new my-app --install                # scaffold + install + run the conformance test
+ssss new my-app --with-total-recall      # also wire the Total Recall memory OS
+```
+
+Scaffolds a starter `vault/`, a dependency-free conformance test, and a `CLAUDE.md`.
+See `ssss help scaffold`.
+
 ## Quick start — the lifecycle
 
 ```
@@ -59,6 +69,7 @@ ssss import festival.ucw.json --vault ./new-tenant \
 
 | Command | Purpose |
 |---------|---------|
+| `ssss new <dir>` | Scaffold a new SSSS project (`--with-total-recall`, `--install`). |
 | `ssss export <vault>` | Package a vault into a `.ucw` bundle (§16). Pure & deterministic. |
 | `ssss validate <bundle>` | Check a bundle against the schema + portability rules. |
 | `ssss inspect <bundle>` | Human-readable summary (manifest, inventory, params, steps). |
