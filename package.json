@@ -8,7 +8,11 @@
     "./engine": "./src/engine.mjs",
     "./registry": "./src/registry.mjs",
     "./frontmatter": "./src/frontmatter.mjs",
-    "./bundle": "./src/bundle.mjs"
+    "./bundle": "./src/bundle.mjs",
+    "./conformance/fixtures.json": "./conformance/fixtures.json",
+    "./conformance/reference-bundle.ucw.json": "./conformance/reference-bundle.ucw.json",
+    "./registry/core.json": "./registry/core.json",
+    "./package.json": "./package.json"
   },
   "bin": {
     "ssss": "./scripts/ssss.mjs"
