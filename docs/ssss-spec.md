@@ -547,7 +547,11 @@ An operation is a JSON envelope:
   "patches": { },               // partial merge (patch only)
   "lease_id": "uuid",           // OPTIONAL — see §7
   "intent": "human description", // OPTIONAL — audit annotation
-  "dry_run": false               // OPTIONAL — validate without committing
+  "dry_run": false,              // OPTIONAL — validate without committing
+  "actor": {                     // OPTIONAL — the cryptographically verified identity.
+    "type": "human",             // "human" | "ai" | "system"
+    "role": "admin"              // role-based access control hook for the host
+  }
 }
 ```
 
@@ -582,7 +586,8 @@ failure aborts the operation with no commit.
    well-formed.
 2. **Idempotency check** — if this `idempotency_key` + `workspace_id` was already
    committed within the TTL, return the original result as a replay (§6.4). Stop.
-3. **Authorization** — the agent has write access to `workspace_id`.
+3. **Authorization & Actor Identity** — the agent has write access to `workspace_id`.
+   *Security Mandate*: If a host exposes the Operation Contract directly to untrusted clients (e.g., a `POST /api/ssss` REST endpoint), the host **MUST** irreversibly overwrite the `actor` payload with the user's cryptographically verified session identity. Hosts MUST use this `actor` field to enforce Role-Based Access Control (RBAC) over sensitive or `resource_bound` primitives.
 4. **Lease check** — if the target path is leased, the operation MUST carry a
    matching, unexpired `lease_id` (§7).
 5. **Content validation** — for `operation`/`patch`, the resulting file is validated
