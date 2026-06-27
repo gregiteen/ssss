@@ -1,6 +1,6 @@
 {
   "name": "@ssss/cli",
-  "version": "0.5.0",
+  "version": "0.5.1",
   "description": "CLI tools and the reference engine for the Structured Semantic Syntax System",
   "main": "src/engine.mjs",
   "exports": {
