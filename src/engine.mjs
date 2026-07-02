@@ -105,6 +105,19 @@ export function createEngine({ registryDir, leaseStore } = {}) {
     }
   }
 
+  function isEmpty(v) {
+    return v === undefined || v === null || v === '' || (Array.isArray(v) && v.length === 0);
+  }
+
+  /** Parse a registry `required_when` condition key, e.g. "schema_version==2". */
+  function parseCondition(condition) {
+    const m = String(condition).match(/^(\w+)==(.+)$/);
+    if (!m) return null;
+    const [, field, raw] = m;
+    const value = /^-?\d+$/.test(raw) ? parseInt(raw, 10) : raw;
+    return { field, value };
+  }
+
   function validateContent(resolvedType, data, filePath) {
     const def = types.get(resolvedType);
     const errors = [];
@@ -115,11 +128,31 @@ export function createEngine({ registryDir, leaseStore } = {}) {
       return { errors, repair };
     }
     for (const f of def.required_fields || []) {
-      const v = data[f];
-      const empty = v === undefined || v === null || v === '' || (Array.isArray(v) && v.length === 0);
-      if (empty) {
+      if (isEmpty(data[f])) {
         errors.push(`Missing required field '${f}' for type '${resolvedType}' in ${filePath}.`);
         repair.push({ field: f, issue: `Missing required field '${f}' for type '${resolvedType}'.` });
+      }
+    }
+    // required_when (§9): fields required only when a condition field matches a value.
+    for (const [condition, fields] of Object.entries(def.required_when || {})) {
+      const cond = parseCondition(condition);
+      if (!cond || data[cond.field] !== cond.value) continue;
+      for (const f of fields) {
+        if (isEmpty(data[f])) {
+          errors.push(`Missing required field '${f}' for type '${resolvedType}' when ${condition} in ${filePath}.`);
+          repair.push({ field: f, issue: `Required when ${condition}.` });
+        }
+      }
+    }
+    // enums: a present field's value(s) must be drawn from the registry's declared set.
+    for (const [field, allowedValues] of Object.entries(def.enums || {})) {
+      if (isEmpty(data[field])) continue;
+      const values = Array.isArray(data[field]) ? data[field] : [data[field]];
+      for (const v of values) {
+        if (!allowedValues.includes(v)) {
+          errors.push(`Invalid value '${v}' for field '${field}' on type '${resolvedType}'; must be one of: ${allowedValues.join(', ')}.`);
+          repair.push({ field, issue: `Must be one of: ${allowedValues.join(', ')}.` });
+        }
       }
     }
     return { errors, repair };
@@ -179,8 +212,8 @@ export function createEngine({ registryDir, leaseStore } = {}) {
     const cached = idempotencyCache.get(ck);
     if (cached) return { ...cached.response, replay: cached.response };
 
-    // Stage 3 — Authorization (protocol-path hook; default admin)
-    // (kept minimal; agentRole-based protected paths can be layered by a host)
+    // Stage 3 — Authorization (protocol-path hook)
+    // Granular RBAC is now evaluated in Stage 5.5 once the primitive type is resolved.
 
     // Stage 4 — Lease check
     const store = options.leaseStore || leaseStore;
@@ -196,10 +229,14 @@ export function createEngine({ registryDir, leaseStore } = {}) {
     let mergedForCommit = null;
 
     if (envelope.type === 'operation') {
-      const { data } = parseDocument(envelope.content);
-      resolvedType = data.type || null;
-      if (!resolvedType) { errors.push(`Missing required frontmatter field 'type' in ${envelope.path}.`); repair.push({ field: 'type', issue: 'Frontmatter must declare a type.' }); }
-      else ({ errors, repair } = validateContent(resolvedType, data, envelope.path));
+      if (envelope.path.endsWith('/index.md')) {
+        resolvedType = 'index';
+      } else {
+        const { data } = parseDocument(envelope.content);
+        resolvedType = data.type || null;
+        if (!resolvedType) { errors.push(`Missing required frontmatter field 'type' in ${envelope.path}.`); repair.push({ field: 'type', issue: 'Frontmatter must declare a type.' }); }
+        else ({ errors, repair } = validateContent(resolvedType, data, envelope.path));
+      }
       // append-type rewrite guard
       if (!errors.length && isAppendType(types.get(resolvedType)) && fs.existsSync(abs)) {
         const existing = parseDocument(fs.readFileSync(abs, 'utf8')).body.trim();
@@ -234,7 +271,46 @@ export function createEngine({ registryDir, leaseStore } = {}) {
       }
     }
 
-    const valid = errors.length === 0;
+    let valid = errors.length === 0;
+
+    // Stage 5.5 — Granular Authorization (Default RBAC)
+    if (valid) {
+      // Fail-closed by design: a host that forgets to overwrite `actor` with a
+      // verified identity (spec §6.3 Stage 3 MUST) gets denied, not admin. Only
+      // an EXPLICIT actor.role === 'admin' still resolves to full access.
+      const actorRole = envelope.actor?.role || null;
+      // `event` envelopes never resolve a document-primitive type (they're a raw
+      // log entry, not a typed file), so gate them on the `event` contract
+      // primitive itself rather than the ever-null resolvedType (which would
+      // otherwise require the unsatisfiable permission 'write:null').
+      const permType = envelope.type === 'event' ? 'event' : resolvedType;
+      const requiredPerm = `write:${permType}`;
+      let allowed = false;
+      if (actorRole === 'system') {
+        allowed = true;
+      } else if (actorRole) {
+        let perms = [];
+        if (actorRole === 'admin') perms = ['write:*', 'read:*'];
+        const roleFile = path.join(vaultRoot, 'roles', actorRole, 'ROLE.md');
+        if (fs.existsSync(roleFile)) {
+          try {
+            const { data } = parseDocument(fs.readFileSync(roleFile, 'utf8'));
+            if (data.permissions) perms = data.permissions;
+          } catch {}
+        }
+        allowed = perms.includes('*:*') || perms.includes('write:*') || perms.includes(`*:${permType}`) || perms.includes(requiredPerm);
+      }
+      // else: actorRole is absent — allowed stays false (fail closed).
+
+      if (!allowed) {
+        errors.push(`Access denied: role '${actorRole || '(none)'}' lacks permission '${requiredPerm}'.`);
+        repair.push({
+          field: 'actor.role',
+          issue: actorRole ? 'Insufficient permissions.' : 'Missing actor.role — the envelope was not authorized by a verified identity.',
+        });
+        valid = false;
+      }
+    }
 
     // dry_run: stop after stage 5
     if (envelope.dry_run || !valid) {

@@ -1,0 +1,20 @@
+[
+  {
+    "id": "skill-eval-1",
+    "description": "SKILL.md exists",
+    "command": "test -f .agent/skills/skill/SKILL.md",
+    "expected_exit_code": 0
+  },
+  {
+    "id": "skill-eval-2",
+    "description": "Evals validation",
+    "command": "test -f .agent/skills/skill/scripts/run-evals.mjs",
+    "expected_exit_code": 0
+  },
+  {
+    "id": "skill-eval-3",
+    "description": "Optimization enforcement",
+    "command": "test -f .agent/skills/skill/scripts/enforce-skill-optimization.mjs",
+    "expected_exit_code": 0
+  }
+]

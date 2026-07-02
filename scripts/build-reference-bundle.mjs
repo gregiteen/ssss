@@ -15,6 +15,7 @@ import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { exportBundle, validateBundle } from '../src/bundle.mjs';
+import { generateIndexes } from './autolink.mjs';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const OUT = path.resolve(__dirname, '..', 'conformance', 'reference-bundle.ucw.json');
@@ -51,6 +52,20 @@ name: Refund Policy
 slug: refund-policy
 ---
 Refunds are available up to 14 days before the event.`,
+  'roles/admin/ROLE.md':
+`---
+type: security_role
+name: Administrator
+permissions:
+  - "write:assistant"
+  - "write:workflow"
+  - "write:rule"
+  - "write:domain"
+  - "write:page"
+  - "write:security_role"
+  - "write:task"
+---
+Full access to all festival operations.`,
   // resource_bound — declares "this business needs a domain"; the SELLER's domain never ships
   'domains/festival.md':
 `---
@@ -75,11 +90,19 @@ Attendee jane@example.com requested a seat change.`,
 
 function buildVault() {
   const root = fs.mkdtempSync(path.join(os.tmpdir(), 'ssss-refvault-'));
+  const files = [];
+
   for (const [rel, content] of Object.entries(VAULT)) {
     const abs = path.join(root, rel);
     fs.mkdirSync(path.dirname(abs), { recursive: true });
     fs.writeFileSync(abs, content);
+    files.push(abs);
   }
+
+  // Generate index.md for progressive disclosure (§4.3) — reuses the same
+  // generator `ssss autolink --index` uses, so there is one implementation.
+  generateIndexes(files, root, { write: true }, { indexes: [] });
+
   return root;
 }
 

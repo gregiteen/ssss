@@ -22,19 +22,19 @@ SSSS — the Structured Semantic Syntax System — is a **database-free, Markdow
 schema and mutation contract for AI agent state**.
 
 Every unit of agent-relevant state — a memory, a skill, a conversation, a workflow
-run, an assistant definition — is a plain Markdown file with YAML frontmatter. There
-is no relational database of record, no binary format, and no proprietary container.
-A relational store MAY exist, but only as a *disposable projection* rebuildable from
-the Markdown.
+run, an assistant definition, a runtime task — is a plain Markdown file with YAML
+frontmatter. There is no relational database of record, no binary format, and no
+proprietary container. A relational store MAY exist, but only as a *disposable
+projection* rebuildable from the Markdown.
 
 SSSS additionally defines the **Operation Contract**: a single, validated, idempotent
 envelope through which all agent-generated mutations must flow. This makes
 AI-generated state changes deterministic, replayable, conflict-safe, and auditable.
 
-Any tool, IDE, agent framework, or CLI that can read Markdown can interoperate with
-an SSSS vault. The only thing that distinguishes a memory engine, a chat runtime, and
-a workflow orchestrator is *which primitive types they read and write* — the
-underlying file format and mutation contract are identical.
+Any tool, IDE, agent framework, daemon, or CLI that can read Markdown can
+interoperate with an SSSS vault. The only thing that distinguishes a memory engine,
+a chat runtime, and a workflow orchestrator is *which primitive types they read and
+write* — the underlying file format and mutation contract are identical.
 
 ---
 
@@ -168,6 +168,7 @@ primitive — it implements the subset its product requires — but any primitiv
 | `memory` | knowledge | structural | A single unit of agent knowledge (rule, pattern, fact, preference). |
 | `skill` | capability | structural | A skill package manifest. |
 | `rule` | governance | structural | A workspace-scoped behavior rule applied to assistants/agents. |
+| `security_role` | governance | structural | A security role definition for role-based access control (RBAC). |
 | `task` | work | tenant_private | A unit of submitted work — one step or many. The universal work primitive. |
 | `assistant` | actor | structural | The definition of an AI assistant/persona. |
 | `workflow` | work | structural | A reusable **task template**: a defined procedure plus triggers. Firing a workflow submits a `task`. |
@@ -283,12 +284,21 @@ REQUIRED: `type`, `priority` (integer), `category`, `status`
 (`pending|in_progress|done|failed`). A task instantiated from a template carries an
 OPTIONAL `workflow_id` referencing it.
 
+Runtime-created tasks SHOULD additionally carry `workflow_path`, `trigger_id`,
+`trigger_type`, `trigger_event_id`, `scheduled_for`, and `dedupe_key`. These fields
+make the task reconstructible from the workflow definition plus the trigger event
+and prevent duplicate daemon ticks from creating duplicate work (§11.8).
+
 ```markdown
 ---
 type: task
 priority: 85
 category: skill-engineering
 status: pending
+workflow_id: "research-skill"
+trigger_id: "manual"
+scheduled_for: 2026-05-16T08:00:00Z
+dedupe_key: "runtime:abc123"
 ---
 
 ## Objective
@@ -324,6 +334,20 @@ the submitted instance.
 REQUIRED: `type`, `name`. `triggers` (array) is OPTIONAL — a workflow with no
 triggers is valid and may be invoked manually or by another workflow.
 
+When present, `triggers[]` is the canonical schedule source. OS cron, hosted
+schedulers, queues, and daemon timers are wake-up mechanisms only; they MUST NOT
+become the record of what the workflow schedule means. A trigger entry SHOULD
+include:
+
+| Field | Description |
+|-------|-------------|
+| `type` | `manual`, `cron`, `interval`, `event`, `webhook`, `file_change`, or `condition`. |
+| `id` / `trigger_id` | Stable trigger identity within the workflow. |
+| `cron` / `interval` / `event_type` | Type-specific selector. |
+| `timezone` | Required for wall-clock schedules; UTC is implied if omitted. |
+| `misfire_policy` | `skip`, `run_once`, or `catch_up`; default `run_once`. |
+| `concurrency` | `allow_parallel`, `skip_if_running`, `enqueue`, or `replace`; default `skip_if_running`. |
+
 ```markdown
 ---
 type: workflow
@@ -331,7 +355,11 @@ name: "Daily Digest"
 description: "Sends a daily summary email."
 triggers:
   - type: cron
+    id: daily-0800
     cron: "0 8 * * *"
+    timezone: "America/Denver"
+    misfire_policy: run_once
+    concurrency: skip_if_running
 isActive: true
 ---
 
@@ -358,6 +386,27 @@ scope: support
 ---
 
 Outbound links are stripped from any assistant reply on a support thread.
+```
+
+#### `security_role`
+
+A definition of a security role used for role-based access control (RBAC).
+It maps a role name to a set of permissions that dictate what an agent or user
+can do within the workspace.
+
+REQUIRED: `type`, `name`, `permissions` (array). OPTIONAL: `description`.
+
+```markdown
+---
+type: security_role
+name: "admin"
+description: "Administrator with full access to all workspace primitives."
+permissions:
+  - "read:*"
+  - "write:*"
+---
+
+Full administrative access to the workspace.
 ```
 
 #### `model`
@@ -407,14 +456,18 @@ Hi — how can I help?
 An append-only workflow execution record. Append-type.
 
 REQUIRED: `type`, `run_id`, `workflow_id`. Typical fields: `workspace_id`, `status`,
-`step_count`, `started_at`.
+`task_id`, `task_path`, `step_count`, `started_at`.
+
+`status` SHOULD be one of: `queued`, `claimed`, `running`, `waiting_for_human`,
+`succeeded`, `failed`, `canceled`, `retrying`, `dead_letter`.
 
 ```markdown
 ---
 type: run
 run_id: "run-001"
 workflow_id: "daily-digest"
-status: running
+task_path: "tasks/daily-digest/daily-0800-20260516T080000Z.md"
+status: queued
 started_at: 2026-05-16T08:00:00Z
 ---
 
@@ -594,11 +647,24 @@ failure aborts the operation with no commit.
    against its primitive schema (§9). Append-type rewrite attempts are rejected. For
    `delete`, the host verifies the target exists and is a replace-type document (append-type
    deletes are rejected).
+5.5. **Granular Authorization (RBAC)** — evaluated only if stage 5 passed. Resolve
+   `actor.role` from the (by now host-verified, per stage 3) envelope. `role: "system"`
+   is an unconditional bypass (used by trusted internal callers such as the provisioning
+   pipeline, §17). `role: "admin"` is granted `write:*`/`read:*` unconditionally. Any
+   other named role's permissions are read from that role's `security_role` document
+   (canonical location `roles/<role>/ROLE.md`) and checked against the required
+   permission — `write:<type>` for `operation`/`patch`/`delete` (using the type resolved
+   in stage 5), or the fixed `write:event` for `event` envelopes (which have no resolved
+   document type). A permission list satisfies the requirement via an exact match,
+   `*:<type>`, `write:*`, or `*:*`. **A MISSING `actor.role` MUST be denied, not treated
+   as any default role** — this is the fail-closed complement to stage 3's mandate: a
+   host that forgets to overwrite `actor` gets every write rejected, not silently
+   promoted to admin.
 6. **Commit** — the mutation is applied to the vault atomically. For `delete`, the file is
    removed.
 7. **Audit** — an audit entry is appended to the event log (§8).
 
-A `dry_run` operation runs stages 1–5 and then stops: it MUST return the validation
+A `dry_run` operation runs stages 1–5.5 and then stops: it MUST return the validation
 verdict with `success` reflecting validity, and MUST NOT commit (`committed_at` is
 `null`).
 
@@ -627,8 +693,10 @@ verdict with `success` reflecting validity, and MUST NOT commit (`committed_at` 
 
 | Code | Meaning |
 |------|---------|
+| `400` | Invalid request — malformed envelope, or a path that fails the traversal guard. |
 | `401` | Authentication required. |
 | `403` | Agent lacks write access to the workspace. |
+| `404` | The `patch`/`delete` target does not exist. |
 | `409` | Lease conflict — path is locked, or the supplied lease is invalid/expired. |
 | `422` | Validation failure — see `validation.errors` and `repair`. |
 | `500` | Internal error — the operation was not committed. |
@@ -873,6 +941,109 @@ content. A host applies a `language_convention` as a **presentation overlay** at
 semantic/rendering layer; it MUST NOT alter the deterministic layer's symbolic keys or
 enumerated values.
 
+### 11.8 Workflow Runtime & Daemon Contract
+
+SSSS defines the source of truth for workflow runtime behavior, but it does not
+mandate one resident process manager. A host MAY use OS cron, systemd timers,
+serverless schedules, webhooks, message queues, browser alarms, or an always-on
+daemon to wake the runtime. Those systems are **wake-up mechanisms** only. They MUST
+NOT become the canonical schedule, queue, or task history.
+
+The canonical runtime sources are:
+
+| Concern | Source of truth |
+|---------|-----------------|
+| Schedule and trigger meaning | `workflow` frontmatter `triggers[]`. |
+| Submitted work | `task` documents. |
+| Execution transcript | append-only `run` documents. |
+| What happened | append-only event log (§8). |
+| Claim/concurrency safety | leases (§7) plus deterministic idempotency keys (§6.4). |
+| Dashboards, task queues, cursors | projections (§10), rebuildable from the vault and event log. |
+
+A conformant daemon loop is:
+
+1. **Scan** active `workflow` primitives whose `triggers[]` might fire.
+2. **Evaluate** the trigger against wall-clock time, incoming event, webhook, file
+   change, condition, or explicit manual invocation.
+3. **Append** a `workflow_triggered` event via an `event` envelope.
+4. **Instantiate** one `task` via an `operation` envelope.
+5. **Claim** the task using a time-bound lease before execution.
+6. **Create or append** a `run` record for execution steps.
+7. **Patch** task status to `done` or `failed`, or to `pending` with retry metadata.
+8. **Rebuild** derived task queues, run timelines, graph indexes, or UI projections
+   as needed.
+
+Every step that mutates vault state MUST use the Operation Contract (§6). A daemon
+MUST NOT write task, run, cursor, or workflow files directly.
+
+#### Trigger Types
+
+Core trigger types are:
+
+| Type | Fires when |
+|------|------------|
+| `manual` | A human, agent, or another workflow invokes it. |
+| `cron` | A wall-clock cron expression reaches a scheduled instant. |
+| `interval` | A fixed duration elapses after the previous scheduled instant. |
+| `event` | A matching event-log entry appears. |
+| `webhook` | A verified external request arrives. |
+| `file_change` | A matching vault path is created, patched, or deleted. |
+| `condition` | A host-defined predicate over vault/projection state becomes true. |
+
+Trigger entries SHOULD use the fields documented in §5.4 `workflow`. Hosts MAY add
+type-specific `x_` fields, but MUST preserve unknown fields when rewriting the
+workflow document (§4.2).
+
+#### Idempotency & Duplicate Daemons
+
+The idempotency basis for runtime-created work is:
+
+```text
+workspace_id + workflow_id + trigger_id + scheduled_for
+```
+
+Two daemon ticks evaluating the same trigger for the same scheduled instant MUST
+produce the same task idempotency key. Replaying the same envelope MUST NOT create a
+second task. This rule is what lets an SSSS host run multiple scheduler processes
+without a scheduler database becoming the source of truth.
+
+For `event`, `webhook`, and `file_change` triggers, `scheduled_for` SHOULD be the
+canonical event timestamp or the host's normalized receipt timestamp, and the task
+SHOULD also record `trigger_event_id` when one exists.
+
+#### Concurrency, Misfires & Retries
+
+`misfire_policy` determines what happens when a daemon wakes after one or more missed
+schedule instants:
+
+| Policy | Meaning |
+|--------|---------|
+| `skip` | Do not create work for missed instants. |
+| `run_once` | Create one task for the most recent missed instant. |
+| `catch_up` | Create one task per missed instant, each with its own idempotency key. |
+
+`concurrency` determines what happens when a trigger fires while earlier work from
+the same workflow/trigger is still active:
+
+| Policy | Meaning |
+|--------|---------|
+| `allow_parallel` | Create the new task regardless of active runs. |
+| `skip_if_running` | Do not create a new task while a prior run is active. |
+| `enqueue` | Create a pending task, but allow a worker to claim it only after prior work finishes. |
+| `replace` | Cancel or fail the previous task/run before creating the replacement. |
+
+Retries MUST be represented on the `task` and/or `run` (`attempts`,
+`next_attempt_at`, `status: retrying`) and by events. A dead-letter outcome SHOULD be
+represented as `status: failed` on the task and `status: dead_letter` on the final
+run, plus an event explaining the terminal failure.
+
+#### Runtime Helpers
+
+The reference package exposes `@ssss/cli/runtime`, including deterministic helpers
+for planning a workflow trigger into a `workflow_triggered` event envelope and a
+task `operation` envelope. Hosts MAY implement their own daemon, but SHOULD pass the
+runtime conformance checks to prove the same source-of-truth and idempotency rules.
+
 ---
 
 ## 12. Conformance
@@ -886,13 +1057,15 @@ Fixtures are distributed as a JSON document carrying:
 - `operation_types` — the envelope-type schemas.
 - `idempotency` — TTL and replay behavior.
 - `validation_rules` — envelope and content rules.
+- `runtime_contract` — trigger vocabulary and daemon idempotency rules (§11.8).
 - `fixtures[]` — each with a `request`, an `expected_response`, and an
   OPTIONAL `expected_http_status`.
 - `error_codes` — the canonical code table.
 
 The conformance fixture set is the shared test contract between all SSSS
 implementations. A host MUST NOT claim SSSS conformance without passing the current
-fixture set.
+fixture set. Hosts implementing workflow daemons SHOULD also run the reference
+runtime checks exposed by `@ssss/cli/runtime`.
 
 ---
 

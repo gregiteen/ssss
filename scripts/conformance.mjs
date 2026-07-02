@@ -18,6 +18,9 @@ import { fileURLToPath } from 'node:url';
 import { createEngine } from '../src/engine.mjs';
 import { validateBundle, provisionBundle, importBundle } from '../src/bundle.mjs';
 import { parseDocument } from '../src/frontmatter.mjs';
+import { createRunEnvelope, planWorkflowTrigger } from '../src/runtime.mjs';
+import { auditRegistryFieldUsage } from './audit-registry-field-usage.mjs';
+import { validateSkills } from './validate-skills.mjs';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const FIXTURES = path.resolve(__dirname, '..', 'conformance', 'fixtures.json');
@@ -207,7 +210,7 @@ function runBundleConformance() {
     check('re-import is idempotent (0 new commits)', second.ok && second.committed === 0,
       `committed=${second.committed}`);
 
-    const landed = fs.existsSync(path.join(vault, 'tasks')) ? fs.readdirSync(path.join(vault, 'tasks')) : [];
+    const landed = fs.existsSync(path.join(vault, 'tasks')) ? fs.readdirSync(path.join(vault, 'tasks')).filter(f => f !== 'index.md') : [];
     check('no tenant_private task file on disk after import', landed.length === 0, `found=${JSON.stringify(landed)}`);
   } finally {
     fs.rmSync(vault, { recursive: true, force: true });
@@ -219,6 +222,109 @@ function runBundleConformance() {
     else console.log(`  ❌ ${c.name}${c.detail ? ` — ${c.detail}` : ''}`);
   }
   console.log(`\n  ${pass}/${checks.length} bundle/provisioning checks passed (§16/§17)`);
+  return pass === checks.length;
+}
+
+/**
+ * Runtime conformance (spec §11.8). Proves that a conformant daemon can treat
+ * workflow frontmatter as the canonical schedule source, then derive trigger,
+ * task, and run envelopes without introducing a scheduler database of record.
+ */
+function runRuntimeConformance() {
+  const checks = [];
+  const check = (name, cond, detail = '') => { checks.push({ name, cond, detail }); };
+
+  const workflowPath = 'workflows/daily-digest/WORKFLOW.md';
+  const workflowContent = [
+    '---',
+    'type: workflow',
+    'name: "Daily Digest"',
+    'priority: 80',
+    'triggers:',
+    '  - type: cron',
+    '    id: daily-0800',
+    '    cron: "0 8 * * *"',
+    '    timezone: "America/Denver"',
+    '    misfire_policy: run_once',
+    '    concurrency: skip_if_running',
+    'isActive: true',
+    '---',
+    '',
+    '1. Gather unread messages.',
+    '2. Summarize.',
+    '3. Send the digest.',
+    '',
+  ].join('\n');
+
+  const trigger = {
+    type: 'cron',
+    id: 'daily-0800',
+    cron: '0 8 * * *',
+    timezone: 'America/Denver',
+    misfire_policy: 'run_once',
+    concurrency: 'skip_if_running',
+  };
+  const scheduledFor = '2026-07-02T14:00:00.000Z';
+  const firstPlan = planWorkflowTrigger({
+    workflowPath,
+    workflowContent,
+    workspaceId: 'TEST_WORKSPACE_ID',
+    trigger,
+    scheduledFor,
+    firedAt: scheduledFor,
+  });
+  const secondPlan = planWorkflowTrigger({
+    workflowPath,
+    workflowContent,
+    workspaceId: 'TEST_WORKSPACE_ID',
+    trigger,
+    scheduledFor,
+    firedAt: scheduledFor,
+  });
+
+  check('same workflow trigger plans the same task path',
+    firstPlan.envelopes[1].path === secondPlan.envelopes[1].path,
+    `${firstPlan.envelopes[1].path} !== ${secondPlan.envelopes[1].path}`);
+  check('same workflow trigger plans the same task idempotency key',
+    firstPlan.envelopes[1].idempotency_key === secondPlan.envelopes[1].idempotency_key);
+  check('runtime emits event then task envelopes',
+    firstPlan.envelopes[0].type === 'event' && firstPlan.envelopes[1].type === 'operation');
+
+  const vault = fs.mkdtempSync(path.join(os.tmpdir(), 'ssss-runtime-'));
+  try {
+    const engine = createEngine({ registryDir: REGISTRY_DIR });
+    const eventRes = engine.processOperation(firstPlan.envelopes[0], vault);
+    const taskRes = engine.processOperation(firstPlan.envelopes[1], vault);
+    check('trigger event commits through Operation Contract', eventRes.success === true,
+      JSON.stringify(eventRes.validation?.errors || []));
+    check('instantiated task commits through Operation Contract', taskRes.success === true,
+      JSON.stringify(taskRes.validation?.errors || []));
+
+    const replayEvent = engine.processOperation(secondPlan.envelopes[0], vault);
+    const replayTask = engine.processOperation(secondPlan.envelopes[1], vault);
+    check('duplicate daemon tick replays trigger event idempotently', replayEvent.replay != null);
+    check('duplicate daemon tick replays task write idempotently', replayTask.replay != null);
+
+    const runEnvelope = createRunEnvelope({
+      workflowId: firstPlan.workflow_id,
+      workspaceId: 'TEST_WORKSPACE_ID',
+      taskPath: firstPlan.envelopes[1].path,
+      status: 'queued',
+      startedAt: scheduledFor,
+    });
+    const runRes = engine.processOperation(runEnvelope, vault);
+    check('worker-created run commits through Operation Contract', runRes.success === true,
+      JSON.stringify(runRes.validation?.errors || []));
+  } finally {
+    fs.rmSync(vault, { recursive: true, force: true });
+  }
+
+  let pass = 0;
+  for (const c of checks) {
+    if (c.cond) { pass++; console.log(`  ✅ ${c.name}`); }
+    else console.log(`  ❌ ${c.name}${c.detail ? ` — ${c.detail}` : ''}`);
+  }
+  console.log(`\n  ${pass}/${checks.length} runtime checks passed (§11.8)`);
   return pass === checks.length;
 }
 
@@ -264,6 +370,22 @@ async function main() {
   }
   console.log(`✅ Registry valid: every primitive declares a portability class (${PORTABILITY_CLASSES.join(' | ')})`);
 
+  const parityProblems = auditRegistryFieldUsage();
+  if (parityProblems.length) {
+    console.error('❌ Registry/engine parity audit failed:');
+    for (const p of parityProblems) console.error(`   • ${p}`);
+    process.exit(1);
+  }
+  console.log('✅ Registry/engine parity: every enforcement-relevant registry key is referenced in src/engine.mjs.');
+
+  const skillProblems = validateSkills();
+  if (skillProblems.length) {
+    console.error('❌ Skill conformance failed:');
+    for (const p of skillProblems) console.error(`   • ${p}`);
+    process.exit(1);
+  }
+  console.log('✅ Skill conformance: every shipped skill (skills/) validates against the skill primitive and required directory structure.');
+
   if (opts.endpoint) {
     console.log(`\nRunning against ${opts.endpoint} ...`);
     const ok = await runAgainstEndpoint(doc, opts);
@@ -271,9 +393,11 @@ async function main() {
   } else if (opts.engine) {
     console.log('\nRunning fixtures through the reference engine (src/engine.mjs) ...');
     const engineOk = runAgainstEngine(doc);
+    console.log('\nRunning workflow runtime conformance (src/runtime.mjs, §11.8) ...');
+    const runtimeOk = runRuntimeConformance();
     console.log('\nRunning bundle/provisioning conformance (src/bundle.mjs, §16/§17) ...');
     const bundleOk = runBundleConformance();
-    process.exit(engineOk && bundleOk ? 0 : 1);
+    process.exit(engineOk && runtimeOk && bundleOk ? 0 : 1);
   } else {
     console.log('\nℹ  No --endpoint/--engine given; ran structural + registry validation only.');
     console.log('   Reference engine:  ssss conformance --engine');

@@ -1,0 +1,27 @@
+[
+  {
+    "name": "prefix-is-screaming-snake-case",
+    "assertion": "Every PROJECT_PREFIX used matches ^[A-Z][A-Z0-9_]*[A-Z0-9]$",
+    "severity": "error"
+  },
+  {
+    "name": "prefix-unique-across-lifecycle",
+    "assertion": "No PROJECT_PREFIX appears under more than one of docs/projects/{planned,in-progress,completed}/ simultaneously",
+    "severity": "error"
+  },
+  {
+    "name": "four-documents-present",
+    "assertion": "A project folder contains exactly the 4 canonical documents (PRD, ARCHITECTURE, DEVELOPMENT_PLAN, PROJECT_TRACKER), each named <PREFIX>_<SUFFIX>.md",
+    "severity": "error"
+  },
+  {
+    "name": "kanban-state-matches-folder",
+    "assertion": "Every document's 'Kanban State' header line matches the lifecycle directory it physically lives in (Planned/In Progress/Completed)",
+    "severity": "error"
+  },
+  {
+    "name": "no-ephemeral-planning-artifacts",
+    "assertion": "No implementation_plan.md, task.md, or walkthrough.md file exists outside docs/projects/ for tracked project work",
+    "severity": "warning"
+  }
+]

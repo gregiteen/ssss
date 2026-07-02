@@ -1,0 +1,37 @@
+[
+  {
+    "name": "frontmatter-has-name-and-description",
+    "assertion": "SKILL.md YAML frontmatter contains only 'name' and 'description' fields (no SSSS memory-node fields like type/slug/category)",
+    "severity": "error"
+  },
+  {
+    "name": "description-is-trigger-optimized",
+    "assertion": "description field states WHAT the skill does, WHEN to use it, and WHEN NOT to use it (explicitly defers RBAC auditing to rbac-fail-open-auditor)",
+    "severity": "warning"
+  },
+  {
+    "name": "run-parity-audit-passes-clean-on-healthy-repo",
+    "assertion": "node scripts/run-parity-audit.mjs, run against a repo where every registry-declared enforcement key is referenced in src/engine.mjs + src/registry.mjs, exits 0 and prints the clean-pass message",
+    "severity": "error"
+  },
+  {
+    "name": "run-parity-audit-catches-a-real-regression",
+    "assertion": "if a registry primitive declares a NEW key not in ENGINE_ENFORCED_KEYS or KNOWN_NON_ENGINE_KEYS, running the audit reports it as 'unclassified registry key' rather than silently passing",
+    "severity": "error"
+  },
+  {
+    "name": "audit-spec-refs-resolves-real-headings",
+    "assertion": "node scripts/audit-spec-refs.mjs against this repo's own docs/ssss-spec.md + registry/ reports 0 problems (all spec_ref annotations are currently valid)",
+    "severity": "error"
+  },
+  {
+    "name": "diff-reconciliation-table-flags-genuinely-open-rows",
+    "assertion": "node scripts/diff-reconciliation-table.mjs correctly distinguishes rows marked resolved from rows that are genuinely still open, and does not false-flag a row whose proposed fix is already present in the spec",
+    "severity": "error"
+  },
+  {
+    "name": "scripts-run-against-a-foreign-repo-path",
+    "assertion": "all three scripts accept an optional repo-path argument and also auto-detect the repo root when run from inside it, so the skill works when invoked from a different working directory",
+    "severity": "warning"
+  }
+]

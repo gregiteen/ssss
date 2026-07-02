@@ -198,7 +198,7 @@ export function provisionBundle(bundle, opts = {}) {
   const plan = bundle.files.map((f) => {
     const targetPath = remap(f.path);
     const key = 'prov-' + crypto.createHash('sha256').update(workspaceId + ':' + targetPath).digest('hex').slice(0, 24);
-    return { type: 'operation', idempotency_key: key, path: targetPath, workspace_id: workspaceId, content: f.content, intent: 'provision', dry_run: dryRun };
+    return { type: 'operation', idempotency_key: key, path: targetPath, workspace_id: workspaceId, content: f.content, intent: 'provision', dry_run: dryRun, actor: { role: 'system' } };
   });
 
   const ok = unresolved.length === 0 && danglingLinks.length === 0;

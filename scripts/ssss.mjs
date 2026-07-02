@@ -4,8 +4,10 @@
  *
  * Routes the first positional argument to a subcommand. The bundle/provisioning
  * commands (export/validate/inspect/provision/import/help) export a `run(argv)`
- * function; the two legacy scripts (autolink/conformance) self-execute on import
- * and read process.argv directly.
+ * function; `autolink.mjs` exports `main()` (also reused as a library by
+ * `build-reference-bundle.mjs` for `generateIndexes`, so it no longer
+ * self-executes on import); `conformance.mjs` is still legacy and self-executes
+ * on import, reading process.argv directly.
  *
  * Run `ssss help` for documentation topics, or `ssss <command> --help` for flags.
  */
@@ -39,7 +41,7 @@ Authoring & conformance:
                         --engine | --endpoint <url> [--token <pat>]
 
 Docs:
-  help [topic]          Show local documentation (portability, bundle, provisioning, …).
+  help [topic]          Show local documentation (runtime, portability, bundle, provisioning, …).
   version               Print the version.
 
 Run 'ssss <command> --help' for a command's flags, or 'ssss help' for topics.
@@ -66,9 +68,11 @@ if (sub in MODULES) {
   await mod.run(rest);
 } else {
   switch (sub) {
-    case 'autolink':
-      await import('./autolink.mjs');
+    case 'autolink': {
+      const mod = await import('./autolink.mjs');
+      await mod.main();
       break;
+    }
     case 'conformance':
       await import('./conformance.mjs');
       break;
