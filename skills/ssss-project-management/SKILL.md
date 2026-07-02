@@ -1,11 +1,13 @@
 ---
 type: skill
+title: SSSS Project Management
 name: ssss-project-management
 description: >
   Project management skill for the SSSS (Structured Semantic Syntax System) standard repo.
   Guides agents through the standard SWE sequence (PRD → Architecture → Dev Plan → Tracker) 
   and enforces per-project document isolation. ACTIVATE this skill for any task related to
   SSSS project planning, tracking, or feature scoping.
+timestamp: 2026-07-02T00:00:00Z
 ---
 
 # SSSS — Project Management Skill

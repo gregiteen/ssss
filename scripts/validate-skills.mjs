@@ -38,13 +38,18 @@ export function validateSkills(skillsDir = SKILLS_DIR) {
   const problems = [];
   if (!fs.existsSync(skillsDir)) return problems; // nothing shipped yet is not an error
 
-  const { types } = loadRegistries();
+  const { types, core } = loadRegistries();
   const skillDef = types.get('skill');
   if (!skillDef) {
     problems.push("registry/core.json no longer defines a 'skill' primitive — validate-skills.mjs is stale.");
     return problems;
   }
-  const requiredFields = skillDef.required_fields || ['type', 'name', 'description'];
+  const requiredFields = [
+    ...new Set([
+      ...(core.universal_frontmatter?.required || ['type']),
+      ...(skillDef.required_fields || ['type', 'name', 'description']),
+    ]),
+  ];
 
   const entries = fs.readdirSync(skillsDir, { withFileTypes: true }).filter((e) => e.isDirectory());
   for (const entry of entries) {

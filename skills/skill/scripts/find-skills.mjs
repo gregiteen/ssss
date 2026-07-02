@@ -15,7 +15,7 @@
  *   └ https://skills.sh/jiulingyun/openclaw-cn/github
  */
 
-import { execSync } from 'node:child_process';
+import { execFileSync } from 'node:child_process';
 
 // ─── Install Count Parser ────────────────────────────────────────────────────
 
@@ -111,7 +111,7 @@ export function parseFindOutput(rawOutput) {
  */
 export function searchRegistry(query, { timeoutMs = 15_000 } = {}) {
   try {
-    const output = execSync(`npx -y skills find "${query.replace(/"/g, '\\"')}"`, {
+    const output = execFileSync('npx', ['-y', 'skills', 'find', String(query)], {
       timeout: timeoutMs,
       encoding: 'utf8',
       stdio: ['pipe', 'pipe', 'pipe'],

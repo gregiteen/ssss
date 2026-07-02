@@ -112,6 +112,9 @@ export function planWorkflowTrigger({
   const taskContent = [
     '---',
     'type: task',
+    `title: ${yamlString(`Task: ${data.name}`)}`,
+    `description: ${yamlString(`Instantiated from ${workflowPath} by ${normalizedTrigger.type} trigger ${normalizedTrigger.trigger_id}.`)}`,
+    `timestamp: ${yamlString(fired_at)}`,
     `priority: ${Number.isInteger(data.priority) ? data.priority : 50}`,
     'category: workflow',
     'status: pending',
@@ -181,6 +184,9 @@ export function createRunEnvelope({
   const content = [
     '---',
     'type: run',
+    `title: ${yamlString(`Run ${run_id}`)}`,
+    `description: ${yamlString(`Workflow run for task ${taskPath}.`)}`,
+    `timestamp: ${yamlString(iso(startedAt, 'startedAt'))}`,
     `run_id: ${yamlString(run_id)}`,
     `workflow_id: ${yamlString(workflowId)}`,
     `task_id: ${yamlString(taskId)}`,

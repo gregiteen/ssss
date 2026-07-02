@@ -54,6 +54,7 @@ export async function run(argv) {
     if (!prov.ok) {
       if (prov.unresolved.length) console.error(`✗ unresolved parameter(s): ${prov.unresolved.join(', ')}`);
       for (const d of prov.danglingLinks) console.error(`✗ dangling link: ${d.file} → [[${d.ref}]]`);
+      for (const e of prov.errors || []) console.error(`✗ bundle validation: ${e}`);
       process.exit(1);
     }
     envelopes = prov.plan;

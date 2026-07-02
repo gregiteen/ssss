@@ -1,7 +1,9 @@
 ---
 type: skill
+title: Skill Architecture
 name: skill
 description: "Use this skill when creating, auditing, or modifying any skill package — including the ones shipped in this repo's skills/ directory. MANDATORY: You MUST read the full SKILL.md file before executing."
+timestamp: 2026-07-02T00:00:00Z
 ---
 
 # Skill Architecture — Canonical Format Guide
@@ -258,7 +260,7 @@ When downloading, importing, or adding external skills from registries like `ski
 | Mistake | Why It's Wrong | Fix |
 |:---|:---|:---|
 | Omitting `type: skill` | Not an IDE-discovery problem (the IDE only reads `name`/`description`), but it breaks SSSS conformance — the manifest won't validate against `registry/core.json`'s `skill` primitive. | Always include `type: skill` |
-| Using `slug`/`category`/`title`/`schema_version`/`importance` in frontmatter | Those are SSSS *memory-node* fields, not skill fields — they have no meaning on the `skill` primitive. | Only `type`, `name`, `description` (plus any skill-specific fields you define) |
+| Using `slug`/`category`/`schema_version`/`importance` in frontmatter | Those are SSSS *memory-node* fields, not skill fields — they have no meaning on the `skill` primitive. | Use `type`, `title`, `description`, `timestamp`, and `name` (plus any skill-specific fields you define) |
 | Empty `references/` with just `.gitkeep` | Agent loses critical domain context | Add at least one reference doc — even a short one |
 | Empty `evals/` | No way to verify the skill worked | Write 3+ assertions in `evals.json` |
 | Vague description | `"A skill for doing stuff"` → IDE never triggers it | `"Use this skill when X. Do NOT use for Y."` |

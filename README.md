@@ -4,8 +4,8 @@
 > Turn a running business into a single tradeable file — *a festival in a box.*
 
 [![conformance](https://img.shields.io/badge/conformance-fixtures%20%2B%20runtime%20%2B%20bundle-brightgreen)](conformance/)
-[![spec](https://img.shields.io/badge/spec-v0.5%20draft-blue)](docs/ssss-spec.md)
-[![OKF](https://img.shields.io/badge/Google%20OKF-compliant-blue)](docs/ssss-spec.md)
+[![spec](https://img.shields.io/badge/spec-v0.6%20draft-blue)](docs/ssss-spec.md)
+[![OKF](https://img.shields.io/badge/OKF-v0.1%20compatible-blue)](docs/ssss-spec.md)
 
 SSSS is the vendor-neutral standard and reference implementation shared by
 [festech.live](https://festech.live), **ultrachat**, and **total-recall**. It defines:
@@ -144,7 +144,7 @@ npm test                    # == ssss conformance --engine
 ## Repository layout
 
 ```
-docs/ssss-spec.md          The normative specification (v0.5 draft).
+docs/ssss-spec.md          The normative specification (v0.6 draft).
 docs/help/                 Topic docs surfaced by `ssss help`.
 registry/core.json         14 document + 5 contract primitives; bundle & provisioning schemas.
 registry/extensions/       Application extension registries (e.g. festech).

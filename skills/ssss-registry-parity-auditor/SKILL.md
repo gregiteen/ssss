@@ -1,5 +1,6 @@
 ---
 type: skill
+title: SSSS Registry Parity Auditor
 name: ssss-registry-parity-auditor
 description: >
   Use this skill to audit whether SSSS's registry (registry/core.json +
@@ -15,6 +16,7 @@ description: >
   memory primitive for a full release cycle with zero engine enforcement).
   Do NOT use for RBAC/authorization-specific auditing — use
   rbac-fail-open-auditor for that.
+timestamp: 2026-07-02T00:00:00Z
 ---
 
 # ssss-registry-parity-auditor

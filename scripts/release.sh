@@ -13,6 +13,13 @@ if [ "$#" -ne 1 ]; then
 fi
 
 NEW_VERSION=$1
+
+if [[ ! "$NEW_VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+(-[0-9A-Za-z.-]+)?$ ]]; then
+    echo "Invalid version: $NEW_VERSION"
+    echo "Use semantic version format, e.g. 0.7.0 or 1.0.0-beta.1"
+    exit 1
+fi
+
 echo "$NEW_VERSION" > VERSION
 
 # Quick sed to insert new version at the top of the changelog
