@@ -5,6 +5,23 @@ All notable changes to the SSSS (Structured Semantic Syntax System) spec will be
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.6.0] - 2026-07-02
+### Added
+- **Workflow Runtime & Daemon Contract (spec §11.8)** — standardizes workflow
+  trigger evaluation across daemon, cron, webhook, file-change, event, condition,
+  and manual runtimes. Workflows own `triggers[]`; external schedulers are only
+  wake-up mechanisms.
+- **`@ssss/cli/runtime` helpers** — deterministic `planWorkflowTrigger()` and
+  `createRunEnvelope()` helpers derive `workflow_triggered` events, task
+  documents, and run documents through the Operation Contract.
+- **Runtime conformance metadata/checks** — `conformance/fixtures.json` v1.3.0
+  declares trigger/misfire/concurrency vocabularies and proves duplicate daemon
+  ticks replay idempotently.
+
+### Changed
+- Registry `spec_version` -> `0.5`; spec header -> v0.5 draft. Reference bundle
+  metadata now targets SSSS core `0.5`.
+
 ## [0.5.0] - 2026-06-25
 ### Added
 - **`ssss new <dir>` scaffolder** — bootstrap a fresh SSSS-native repo in one command:

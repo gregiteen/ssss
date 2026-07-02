@@ -1,6 +1,6 @@
 # SSSS — Structured Semantic Syntax System
 
-**Specification v0.4 — Draft**
+**Specification v0.5 — Draft**
 
 > This is the canonical, vendor-neutral specification for SSSS. It is the ground
 > truth on which all SSSS implementations are built. It is intended to be vendored
@@ -1093,7 +1093,7 @@ opaque ID as the slug and keep the human-readable label in `title` / `name`.
 This document is versioned independently of any host and of the conformance
 fixture set.
 
-- The spec version is stated in the document header (currently **v0.4 — Draft**).
+- The spec version is stated in the document header (currently **v0.5 — Draft**).
 - Breaking changes to the file format, the type registry, or the Operation
   Contract increment the spec version.
 - Until **v1.0**, any version MAY introduce breaking changes.
