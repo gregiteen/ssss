@@ -13,6 +13,7 @@
       "assistant": 1,
       "domain": 1,
       "page": 1,
+      "security_role": 1,
       "rule": 1,
       "workflow": 1
     },
@@ -67,9 +68,9 @@
         "required": false
       }
     ],
-    "file_count": 5,
+    "file_count": 14,
     "provenance": {
-      "content_hash": "sha256:f6dae41b3858cda271651818cb32923e13dd49c2e7245c170d0d0fc74c95d303",
+      "content_hash": "sha256:0552fc1ee2f1ce2e872fdf7a8f556af53a3ae638de9e8cc67822c6ef4dac493e",
       "exporter": "@ssss/cli@0.4.0"
     }
   },
@@ -79,20 +80,56 @@
       "content": "---\ntype: assistant\nname: Festival Concierge\nslug: concierge\n---\nAnswer attendee questions about the lineup and venue."
     },
     {
+      "path": "assistants/index.md",
+      "content": "# Index — assistants\n\n- [Festival Concierge](./concierge.md)\n"
+    },
+    {
       "path": "domains/festival.md",
       "content": "---\ntype: domain\ndomain_name: REQUIREMENT\nregistrar: REQUIREMENT\nstatus: required\npayment_status: unbound\nx_portability: resource_bound\n---\nThis festival needs a domain. The buyer binds their own at provision (owns_domain)."
+    },
+    {
+      "path": "domains/index.md",
+      "content": "# Index — domains\n\n- [festival](./festival.md)\n"
+    },
+    {
+      "path": "pages/index.md",
+      "content": "# Index — pages\n\n- [Lineup](./lineup.md)\n"
     },
     {
       "path": "pages/lineup.md",
       "content": "---\ntype: page\nslug: lineup\nname: Lineup\nsandbox_entry: lineup/index.html\n---\nThe festival lineup page."
     },
     {
+      "path": "roles/admin/ROLE.md",
+      "content": "---\ntype: security_role\nname: Administrator\npermissions:\n  - \"write:assistant\"\n  - \"write:workflow\"\n  - \"write:rule\"\n  - \"write:domain\"\n  - \"write:page\"\n  - \"write:security_role\"\n  - \"write:task\"\n---\nFull access to all festival operations."
+    },
+    {
+      "path": "roles/admin/index.md",
+      "content": "# Index — roles/admin\n\n- [Administrator](./ROLE.md)\n"
+    },
+    {
+      "path": "roles/index.md",
+      "content": "# Index — roles\n\n- [admin/](./admin/index.md)\n"
+    },
+    {
+      "path": "rules/index.md",
+      "content": "# Index — rules\n\n- [Refund Policy](./refund-policy.md)\n"
+    },
+    {
       "path": "rules/refund-policy.md",
       "content": "---\ntype: rule\nname: Refund Policy\nslug: refund-policy\n---\nRefunds are available up to 14 days before the event."
     },
     {
+      "path": "tasks/index.md",
+      "content": "# Index — tasks\n\n- [ticket-4821](./ticket-4821.md)\n"
+    },
+    {
       "path": "workflows/box-office.md",
       "content": "---\ntype: workflow\nname: Box Office\nslug: box-office\n---\nSell tickets, then hand the buyer to [[concierge]] for questions."
+    },
+    {
+      "path": "workflows/index.md",
+      "content": "# Index — workflows\n\n- [Box Office](./box-office.md)\n"
     }
   ]
 }

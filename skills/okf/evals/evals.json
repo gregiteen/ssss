@@ -1,0 +1,22 @@
+[
+  {
+    "name": "no-compliance-overclaim",
+    "assertion": "SKILL.md and any document it influences never describes SSSS as 'OKF-compliant', 'certified', or otherwise formally affiliated with OKF",
+    "severity": "error"
+  },
+  {
+    "name": "no-local-file-links",
+    "assertion": "Every citation URL in SKILL.md uses https:// (never file:///) — run scripts/check-okf-links.mjs to verify",
+    "severity": "error"
+  },
+  {
+    "name": "cited-urls-resolve",
+    "assertion": "scripts/check-okf-links.mjs exits 0 (every cited URL returns < 400)",
+    "severity": "warning"
+  },
+  {
+    "name": "distinguishes-from-open-knowledge-foundation",
+    "assertion": "SKILL.md explicitly notes OKF (Open Knowledge Format) is not the Open Knowledge Foundation",
+    "severity": "warning"
+  }
+]

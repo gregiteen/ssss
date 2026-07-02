@@ -21,6 +21,9 @@ ssss conformance --endpoint <url> --token <pat>   # run the fixtures against a l
    - provision resolves parameters and link integrity,
    - import commits every file, and a second import commits **zero** (idempotent),
    - no `tenant_private` file ever lands on disk.
+3. **Workflow runtime checks** (`src/runtime.mjs`) prove a workflow trigger plans
+   deterministic event/task envelopes, duplicate daemon ticks replay idempotently,
+   and worker-created runs commit through the Operation Contract.
 
 ## Endpoint mode
 
@@ -28,4 +31,4 @@ ssss conformance --endpoint <url> --token <pat>   # run the fixtures against a l
 and diffs the response — this is how festech / ultrachat / total-recall prove they
 implement the *same* standard rather than three drifting copies.
 
-See also: `conformance/README.md`, `ssss help provisioning`.
+See also: `conformance/README.md`, `ssss help runtime`, `ssss help provisioning`.

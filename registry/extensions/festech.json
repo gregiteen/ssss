@@ -3,7 +3,7 @@
   "registry": "festech",
   "extends": "core",
   "spec_version": "0.3",
-  "description": "Festech extension registry. Defines the host-specific primitives that festech.live layers on top of the SSSS core (registry/core.json). Lifted from festech's docs/ssss/primitive-registry.json and assigned a portability class (§5.5) so a festech workspace can be exported as a backup/template/sale bundle. Core primitives (assistant, workflow, rule, skill, model, memory, task, conversation, run, conflict, page, migration, release) are NOT redefined here — they are governed by core.json. An extension MUST NOT redefine a core type.",
+  "description": "Festech extension registry. Defines the host-specific primitives that festech.live layers on top of the SSSS core (registry/core.json). Lifted from festech's docs/ssss/primitive-registry.json and assigned a portability class (§5.5) so a festech workspace can be exported as a backup/template/sale bundle. Core primitives (assistant, workflow, rule, security_role, skill, model, memory, task, conversation, run, conflict, page, migration, release) are NOT redefined here — they are governed by core.json. An extension MUST NOT redefine a core type.",
   "conformance": "A festech-conformant host MUST resolve portability for these primitives from this registry. The `resource_bound` primitives MUST ship only a requirement declaration (never the seller's bound value) in a template/sale export; the `tenant_private` primitives MUST be dropped from template/sale entirely (§5.5).",
 
   "document_primitives": {

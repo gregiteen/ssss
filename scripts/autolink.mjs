@@ -25,6 +25,7 @@
  */
 import fs from 'node:fs';
 import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 
 // ─── args ────────────────────────────────────────────────────────────────────
 function parseArgs() {
@@ -235,22 +236,47 @@ function applySemantic(body, links, selfTarget, stats) {
 }
 
 // ─── index.md generation (spec §4.3) ─────────────────────────────────────────
-function generateIndexes(files, root, opts, summary) {
-  const byDir = new Map();
+/**
+ * Generate one index.md per directory for progressive disclosure.
+ *
+ * Covers every ANCESTOR directory of every tracked file (not just directories
+ * that directly contain a .md file) — a nested primitive like
+ * `roles/admin/ROLE.md` needs `roles/admin/index.md` (listing ROLE.md) AND
+ * `roles/index.md` (listing the `admin/` subdirectory) for the chain to be
+ * navigable end to end. Subdirectories that themselves get an index are
+ * listed as `[name/](./name/index.md)` entries alongside sibling files.
+ */
+export function generateIndexes(files, root, opts, summary) {
+  const dirs = new Set();
   for (const f of files) {
     if (path.basename(f) === 'index.md') continue;
-    const d = path.dirname(f);
-    if (!byDir.has(d)) byDir.set(d, []);
-    byDir.get(d).push(f);
+    // Stop before `root` itself: a bundle-relative path of bare "index.md"
+    // (no leading directory) doesn't match the engine's `*/index.md` special
+    // case and would fail normal frontmatter validation. Vault-root indexing
+    // is intentionally out of scope here, matching prior behavior.
+    let d = path.dirname(f);
+    while (d !== root) {
+      dirs.add(d);
+      const parent = path.dirname(d);
+      if (parent === d) break;
+      d = parent;
+    }
   }
-  for (const [dir, list] of byDir) {
+
+  for (const dir of dirs) {
     const lines = [`# Index — ${path.relative(root, dir) || '.'}`, ''];
-    for (const f of list.sort()) {
-      const { fm } = splitFrontmatter(fs.readFileSync(f, 'utf8'));
-      const meta = readMeta(fm);
-      const label = meta.title || meta.name || path.basename(f, '.md');
-      const rel = './' + path.basename(f);
-      lines.push(`- [${label}](${rel})`);
+    const entries = fs.readdirSync(dir, { withFileTypes: true })
+      .filter((e) => !e.name.startsWith('.') && e.name !== 'node_modules')
+      .sort((a, b) => a.name.localeCompare(b.name));
+    for (const e of entries) {
+      if (e.isDirectory()) {
+        if (dirs.has(path.join(dir, e.name))) lines.push(`- [${e.name}/](./${e.name}/index.md)`);
+      } else if (e.name.endsWith('.md') && e.name !== 'index.md') {
+        const { fm } = splitFrontmatter(fs.readFileSync(path.join(dir, e.name), 'utf8'));
+        const meta = readMeta(fm);
+        const label = meta.title || meta.name || path.basename(e.name, '.md');
+        lines.push(`- [${label}](./${e.name})`);
+      }
     }
     const target = path.join(dir, 'index.md');
     summary.indexes.push(path.relative(root, target));
@@ -259,7 +285,7 @@ function generateIndexes(files, root, opts, summary) {
 }
 
 // ─── main ────────────────────────────────────────────────────────────────────
-async function main() {
+export async function main() {
   const opts = parseArgs();
   console.log(`\n=== ssss autolink ===`);
   console.log(`  dir:      ${opts.dir}`);
@@ -305,4 +331,9 @@ async function main() {
   if (!opts.write && summary.changed > 0) console.log(`  Re-run with --write to apply.`);
 }
 
-main();
+// Only self-execute when run directly (`node scripts/autolink.mjs ...` or the
+// `ssss.mjs` dispatcher explicitly calling `main()`), never as a side effect
+// of another module importing `generateIndexes` for reuse.
+if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
+  main();
+}

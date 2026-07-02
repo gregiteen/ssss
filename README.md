@@ -3,7 +3,7 @@
 > A database-free, Markdown-first schema and mutation contract for AI-agent state.
 > Turn a running business into a single tradeable file — *a festival in a box.*
 
-[![conformance](https://img.shields.io/badge/conformance-9%2F9%20fixtures%20%2B%206%2F6%20bundle-brightgreen)](conformance/)
+[![conformance](https://img.shields.io/badge/conformance-fixtures%20%2B%20runtime%20%2B%20bundle-brightgreen)](conformance/)
 [![spec](https://img.shields.io/badge/spec-v0.4%20draft-blue)](docs/ssss-spec.md)
 [![OKF](https://img.shields.io/badge/Google%20OKF-compliant-blue)](docs/ssss-spec.md)
 
@@ -14,6 +14,8 @@ SSSS is the vendor-neutral standard and reference implementation shared by
   `rule`, `page`, `assistant`, …), validated against a registry, not hand-written code.
 - **The Operation Contract** (§6) — four envelope types (`operation` / `patch` /
   `event` / `delete`) for mutating a vault, with idempotency replay and audit.
+- **The Workflow Runtime Contract** (§11.8) — workflows own triggers; daemons,
+  crons, and webhooks derive idempotent event/task/run envelopes from the vault.
 - **Portability classification** (§5.5) — the keystone: every primitive is
   `structural`, `tenant_private`, or `resource_bound`, so a vault can be *sold*
   without leaking the operator's private data.
@@ -77,7 +79,7 @@ ssss import festival.ucw.json --vault ./new-tenant \
 | `ssss import <bundle>` | Replay a bundle/plan into a vault via the engine (idempotent). |
 | `ssss autolink [dir]` | Generate OKF wiki-links across a vault. |
 | `ssss conformance` | Run the canonical conformance suite (§12). |
-| `ssss help [topic]` | Local docs: `portability`, `bundle`, `provisioning`, … |
+| `ssss help [topic]` | Local docs: `runtime`, `portability`, `bundle`, `provisioning`, … |
 
 Run `ssss <command> --help` for flags, or `ssss help <topic>` for concepts.
 
@@ -86,6 +88,7 @@ Run `ssss <command> --help` for flags, or `ssss help <topic>` for concepts.
 ```js
 import { createEngine } from '@ssss/cli/engine';
 import { exportBundle, validateBundle, provisionBundle, importBundle } from '@ssss/cli/bundle';
+import { planWorkflowTrigger } from '@ssss/cli/runtime';
 
 const bundle = exportBundle('./my-vault', { profile: 'sale', name: 'Festival in a Box' });
 const { valid, errors } = validateBundle(bundle);
@@ -93,11 +96,28 @@ const { valid, errors } = validateBundle(bundle);
 const engine = createEngine();
 const plan = provisionBundle(bundle, { parameters: { domain: 'acme.live' }, workspaceId: 'ws-1' });
 importBundle(plan.plan, './new-tenant', engine);
+
+const workflowContent = `---
+type: workflow
+name: "Daily Digest"
+---
+
+1. Gather messages.
+2. Summarize.
+3. Send digest.
+`;
+const runtimePlan = planWorkflowTrigger({
+  workflowPath: 'workflows/daily-digest/WORKFLOW.md',
+  workflowContent,
+  workspaceId: 'ws-1',
+  trigger: { type: 'cron', id: 'daily-0800', cron: '0 8 * * *' },
+  scheduledFor: '2026-07-02T14:00:00.000Z',
+});
 ```
 
 Exports: `@ssss/cli` / `@ssss/cli/engine` (Operation Contract engine),
 `@ssss/cli/bundle` (export/provision/import), `@ssss/cli/registry`,
-`@ssss/cli/frontmatter`.
+`@ssss/cli/runtime`, `@ssss/cli/frontmatter`.
 
 ## Portability — why a vault is safe to sell
 
@@ -126,9 +146,10 @@ npm test                    # == ssss conformance --engine
 ```
 docs/ssss-spec.md          The normative specification (v0.4 draft).
 docs/help/                 Topic docs surfaced by `ssss help`.
-registry/core.json         13 document + 5 contract primitives; bundle & provisioning schemas.
+registry/core.json         14 document + 5 contract primitives; bundle & provisioning schemas.
 registry/extensions/       Application extension registries (e.g. festech).
 src/engine.mjs             Operation Contract engine (§6).
+src/runtime.mjs            Workflow trigger → event/task/run envelope planning (§11.8).
 src/bundle.mjs             export / validate / provision / import (§16–§17).
 src/registry.mjs           Registry-driven type + portability resolution.
 src/frontmatter.mjs        Zero-dependency YAML frontmatter.
