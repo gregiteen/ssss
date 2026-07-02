@@ -13,7 +13,7 @@ integrity. The container file is conventionally named `*.ucw.json`.
     "description": "...",
     "version": "0.1.0",
     "exported_at": "1970-01-01T00:00:00.000Z",   // frozen → deterministic export
-    "ssss_core_version": "0.4",
+    "ssss_core_version": "0.5",
     "required_extensions": ["festech"],
     "export_profile": "sale",                      // backup | template | sale
     "primitive_inventory": { "workflow": 1, "page": 1, "rule": 1, "assistant": 1, "domain": 1 },

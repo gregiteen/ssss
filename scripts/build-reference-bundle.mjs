@@ -113,7 +113,7 @@ try {
     name: 'Festival in a Box',
     description: 'A complete music-festival operation as a tradeable SSSS bundle.',
     version: '1.0.0',
-    exporter: '@ssss/cli@0.4.0',
+    exporter: '@ssss/cli@0.6.0',
     requiredExtensions: ['festech'],
     parameters: [
       { key: 'business_name', label: 'Festival name', type: 'string', scope: 'workspace', source: 'user', required: true },
