@@ -26,6 +26,9 @@ const VAULT = {
   'workflows/box-office.md':
 `---
 type: workflow
+title: Box Office
+description: Ticket-sales workflow for a music festival.
+timestamp: 2026-07-02T00:00:00Z
 name: Box Office
 slug: box-office
 ---
@@ -33,6 +36,9 @@ Sell tickets, then hand the buyer to [[concierge]] for questions.`,
   'assistants/concierge.md':
 `---
 type: assistant
+title: Festival Concierge
+description: Assistant that answers attendee questions about the lineup and venue.
+timestamp: 2026-07-02T00:00:00Z
 name: Festival Concierge
 slug: concierge
 ---
@@ -40,6 +46,9 @@ Answer attendee questions about the lineup and venue.`,
   'pages/lineup.md':
 `---
 type: page
+title: Lineup
+description: Public-facing festival lineup page.
+timestamp: 2026-07-02T00:00:00Z
 slug: lineup
 name: Lineup
 sandbox_entry: lineup/index.html
@@ -48,6 +57,9 @@ The festival lineup page.`,
   'rules/refund-policy.md':
 `---
 type: rule
+title: Refund Policy
+description: Refund eligibility rule for festival attendees.
+timestamp: 2026-07-02T00:00:00Z
 name: Refund Policy
 slug: refund-policy
 ---
@@ -55,6 +67,9 @@ Refunds are available up to 14 days before the event.`,
   'roles/admin/ROLE.md':
 `---
 type: security_role
+title: Administrator Role
+description: Security role with full festival operations write access.
+timestamp: 2026-07-02T00:00:00Z
 name: Administrator
 permissions:
   - "write:assistant"
@@ -70,6 +85,9 @@ Full access to all festival operations.`,
   'domains/festival.md':
 `---
 type: domain
+title: Festival Domain Requirement
+description: Domain resource requirement that the buyer binds during provisioning.
+timestamp: 2026-07-02T00:00:00Z
 domain_name: REQUIREMENT
 registrar: REQUIREMENT
 status: required
@@ -81,6 +99,9 @@ This festival needs a domain. The buyer binds their own at provision (owns_domai
   'tasks/ticket-4821.md':
 `---
 type: task
+title: Ticket 4821 Seat Change
+description: Private support task for an attendee seat-change request.
+timestamp: 2026-07-02T00:00:00Z
 priority: high
 category: support
 status: open
@@ -113,7 +134,7 @@ try {
     name: 'Festival in a Box',
     description: 'A complete music-festival operation as a tradeable SSSS bundle.',
     version: '1.0.0',
-    exporter: '@ssss/cli@0.6.0',
+    exporter: '@ssss/cli@0.7.0',
     requiredExtensions: ['festech'],
     parameters: [
       { key: 'business_name', label: 'Festival name', type: 'string', scope: 'workspace', source: 'user', required: true },

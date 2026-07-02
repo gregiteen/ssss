@@ -1,11 +1,13 @@
 ---
 type: skill
+title: OKF Compatibility
 name: okf
 description: >
   Use this skill to access information about Google's Open Knowledge Format (OKF).
   Contains core principles, repository links, and conventions. ACTIVATE this skill 
   when designing or upgrading SSSS schemas to ensure they maintain strict compatibility 
   with the OKF standard.
+timestamp: 2026-07-02T00:00:00Z
 ---
 
 # Google Open Knowledge Format (OKF)
@@ -27,19 +29,19 @@ OKF solves the "context problem" for AI agents by providing a unified, interoper
 
 1. **Simple Structure**: An OKF bundle is simply a directory of standard Markdown files.
 2. **YAML Frontmatter**: Every file MUST include YAML frontmatter.
-3. **Mandatory Field**: The only strictly mandatory field defined by the base OKF spec is `type`.
-4. **Interoperable Metadata**: It standardizes the usage of fields like `type`, `title`, `description`, `tags`, and `timestamp` to ensure AI agents can easily query and route knowledge.
+3. **Mandatory Field**: The base OKF spec requires `type`; Google's reference tooling also validates `title`, `description`, and `timestamp`.
+4. **Interoperable Metadata**: SSSS treats `type`, `title`, `description`, and `timestamp` as mandatory universal metadata, with `resource`, `tags`, and `aliases` as portable enrichment fields.
 
 ## How SSSS Relates to OKF
 
-There is **no formal relationship** between SSSS and OKF — no adoption announcement, no cross-reference from Google's side, no conformance program to certify against. SSSS voluntarily tracks compatibility with OKF's concept model (type-first YAML frontmatter, directory-of-Markdown, `index.md`/`log.md` conventions) as an **interoperability goal SSSS has chosen for itself**, because OKF's structural pattern is close enough that an SSSS vault should be able to round-trip as valid minimal OKF concepts. Do not describe SSSS as "OKF-compliant," a "certified superset," or otherwise imply an external body verifies this — that claim does not hold up.
+There is **no formal relationship** between SSSS and OKF — no adoption announcement, no cross-reference from Google's side, no conformance program to certify against. SSSS targets OKF v0.1 compatibility as a first-class interoperability requirement: every SSSS document primitive must carry `type`, `title`, `description`, and `timestamp`, and OKF export surfaces must be plain Markdown directory trees using OKF reserved `index.md` / `log.md` semantics.
 
 SSSS adds, on top of that shared Markdown+YAML substrate, its own primitives OKF does not define: the **Operation Contract** (idempotent mutation envelopes), the **Type Registry** (`registry/core.json`), portability classification, and **leases**.
 
-**When developing for SSSS, keep it interoperable with OKF's minimal concept model where practical:**
+**When developing for SSSS, keep it interoperable with OKF's concept model:**
 - Never introduce binary blobs into the SSSS vault.
 - Never use alternative metadata storage (like a separate database table) for document properties that belong in the YAML frontmatter.
-- Prefer including OKF's recommended fields (`title`, `description`, `tags`, `timestamp`) in SSSS primitive definitions where they fit naturally.
+- Always include `type`, `title`, `description`, and `timestamp`; prefer `resource`, `tags`, and `aliases` when they fit naturally.
 
 ## Tracking OKF
 

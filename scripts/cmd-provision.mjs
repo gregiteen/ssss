@@ -51,6 +51,10 @@ export async function run(argv) {
     console.error(`✗ ${result.danglingLinks.length} dangling internal link(s):`);
     for (const d of result.danglingLinks) console.error(`  - ${d.file} → [[${d.ref}]]`);
   }
+  if (result.errors?.length) {
+    console.error(`✗ ${result.errors.length} bundle validation error(s):`);
+    for (const e of result.errors) console.error(`  - ${e}`);
+  }
 
   const plan = { workspace_id: flags.workspace || 'ws-provision', steps: result.steps, envelopes: result.plan };
   const json = JSON.stringify(plan, null, 2);

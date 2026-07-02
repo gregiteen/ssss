@@ -88,13 +88,13 @@ export async function run(argv) {
 
   // ── starter vault (core primitives; the task is tenant_private) ──────────
   W(root, 'vault/rules/welcome.md',
-    '---\ntype: rule\nname: Welcome Rule\n---\n\n# Welcome\n\nA starter **structural** rule — the kind of thing that ships in a `sale` bundle.\n');
+    '---\ntype: rule\ntitle: Welcome Rule\ndescription: Starter structural rule for an SSSS-native app.\ntimestamp: 2026-07-02T00:00:00Z\nname: Welcome Rule\n---\n\n# Welcome\n\nA starter **structural** rule — the kind of thing that ships in a `sale` bundle.\n');
   W(root, 'vault/workflows/onboarding.md',
-    '---\ntype: workflow\nname: Onboarding\n---\n\n# Onboarding\n\n1. Apply the [[welcome]] rule.\n2. Greet the operator.\n');
+    '---\ntype: workflow\ntitle: Onboarding\ndescription: Starter workflow that applies the welcome rule and greets the operator.\ntimestamp: 2026-07-02T00:00:00Z\nname: Onboarding\n---\n\n# Onboarding\n\n1. Apply the [[welcome]] rule.\n2. Greet the operator.\n');
   W(root, 'vault/assistants/concierge.md',
-    '---\ntype: assistant\nname: Concierge\n---\n\n# Concierge\n\nA starter assistant definition.\n');
+    '---\ntype: assistant\ntitle: Concierge\ndescription: Starter assistant definition for the project.\ntimestamp: 2026-07-02T00:00:00Z\nname: Concierge\n---\n\n# Concierge\n\nA starter assistant definition.\n');
   W(root, 'vault/tasks/first-task.md',
-    '---\ntype: task\npriority: normal\ncategory: setup\nstatus: open\n---\n\n# First task\n\nThis is `tenant_private` (§5.5) — it is **dropped** from `template`/`sale` exports.\n');
+    '---\ntype: task\ntitle: First Task\ndescription: Starter private setup task that demonstrates tenant_private filtering.\ntimestamp: 2026-07-02T00:00:00Z\npriority: normal\ncategory: setup\nstatus: open\n---\n\n# First task\n\nThis is `tenant_private` (§5.5) — it is **dropped** from `template`/`sale` exports.\n');
 
   // ── conformance test (zero-dependency: node --test) ─────────────────────
   W(root, 'test/ssss-conformance.test.mjs', CONFORMANCE_TEST);

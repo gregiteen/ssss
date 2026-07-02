@@ -28,6 +28,13 @@ const STEP_SYSTEMS = new Set(['workspace', 'branding', 'email', 'phone', 'domain
 const STEP_MODES = new Set(['existing', 'provision', 'install', 'generate', 'configure']);
 const PARAM_SOURCES = new Set(['user', 'llm', 'graph', 'system']);
 
+function isSafeBundlePath(p) {
+  if (typeof p !== 'string' || !p || p.includes('\0')) return false;
+  if (p.startsWith('/') || p.startsWith('\\') || p.includes('\\')) return false;
+  const parts = p.split('/');
+  return !parts.some((part) => part === '' || part === '.' || part === '..');
+}
+
 /** Canonical, path-sorted serialization of files — the hash + transport pre-image (§16.1). */
 function canonicalFiles(files) {
   const sorted = [...files].sort((a, b) => (a.path < b.path ? -1 : a.path > b.path ? 1 : 0));
@@ -46,6 +53,7 @@ function walkVault(vaultRoot) {
   (function rec(dir, rel) {
     for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
       if (entry.name.startsWith('.')) continue; // skip .events, dotfiles
+      if (entry.isSymbolicLink()) throw new Error(`Refusing to export symlinked vault entry: ${rel ? `${rel}/` : ''}${entry.name}`);
       const abs = path.join(dir, entry.name);
       const r = rel ? `${rel}/${entry.name}` : entry.name;
       if (entry.isDirectory()) rec(abs, r);
@@ -120,6 +128,15 @@ export function validateBundle(bundle, opts = {}) {
   if (Array.isArray(bundle.files) && m.file_count !== bundle.files.length) {
     errors.push(`file_count ${m.file_count} ≠ actual ${bundle.files.length}`);
   }
+  const seenPaths = new Set();
+  for (const file of bundle.files || []) {
+    if (!isSafeBundlePath(file.path)) {
+      errors.push(`file '${file.path || '(missing)'}' has an unsafe bundle path`);
+      continue;
+    }
+    if (seenPaths.has(file.path)) errors.push(`duplicate file path '${file.path}'`);
+    seenPaths.add(file.path);
+  }
   // Provenance: recompute the content hash and reject on mismatch (§16.3).
   if (m.provenance) {
     for (const f of core.bundle.provenance_required_fields) {
@@ -134,7 +151,26 @@ export function validateBundle(bundle, opts = {}) {
   const includes = PROFILE_INCLUDES[m.export_profile];
   if (includes) {
     for (const file of bundle.files || []) {
+      if (!isSafeBundlePath(file.path)) continue;
+      const base = path.basename(file.path || '');
+      if (base === 'index.md' || base === 'log.md') continue;
       const { data } = parseDocument(file.content);
+      const def = types.get(data.type);
+      if (!def) {
+        errors.push(`file '${file.path}' declares unknown type '${data.type || '(missing)'}'`);
+        continue;
+      }
+      const requiredFields = [
+        ...new Set([
+          ...(core.universal_frontmatter?.required || ['type']),
+          ...(def.required_fields || []),
+        ]),
+      ];
+      for (const f of requiredFields) {
+        if (data[f] === undefined || data[f] === null || data[f] === '' || (Array.isArray(data[f]) && data[f].length === 0)) {
+          errors.push(`file '${file.path}' missing required frontmatter field '${f}'`);
+        }
+      }
       const klass = resolvePortability(types.get(data.type), data);
       if (!includes.has(klass)) {
         errors.push(`file '${file.path}' is ${klass}, excluded by profile '${m.export_profile}'`);
@@ -169,6 +205,10 @@ function internalRefs(content) {
  */
 export function provisionBundle(bundle, opts = {}) {
   const { parameters = {}, workspaceId = 'ws-provision', pathPrefix = '', dryRun = false } = opts;
+  const validation = validateBundle(bundle, { registryDir: opts.registryDir });
+  if (!validation.valid) {
+    return { ok: false, plan: [], unresolved: [], danglingLinks: [], errors: validation.errors, steps: [] };
+  }
   const m = bundle.manifest;
 
   // Resolve required parameters (§16.5).
@@ -179,7 +219,11 @@ export function provisionBundle(bundle, opts = {}) {
 
   // Id-remap: every file is placed under the target prefix; build the slug set so
   // we can verify link integrity (§17.3) against the remapped target.
-  const remap = (rel) => (pathPrefix ? `${pathPrefix.replace(/\/$/, '')}/${rel}` : rel);
+  const normalizedPrefix = pathPrefix ? pathPrefix.replace(/\/$/, '') : '';
+  if (normalizedPrefix && !isSafeBundlePath(normalizedPrefix)) {
+    return { ok: false, plan: [], unresolved, danglingLinks: [], errors: [`unsafe path prefix '${pathPrefix}'`], steps: m.provisioning || [] };
+  }
+  const remap = (rel) => (normalizedPrefix ? `${normalizedPrefix}/${rel}` : rel);
   const presentSlugs = new Set();
   for (const f of bundle.files) {
     const { data } = parseDocument(f.content);

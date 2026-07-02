@@ -4,7 +4,7 @@
     "description": "A complete music-festival operation as a tradeable SSSS bundle.",
     "version": "1.0.0",
     "exported_at": "1970-01-01T00:00:00.000Z",
-    "ssss_core_version": "0.5",
+    "ssss_core_version": "0.6",
     "required_extensions": [
       "festech"
     ],
@@ -70,14 +70,14 @@
     ],
     "file_count": 14,
     "provenance": {
-      "content_hash": "sha256:0552fc1ee2f1ce2e872fdf7a8f556af53a3ae638de9e8cc67822c6ef4dac493e",
-      "exporter": "@ssss/cli@0.6.0"
+      "content_hash": "sha256:96380f618ee1e178331beca9507e1b3cd28a3d12cfa7f9898317f98da8295218",
+      "exporter": "@ssss/cli@0.7.0"
     }
   },
   "files": [
     {
       "path": "assistants/concierge.md",
-      "content": "---\ntype: assistant\nname: Festival Concierge\nslug: concierge\n---\nAnswer attendee questions about the lineup and venue."
+      "content": "---\ntype: assistant\ntitle: Festival Concierge\ndescription: Assistant that answers attendee questions about the lineup and venue.\ntimestamp: 2026-07-02T00:00:00Z\nname: Festival Concierge\nslug: concierge\n---\nAnswer attendee questions about the lineup and venue."
     },
     {
       "path": "assistants/index.md",
@@ -85,11 +85,11 @@
     },
     {
       "path": "domains/festival.md",
-      "content": "---\ntype: domain\ndomain_name: REQUIREMENT\nregistrar: REQUIREMENT\nstatus: required\npayment_status: unbound\nx_portability: resource_bound\n---\nThis festival needs a domain. The buyer binds their own at provision (owns_domain)."
+      "content": "---\ntype: domain\ntitle: Festival Domain Requirement\ndescription: Domain resource requirement that the buyer binds during provisioning.\ntimestamp: 2026-07-02T00:00:00Z\ndomain_name: REQUIREMENT\nregistrar: REQUIREMENT\nstatus: required\npayment_status: unbound\nx_portability: resource_bound\n---\nThis festival needs a domain. The buyer binds their own at provision (owns_domain)."
     },
     {
       "path": "domains/index.md",
-      "content": "# Index — domains\n\n- [festival](./festival.md)\n"
+      "content": "# Index — domains\n\n- [Festival Domain Requirement](./festival.md)\n"
     },
     {
       "path": "pages/index.md",
@@ -97,15 +97,15 @@
     },
     {
       "path": "pages/lineup.md",
-      "content": "---\ntype: page\nslug: lineup\nname: Lineup\nsandbox_entry: lineup/index.html\n---\nThe festival lineup page."
+      "content": "---\ntype: page\ntitle: Lineup\ndescription: Public-facing festival lineup page.\ntimestamp: 2026-07-02T00:00:00Z\nslug: lineup\nname: Lineup\nsandbox_entry: lineup/index.html\n---\nThe festival lineup page."
     },
     {
       "path": "roles/admin/ROLE.md",
-      "content": "---\ntype: security_role\nname: Administrator\npermissions:\n  - \"write:assistant\"\n  - \"write:workflow\"\n  - \"write:rule\"\n  - \"write:domain\"\n  - \"write:page\"\n  - \"write:security_role\"\n  - \"write:task\"\n---\nFull access to all festival operations."
+      "content": "---\ntype: security_role\ntitle: Administrator Role\ndescription: Security role with full festival operations write access.\ntimestamp: 2026-07-02T00:00:00Z\nname: Administrator\npermissions:\n  - \"write:assistant\"\n  - \"write:workflow\"\n  - \"write:rule\"\n  - \"write:domain\"\n  - \"write:page\"\n  - \"write:security_role\"\n  - \"write:task\"\n---\nFull access to all festival operations."
     },
     {
       "path": "roles/admin/index.md",
-      "content": "# Index — roles/admin\n\n- [Administrator](./ROLE.md)\n"
+      "content": "# Index — roles/admin\n\n- [Administrator Role](./ROLE.md)\n"
     },
     {
       "path": "roles/index.md",
@@ -117,15 +117,15 @@
     },
     {
       "path": "rules/refund-policy.md",
-      "content": "---\ntype: rule\nname: Refund Policy\nslug: refund-policy\n---\nRefunds are available up to 14 days before the event."
+      "content": "---\ntype: rule\ntitle: Refund Policy\ndescription: Refund eligibility rule for festival attendees.\ntimestamp: 2026-07-02T00:00:00Z\nname: Refund Policy\nslug: refund-policy\n---\nRefunds are available up to 14 days before the event."
     },
     {
       "path": "tasks/index.md",
-      "content": "# Index — tasks\n\n- [ticket-4821](./ticket-4821.md)\n"
+      "content": "# Index — tasks\n\n- [Ticket 4821 Seat Change](./ticket-4821.md)\n"
     },
     {
       "path": "workflows/box-office.md",
-      "content": "---\ntype: workflow\nname: Box Office\nslug: box-office\n---\nSell tickets, then hand the buyer to [[concierge]] for questions."
+      "content": "---\ntype: workflow\ntitle: Box Office\ndescription: Ticket-sales workflow for a music festival.\ntimestamp: 2026-07-02T00:00:00Z\nname: Box Office\nslug: box-office\n---\nSell tickets, then hand the buyer to [[concierge]] for questions."
     },
     {
       "path": "workflows/index.md",

@@ -1,5 +1,5 @@
 import chokidar from 'chokidar';
-import { execSync } from 'child_process';
+import { execFileSync } from 'child_process';
 import path from 'path';
 import { fileURLToPath } from 'url';
 
@@ -27,10 +27,10 @@ function executeHooks() {
   try {
     if (actions.includes('add') || actions.includes('change')) {
       console.log(`\n[Watcher] Triggering on-skill-add.sh...`);
-      execSync(`bash ${hooks.add}`, { stdio: 'inherit' });
+      execFileSync('bash', [hooks.add], { stdio: 'inherit' });
     } else if (actions.includes('unlink')) {
       console.log(`\n[Watcher] Triggering on-skill-delete.sh...`);
-      execSync(`bash ${hooks.delete}`, { stdio: 'inherit' });
+      execFileSync('bash', [hooks.delete], { stdio: 'inherit' });
     }
   } catch (error) {
     console.error(`\n[Watcher] Hook execution failed: ${error.message}`);

@@ -14,6 +14,12 @@ if [ -z "$SKILL_NAME" ]; then
   exit 1
 fi
 
+if [[ ! "$SKILL_NAME" =~ ^[a-z0-9][a-z0-9-]{0,63}$ ]]; then
+  echo "❌ Invalid skill name: $SKILL_NAME"
+  echo "   Use kebab-case: lowercase letters, numbers, and hyphens only."
+  exit 1
+fi
+
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 ROOT="$(cd "$SCRIPT_DIR/../../../.." && pwd)"
 SKILLS_DIR="$ROOT/.agent/skills"

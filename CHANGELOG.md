@@ -5,6 +5,36 @@ All notable changes to the SSSS (Structured Semantic Syntax System) spec will be
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.7.0] - 2026-07-02
+### Changed
+- **BREAKING: universal frontmatter enforcement** — every SSSS document primitive
+  now requires `type`, `title`, `description`, and `timestamp`. Primitive-specific
+  required fields still apply after these universal fields.
+- Registry `spec_version` -> `0.6`; spec header -> v0.6 draft. Reference bundle
+  metadata now targets SSSS core `0.6`.
+- The reference engine, bundle validator, skill validator, runtime helpers,
+  scaffold output, conformance fixtures, shipped skills, and reference bundle now
+  share the universal metadata requirement.
+
+### Added
+- OKF compatibility guidance documenting `resource`, `tags`, and `aliases` as
+  recommended discovery enrichment fields while keeping the mandatory universal
+  metadata minimal and deterministic.
+- Security hardening for the reference engine and CLI:
+  - VFS paths now reject absolute, root, dot-segment, empty-segment, backslash,
+    and directory targets.
+  - `workspace_id`, `idempotency_key`, and role names are constrained to safe
+    filesystem identifiers.
+  - Idempotency replay is bound to a request hash; same-key/different-payload
+    requests now fail as conflicts.
+  - Leases fail closed when unreadable and no longer derive filenames directly
+    from raw VFS paths.
+  - Bundle validation rejects unsafe and duplicate file paths, and export refuses
+    symlinked vault entries.
+  - Autolink skips symlinked Markdown targets before `--write`.
+  - Repo-local skill utility scripts avoid shell-string execution and validate
+    write-target names.
+
 ## [0.6.0] - 2026-07-02
 ### Added
 - **Workflow Runtime & Daemon Contract (spec §11.8)** — standardizes workflow

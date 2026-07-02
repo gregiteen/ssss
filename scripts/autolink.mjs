@@ -65,7 +65,8 @@ function walk(dir, out = []) {
   for (const name of fs.readdirSync(dir)) {
     if (name === 'node_modules' || name === '.git' || name.startsWith('.')) continue;
     const p = path.join(dir, name);
-    const st = fs.statSync(p);
+    const st = fs.lstatSync(p);
+    if (st.isSymbolicLink()) continue;
     if (st.isDirectory()) walk(p, out);
     else if (p.endsWith('.md')) out.push(p);
   }
@@ -269,6 +270,7 @@ export function generateIndexes(files, root, opts, summary) {
       .filter((e) => !e.name.startsWith('.') && e.name !== 'node_modules')
       .sort((a, b) => a.name.localeCompare(b.name));
     for (const e of entries) {
+      if (e.isSymbolicLink()) continue;
       if (e.isDirectory()) {
         if (dirs.has(path.join(dir, e.name))) lines.push(`- [${e.name}/](./${e.name}/index.md)`);
       } else if (e.name.endsWith('.md') && e.name !== 'index.md') {

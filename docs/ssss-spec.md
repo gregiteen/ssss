@@ -1,6 +1,6 @@
 # SSSS — Structured Semantic Syntax System
 
-**Specification v0.5 — Draft**
+**Specification v0.6 — Draft**
 
 > This is the canonical, vendor-neutral specification for SSSS. It is the ground
 > truth on which all SSSS implementations are built. It is intended to be vendored
@@ -112,16 +112,17 @@ Every SSSS document primitive MUST include:
 | Field | Type | Description |
 |-------|------|-------------|
 | `type` | string | The primitive type. MUST match an entry in the Type Registry (§5). |
-| `tags` | array | Array of string tags for categorization and routing. REQUIRED for OKF compatibility. |
+| `title` | string | Human-readable title of the document. |
+| `description` | string | One-sentence summary of the document's purpose. |
+| `timestamp` | string | ISO 8601 timestamp of last modification. |
 
-To ensure full compatibility with the **Google Open Knowledge Format (OKF)**, SSSS strongly RECOMMENDS the following universal metadata fields on all document primitives:
+For OKF-compatible discovery, SSSS document primitives SHOULD also include:
 
 | Field | Type | Description |
 |-------|------|-------------|
-| `title` | string | Human-readable title of the document. |
-| `description` | string | Brief summary of the document's purpose. |
+| `resource` | string | Canonical URI for the underlying asset, when the primitive describes one. |
+| `tags` | array | Array of string tags for categorization and routing. |
 | `aliases` | array | Array of alternative names for this concept, used for wiki autolinking. |
-| `timestamp` | string | ISO 8601 timestamp of last modification. |
 
 Every primitive type defines its own additional REQUIRED and OPTIONAL fields
 (§5.4). To maintain forward compatibility and allow agents scratchpad space, hosts MUST NOT reject documents containing unknown frontmatter keys. Unknown fields MUST be preserved.
@@ -637,8 +638,10 @@ failure aborts the operation with no commit.
 1. **Envelope validation** — `type` is one of the four envelope types
    (`operation`/`patch`/`event`/`delete`); required envelope fields present and
    well-formed.
-2. **Idempotency check** — if this `idempotency_key` + `workspace_id` was already
-   committed within the TTL, return the original result as a replay (§6.4). Stop.
+2. **Idempotency check** — if this `idempotency_key` + `workspace_id` +
+   request hash was already committed within the TTL, return the original result
+   as a replay (§6.4). If the key and workspace match but the request hash
+   differs, reject the request with `idempotency_conflict`. Stop.
 3. **Authorization & Actor Identity** — the agent has write access to `workspace_id`.
    *Security Mandate*: If a host exposes the Operation Contract directly to untrusted clients (e.g., a `POST /api/ssss` REST endpoint), the host **MUST** irreversibly overwrite the `actor` payload with the user's cryptographically verified session identity. Hosts MUST use this `actor` field to enforce Role-Based Access Control (RBAC) over sensitive or `resource_bound` primitives.
 4. **Lease check** — if the target path is leased, the operation MUST carry a
@@ -697,7 +700,7 @@ verdict with `success` reflecting validity, and MUST NOT commit (`committed_at` 
 | `401` | Authentication required. |
 | `403` | Agent lacks write access to the workspace. |
 | `404` | The `patch`/`delete` target does not exist. |
-| `409` | Lease conflict — path is locked, or the supplied lease is invalid/expired. |
+| `409` | Lease conflict, version conflict, or idempotency conflict — path is locked, the supplied lease is invalid/expired, or the same idempotency key was reused for a different request hash. |
 | `422` | Validation failure — see `validation.errors` and `repair`. |
 | `500` | Internal error — the operation was not committed. |
 
@@ -1093,7 +1096,7 @@ opaque ID as the slug and keep the human-readable label in `title` / `name`.
 This document is versioned independently of any host and of the conformance
 fixture set.
 
-- The spec version is stated in the document header (currently **v0.5 — Draft**).
+- The spec version is stated in the document header (currently **v0.6 — Draft**).
 - Breaking changes to the file format, the type registry, or the Operation
   Contract increment the spec version.
 - Until **v1.0**, any version MAY introduce breaking changes.

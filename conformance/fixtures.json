@@ -1,6 +1,6 @@
 {
   "$schema": "https://ssss.dev/conformance/v1",
-  "version": "1.3.0",
+  "version": "1.4.0",
   "description": "Canonical SSSS Operation Contract conformance fixtures. These define the canonical request/response shapes for the Operation Contract (spec §6) and are the shared test contract every SSSS implementation MUST pass. A host is conformant only if, for every fixture, it produces the expected response and status code (spec §12).",
   "spec_url": "../docs/ssss-spec.md",
   "operation_types": {
@@ -69,14 +69,14 @@
   "idempotency": {
     "ttl_hours": 24,
     "key_format": "UUID v4 recommended",
-    "behavior": "If the same idempotency_key + workspace_id is seen within TTL and previously committed=true, the server returns a replay response with the original operation_id without re-applying the mutation."
+    "behavior": "If the same idempotency_key + workspace_id + request_hash is seen within TTL and previously committed=true, the server returns a replay response with the original operation_id without re-applying the mutation. Reusing the same idempotency_key + workspace_id with a different request_hash is an idempotency_conflict."
   },
   "validation_rules": {
     "envelope": [
       "type must be one of: operation, patch, event, delete",
-      "idempotency_key must be a non-empty string (min 8 chars)",
+      "idempotency_key must be a safe replay identifier (letters, numbers, dot, underscore, hyphen; 1-128 chars)",
       "path must be a relative VFS path string (no leading /)",
-      "workspace_id must be a non-empty UUID string",
+      "workspace_id must be a safe filesystem identifier (letters, numbers, dot, underscore, hyphen; 1-128 chars)",
       "content is required for type:operation and type:event",
       "patches (object) is required for type:patch"
     ],
@@ -131,7 +131,7 @@
         "actor": {
           "role": "system"
         },
-        "content": "---\ntype: assistant\nname: \"Test Bot\"\ndescription: \"A conformance test assistant.\"\nmodel: \"openai/gpt-4o\"\n---\n\n## Instructions\n\nYou are a conformance test assistant.",
+        "content": "---\ntype: assistant\ntitle: \"Test Bot\"\ntimestamp: \"2026-07-02T00:00:00Z\"\nname: \"Test Bot\"\ndescription: \"A conformance test assistant.\"\nmodel: \"openai/gpt-4o\"\n---\n\n## Instructions\n\nYou are a conformance test assistant.",
         "intent": "Conformance fixture: create a valid assistant"
       },
       "expected_response": {
@@ -156,7 +156,7 @@
         "idempotency_key": "22222222-2222-2222-2222-222222222222",
         "path": "assistants/bad-bot/ASSISTANT.md",
         "workspace_id": "TEST_WORKSPACE_ID",
-        "content": "---\ntype: assistant\ndescription: \"Missing the name field.\"\n---\n\n## Instructions\n\nBroken bot.",
+        "content": "---\ntype: assistant\ntitle: \"Create Assistant — Missing Required Name Field\"\ntimestamp: \"2026-07-02T00:00:00Z\"\ndescription: \"Missing the name field.\"\n---\n\n## Instructions\n\nBroken bot.",
         "intent": "Conformance fixture: missing required name field"
       },
       "expected_response": {
@@ -191,7 +191,7 @@
         "actor": {
           "role": "system"
         },
-        "content": "---\ntype: assistant\nname: \"Dry Run Bot\"\n---\n\n## Instructions\n\nNot committed.",
+        "content": "---\ntype: assistant\ntitle: \"Dry Run Bot\"\ndescription: \"Dry Run Bot SSSS conformance fixture.\"\ntimestamp: \"2026-07-02T00:00:00Z\"\nname: \"Dry Run Bot\"\n---\n\n## Instructions\n\nNot committed.",
         "dry_run": true,
         "intent": "Conformance fixture: dry run pre-flight check"
       },
@@ -269,7 +269,10 @@
         "idempotency_key": "11111111-1111-1111-1111-111111111111",
         "path": "assistants/test-bot/ASSISTANT.md",
         "workspace_id": "TEST_WORKSPACE_ID",
-        "content": "---\ntype: assistant\nname: \"Test Bot V2 — should not apply\"\n---\n\n## Instructions\n\nThis should not overwrite.",
+        "actor": {
+          "role": "system"
+        },
+        "content": "---\ntype: assistant\ntitle: \"Test Bot\"\ntimestamp: \"2026-07-02T00:00:00Z\"\nname: \"Test Bot\"\ndescription: \"A conformance test assistant.\"\nmodel: \"openai/gpt-4o\"\n---\n\n## Instructions\n\nYou are a conformance test assistant.",
         "intent": "Conformance fixture: idempotency replay test"
       },
       "expected_response": {
@@ -285,7 +288,7 @@
         "idempotency_key": "77777777-7777-7777-7777-777777777777",
         "path": "assistants/missing-type/ASSISTANT.md",
         "workspace_id": "TEST_WORKSPACE_ID",
-        "content": "---\ntype: assistant\nname: \"Missing Type Bot\"\n---"
+        "content": "---\ntype: assistant\ntitle: \"Missing Type Bot\"\ndescription: \"Missing Type Bot SSSS conformance fixture.\"\ntimestamp: \"2026-07-02T00:00:00Z\"\nname: \"Missing Type Bot\"\n---"
       },
       "expected_response": {
         "success": false,
@@ -310,7 +313,7 @@
         "actor": {
           "role": "system"
         },
-        "content": "---\ntype: workflow\nworkflow_id: daily-digest\nname: \"Daily Digest\"\ndescription: \"Sends a daily summary email.\"\npriority: 80\ntriggers:\n  - type: cron\n    id: daily-0800\n    cron: \"0 8 * * *\"\n    timezone: \"America/Denver\"\n    misfire_policy: run_once\n    concurrency: skip_if_running\nneeds: []\nisActive: true\n---\n\n## Steps\n\n1. Gather unread inbox messages.\n2. Summarize via LLM.\n3. Send digest email.",
+        "content": "---\ntype: workflow\ntitle: \"Daily Digest\"\ntimestamp: \"2026-07-02T00:00:00Z\"\nworkflow_id: daily-digest\nname: \"Daily Digest\"\ndescription: \"Sends a daily summary email.\"\npriority: 80\ntriggers:\n  - type: cron\n    id: daily-0800\n    cron: \"0 8 * * *\"\n    timezone: \"America/Denver\"\n    misfire_policy: run_once\n    concurrency: skip_if_running\nneeds: []\nisActive: true\n---\n\n## Steps\n\n1. Gather unread inbox messages.\n2. Summarize via LLM.\n3. Send digest email.",
         "intent": "Conformance fixture: create a valid cron workflow"
       },
       "expected_response": {
@@ -361,7 +364,7 @@
         "actor": {
           "role": "admin"
         },
-        "content": "---\ntype: security_role\nname: \"admin\"\npermissions:\n  - \"write:assistant\"\n  - \"write:workflow\"\n  - \"write:rule\"\n  - \"write:domain\"\n  - \"write:page\"\n  - \"write:security_role\"\n  - \"write:task\"\n---\n\nFull administrative access.",
+        "content": "---\ntype: security_role\ntitle: \"Admin\"\ndescription: \"Admin SSSS conformance fixture.\"\ntimestamp: \"2026-07-02T00:00:00Z\"\nname: \"admin\"\npermissions:\n  - \"write:assistant\"\n  - \"write:workflow\"\n  - \"write:rule\"\n  - \"write:domain\"\n  - \"write:page\"\n  - \"write:security_role\"\n  - \"write:task\"\n---\n\nFull administrative access.",
         "intent": "Conformance fixture: create a valid security role"
       },
       "expected_response": {
@@ -386,7 +389,7 @@
         "idempotency_key": "bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb",
         "path": "assistants/no-actor-bot/ASSISTANT.md",
         "workspace_id": "TEST_WORKSPACE_ID",
-        "content": "---\ntype: assistant\nname: \"No Actor Bot\"\n---\n\n## Instructions\n\nShould never commit without a verified actor.",
+        "content": "---\ntype: assistant\ntitle: \"No Actor Bot\"\ndescription: \"No Actor Bot SSSS conformance fixture.\"\ntimestamp: \"2026-07-02T00:00:00Z\"\nname: \"No Actor Bot\"\n---\n\n## Instructions\n\nShould never commit without a verified actor.",
         "intent": "Conformance fixture: envelope with no actor must be denied"
       },
       "expected_response": {
@@ -421,7 +424,7 @@
         "actor": {
           "role": "system"
         },
-        "content": "---\ntype: memory\nslug: prefer-atomic-writes\ncategory: patterns\ntitle: \"Prefer atomic writes\"\nstatus: active\nschema_version: 2\nconfidence: 0.9\nimportance: 4\nmodality: should\nsubject: engine\npredicate: performs\nobject: atomic_write\nsentiment_polarity: descriptive\n---\n\nWrite-then-rename, never write-in-place.",
+        "content": "---\ntype: memory\ndescription: \"Prefer Atomic Writes SSSS conformance fixture.\"\ntimestamp: \"2026-07-02T00:00:00Z\"\nslug: prefer-atomic-writes\ncategory: patterns\ntitle: \"Prefer atomic writes\"\nstatus: active\nschema_version: 2\nconfidence: 0.9\nimportance: 4\nmodality: should\nsubject: engine\npredicate: performs\nobject: atomic_write\nsentiment_polarity: descriptive\n---\n\nWrite-then-rename, never write-in-place.",
         "intent": "Conformance fixture: schema_version 2 memory with all conditional fields"
       },
       "expected_response": {
@@ -446,7 +449,7 @@
         "actor": {
           "role": "system"
         },
-        "content": "---\ntype: memory\nslug: incomplete-schema2\ncategory: patterns\ntitle: \"Incomplete schema 2 node\"\nstatus: active\nschema_version: 2\n---\n\nMissing confidence/importance/modality/subject/predicate/object/sentiment_polarity.",
+        "content": "---\ntype: memory\ndescription: \"Incomplete Schema 2 Node SSSS conformance fixture.\"\ntimestamp: \"2026-07-02T00:00:00Z\"\nslug: incomplete-schema2\ncategory: patterns\ntitle: \"Incomplete schema 2 node\"\nstatus: active\nschema_version: 2\n---\n\nMissing confidence/importance/modality/subject/predicate/object/sentiment_polarity.",
         "intent": "Conformance fixture: schema_version 2 memory missing conditional fields"
       },
       "expected_response": {
@@ -479,7 +482,7 @@
         "actor": {
           "role": "system"
         },
-        "content": "---\ntype: task\npriority: normal\ncategory: support\nstatus: archived\n---\n\n'archived' is not a declared task status.",
+        "content": "---\ntype: task\ntitle: \"Task With An Out Of Enum Status Is Denied\"\ndescription: \"Task With An Out Of Enum Status Is Denied SSSS conformance fixture.\"\ntimestamp: \"2026-07-02T00:00:00Z\"\npriority: normal\ncategory: support\nstatus: archived\n---\n\n'archived' is not a declared task status.",
         "intent": "Conformance fixture: task with invalid status enum value"
       },
       "expected_response": {
@@ -506,7 +509,7 @@
         "actor": {
           "role": "system"
         },
-        "content": "---\ntype: security_role\nname: \"reporter\"\npermissions:\n  - \"write:event\"\n---\n\nMay only append events (e.g. usage/telemetry logging).",
+        "content": "---\ntype: security_role\ntitle: \"Reporter\"\ndescription: \"Reporter SSSS conformance fixture.\"\ntimestamp: \"2026-07-02T00:00:00Z\"\nname: \"reporter\"\npermissions:\n  - \"write:event\"\n---\n\nMay only append events (e.g. usage/telemetry logging).",
         "intent": "Conformance fixture: create a write:event-only role"
       },
       "expected_response": {
@@ -557,7 +560,7 @@
         "actor": {
           "role": "system"
         },
-        "content": "---\ntype: security_role\nname: \"viewer\"\npermissions:\n  - \"read:*\"\n---\n\nRead-only access; may not write anything, including events.",
+        "content": "---\ntype: security_role\ntitle: \"Viewer\"\ndescription: \"Viewer SSSS conformance fixture.\"\ntimestamp: \"2026-07-02T00:00:00Z\"\nname: \"viewer\"\npermissions:\n  - \"read:*\"\n---\n\nRead-only access; may not write anything, including events.",
         "intent": "Conformance fixture: create a read-only role"
       },
       "expected_response": {
@@ -619,7 +622,7 @@
         "actor": {
           "role": "system"
         },
-        "content": "---\ntype: skill\nname: deploy\ndescription: >-\n  Deploy services with zero downtime. Use when the user mentions deploy,\n  release, ship, or production push.\n---\n\n# Deploy\n\nSteps to deploy safely.",
+        "content": "---\ntype: skill\ntitle: \"Deploy\"\ntimestamp: \"2026-07-02T00:00:00Z\"\nname: deploy\ndescription: >-\n  Deploy services with zero downtime. Use when the user mentions deploy,\n  release, ship, or production push.\n---\n\n# Deploy\n\nSteps to deploy safely.",
         "intent": "Conformance fixture: valid skill primitive (spec §5.4 example)"
       },
       "expected_response": {
@@ -644,7 +647,7 @@
         "actor": {
           "role": "system"
         },
-        "content": "---\nname: broken-skill\ndescription: \"Missing the type discriminator.\"\n---\n\n# Broken",
+        "content": "---\ntitle: \"Broken Skill\"\ntimestamp: \"2026-07-02T00:00:00Z\"\nname: broken-skill\ndescription: \"Missing the type discriminator.\"\n---\n\n# Broken",
         "intent": "Conformance fixture: skill manifest missing type: skill"
       },
       "expected_response": {
@@ -670,7 +673,7 @@
         "actor": {
           "role": "system"
         },
-        "content": "---\ntype: skill\nname: broken-skill-2\n---\n\n# Broken",
+        "content": "---\ntype: skill\ntitle: \"Broken Skill 2\"\ntimestamp: \"2026-07-02T00:00:00Z\"\nname: broken-skill-2\n---\n\n# Broken",
         "intent": "Conformance fixture: skill manifest missing description"
       },
       "expected_response": {
@@ -697,7 +700,7 @@
         "actor": {
           "role": "system"
         },
-        "content": "---\ntype: run\nrun_id: \"run-runtime-001\"\nworkflow_id: \"daily-digest\"\ntask_path: \"tasks/daily-digest/daily-0800-20260702T140000000Z.md\"\nworkspace_id: \"TEST_WORKSPACE_ID\"\nstatus: queued\nstarted_at: \"2026-07-02T14:00:00.000Z\"\n---\n\n### run created - 2026-07-02T14:00:00.000Z - queued\nTask claimed by the runtime worker.",
+        "content": "---\ntype: run\ntitle: \"Run Runtime 001\"\ndescription: \"Run Runtime 001 SSSS conformance fixture.\"\ntimestamp: \"2026-07-02T14:00:00.000Z\"\nrun_id: \"run-runtime-001\"\nworkflow_id: \"daily-digest\"\ntask_path: \"tasks/daily-digest/daily-0800-20260702T140000000Z.md\"\nworkspace_id: \"TEST_WORKSPACE_ID\"\nstatus: queued\nstarted_at: \"2026-07-02T14:00:00.000Z\"\n---\n\n### run created - 2026-07-02T14:00:00.000Z - queued\nTask claimed by the runtime worker.",
         "intent": "Conformance fixture: valid runtime run primitive"
       },
       "expected_response": {
@@ -709,6 +712,35 @@
           "errors": []
         }
       }
+    },
+    {
+      "id": "fixture-023",
+      "name": "Idempotency conflict — same key with different payload is denied",
+      "description": "Reusing fixture-001's idempotency key with a different request payload must fail instead of returning a false replay success.",
+      "preconditions": [
+        "fixture-001 must be committed first"
+      ],
+      "request": {
+        "type": "operation",
+        "idempotency_key": "11111111-1111-1111-1111-111111111111",
+        "path": "assistants/test-bot/ASSISTANT.md",
+        "workspace_id": "TEST_WORKSPACE_ID",
+        "actor": {
+          "role": "system"
+        },
+        "content": "---\ntype: assistant\ntitle: \"Test Bot V2 — Should Not Apply\"\ndescription: \"Test Bot V2 — Should Not Apply SSSS conformance fixture.\"\ntimestamp: \"2026-07-02T00:00:00Z\"\nname: \"Test Bot V2 — should not apply\"\n---\n\n## Instructions\n\nThis should not overwrite.",
+        "intent": "Conformance fixture: idempotency conflict test"
+      },
+      "expected_response": {
+        "success": false,
+        "validation": {
+          "valid": false,
+          "errors": [
+            "Idempotency conflict: key '11111111-1111-1111-1111-111111111111' was already committed for a different request payload."
+          ]
+        }
+      },
+      "expected_http_status": 409
     }
   ],
   "error_codes": {

@@ -1,5 +1,6 @@
 ---
 type: skill
+title: RBAC Fail-Open Auditor
 name: rbac-fail-open-auditor
 description: >
   Use this skill when auditing or hardening Stage 5.5 RBAC on an SSSS vault
@@ -13,6 +14,7 @@ description: >
   conformance-schema-compatible negative fixtures for any confirmed gap. Do
   NOT use for registry/spec drift unrelated to authorization — use
   ssss-registry-parity-auditor for that.
+timestamp: 2026-07-02T00:00:00Z
 ---
 
 # rbac-fail-open-auditor

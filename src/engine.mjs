@@ -25,18 +25,49 @@ const ENVELOPE_REQUIRED = {
   delete: ['type', 'idempotency_key', 'path', 'workspace_id'],
 };
 
-const IDEMPOTENCY_TTL_MS = 10 * 60 * 1000;
+const IDEMPOTENCY_TTL_MS = 24 * 60 * 60 * 1000;
+const SAFE_IDENTIFIER_RE = /^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$/;
 
-function cacheKey(wid, key) { return `${wid}:${key}`; }
+function cacheKey(wid, key) { return JSON.stringify([wid, key]); }
+
+function isSafeIdentifier(value) {
+  return typeof value === 'string' && SAFE_IDENTIFIER_RE.test(value);
+}
+
+function stableStringify(value) {
+  if (value === null || typeof value !== 'object') return JSON.stringify(value);
+  if (Array.isArray(value)) return `[${value.map((v) => stableStringify(v)).join(',')}]`;
+  return `{${Object.keys(value).sort().map((k) => `${JSON.stringify(k)}:${stableStringify(value[k])}`).join(',')}}`;
+}
+
+function requestHash(envelope) {
+  const payload = {
+    type: envelope.type,
+    path: envelope.path,
+    workspace_id: envelope.workspace_id,
+    actor: envelope.actor || null,
+    lease_id: envelope.lease_id || null,
+    dry_run: !!envelope.dry_run,
+  };
+  if (Object.prototype.hasOwnProperty.call(envelope, 'content')) payload.content = envelope.content;
+  if (Object.prototype.hasOwnProperty.call(envelope, 'patches')) payload.patches = envelope.patches;
+  return 'sha256:' + crypto.createHash('sha256').update(stableStringify(payload)).digest('hex');
+}
 
 /** festech `resolveContainedPath`: resolve a VFS path, refusing escape from the vault. */
 export function resolveContainedPath(vaultRoot, vfsPath) {
   const root = path.resolve(vaultRoot);
-  const cleaned = String(vfsPath).replace(/^\/+/, '');
+  const raw = String(vfsPath);
+  if (!raw || raw === '.' || raw.includes('\0')) throw new Error(`Invalid VFS path: ${vfsPath}`);
+  if (raw.startsWith('/') || raw.startsWith('\\') || raw.includes('\\')) throw new Error(`Absolute or platform-native paths are not valid VFS paths: ${vfsPath}`);
+  const parts = raw.split('/');
+  if (parts.some((p) => p === '' || p === '.' || p === '..')) throw new Error(`Invalid VFS path segment in: ${vfsPath}`);
+  const cleaned = parts.join('/');
   const resolved = path.resolve(root, cleaned);
   if (resolved !== root && !resolved.startsWith(root + path.sep)) {
     throw new Error(`Path traversal refused: ${vfsPath}`);
   }
+  if (resolved === root) throw new Error(`VFS path must identify a file, not the vault root: ${vfsPath}`);
   return resolved;
 }
 
@@ -75,7 +106,7 @@ function fail(type, opId, p, resolvedType, errors, repairEntries) {
  * in-process idempotency cache, so re-applying an envelope within TTL is a no-op.
  */
 export function createEngine({ registryDir, leaseStore } = {}) {
-  const { types } = loadRegistries(registryDir);
+  const { types, core } = loadRegistries(registryDir);
   const idempotencyCache = new Map();
 
   function pruneExpired() {
@@ -98,6 +129,7 @@ export function createEngine({ registryDir, leaseStore } = {}) {
         if (!idempotencyCache.has(ck)) {
           idempotencyCache.set(ck, {
             ts,
+            request_hash: r.payload.request_hash || null,
             response: ok(r.payload.envelope_type, r.correlation_id, r.subject, r.payload.resolved_type, r.ts),
           });
         }
@@ -127,7 +159,13 @@ export function createEngine({ registryDir, leaseStore } = {}) {
       repair.push({ field: 'type', issue: `Unknown SSSS type '${resolvedType}'.` });
       return { errors, repair };
     }
-    for (const f of def.required_fields || []) {
+    const requiredFields = [
+      ...new Set([
+        ...(core.universal_frontmatter?.required || ['type']),
+        ...(def.required_fields || []),
+      ]),
+    ];
+    for (const f of requiredFields) {
       if (isEmpty(data[f])) {
         errors.push(`Missing required field '${f}' for type '${resolvedType}' in ${filePath}.`);
         repair.push({ field: f, issue: `Missing required field '${f}' for type '${resolvedType}'.` });
@@ -164,7 +202,7 @@ export function createEngine({ registryDir, leaseStore } = {}) {
     fs.appendFileSync(path.join(dir, `${record.workspace_id}.jsonl`), JSON.stringify(record) + '\n');
   }
 
-  function audit(vaultRoot, eventLogDir, opId, committedAt, envelope, resolvedType) {
+  function audit(vaultRoot, eventLogDir, opId, committedAt, envelope, resolvedType, hash) {
     const dir = eventLogDir || path.join(vaultRoot, '.events');
     if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
     fs.appendFileSync(path.join(dir, 'audit.jsonl'), JSON.stringify({
@@ -173,6 +211,7 @@ export function createEngine({ registryDir, leaseStore } = {}) {
       payload: {
         envelope_type: envelope.type, idempotency_key: envelope.idempotency_key,
         workspace_id: envelope.workspace_id, resolved_type: resolvedType,
+        request_hash: hash,
       },
     }) + '\n');
   }
@@ -200,17 +239,40 @@ export function createEngine({ registryDir, leaseStore } = {}) {
         missingEnv.map((f) => `Missing required envelope field '${f}' for ${envelope.type}.`),
         missingEnv.map((f) => ({ field: f, issue: `Required for envelope type '${envelope.type}'.` })));
     }
+    if (!isSafeIdentifier(envelope.workspace_id)) {
+      return fail(envelope.type, opId, envelope.path || '', null,
+        [`Invalid workspace_id '${envelope.workspace_id}'. Use 1-128 characters: letters, numbers, dot, underscore, hyphen.`],
+        [{ field: 'workspace_id', issue: 'Invalid or unsafe filesystem identifier.' }]);
+    }
+    if (!isSafeIdentifier(envelope.idempotency_key)) {
+      return fail(envelope.type, opId, envelope.path || '', null,
+        [`Invalid idempotency_key '${envelope.idempotency_key}'. Use 1-128 characters: letters, numbers, dot, underscore, hyphen.`],
+        [{ field: 'idempotency_key', issue: 'Invalid or unsafe replay identifier.' }]);
+    }
 
     let abs;
     try { abs = resolveContainedPath(vaultRoot, envelope.path); }
     catch (err) { return fail(envelope.type, opId, envelope.path, null, [err.message], [{ field: 'path', issue: err.message }]); }
+    if (fs.existsSync(abs) && fs.statSync(abs).isDirectory()) {
+      return fail(envelope.type, opId, envelope.path, null,
+        [`VFS path '${envelope.path}' resolves to a directory, not a file.`],
+        [{ field: 'path', issue: 'Must identify a file.' }]);
+    }
 
     // Stage 2 — Idempotency
+    const hash = requestHash(envelope);
     warmFromAudit(vaultRoot, eventLogDir);
     pruneExpired();
     const ck = cacheKey(envelope.workspace_id, envelope.idempotency_key);
     const cached = idempotencyCache.get(ck);
-    if (cached) return { ...cached.response, replay: cached.response };
+    if (cached) {
+      if (cached.request_hash && cached.request_hash !== hash) {
+        return fail(envelope.type, opId, envelope.path, null,
+          [`Idempotency conflict: key '${envelope.idempotency_key}' was already committed for a different request payload.`],
+          [{ field: 'idempotency_key', issue: 'Same key cannot be reused for a different request payload.' }]);
+      }
+      return { ...cached.response, replay: cached.response };
+    }
 
     // Stage 3 — Authorization (protocol-path hook)
     // Granular RBAC is now evaluated in Stage 5.5 once the primitive type is resolved.
@@ -237,16 +299,30 @@ export function createEngine({ registryDir, leaseStore } = {}) {
         if (!resolvedType) { errors.push(`Missing required frontmatter field 'type' in ${envelope.path}.`); repair.push({ field: 'type', issue: 'Frontmatter must declare a type.' }); }
         else ({ errors, repair } = validateContent(resolvedType, data, envelope.path));
       }
+      if (!errors.length && fs.existsSync(abs) && !envelope.path.endsWith('/index.md')) {
+        const { data: existingData } = parseDocument(fs.readFileSync(abs, 'utf8'));
+        if (existingData.type && existingData.type !== resolvedType) {
+          errors.push(`Type rewrite refused for ${envelope.path}: existing type '${existingData.type}' cannot be replaced by '${resolvedType}'.`);
+          repair.push({ field: 'type', issue: 'Use a migration controlled by a privileged host; operation writes may not change an existing file type.' });
+        }
+      }
       // append-type rewrite guard
       if (!errors.length && isAppendType(types.get(resolvedType)) && fs.existsSync(abs)) {
-        const existing = parseDocument(fs.readFileSync(abs, 'utf8')).body.trim();
-        const next = parseDocument(envelope.content).body.trim();
-        if (existing && !next.startsWith(existing)) { errors.push(`Append-type '${resolvedType}' may not rewrite existing records.`); repair.push({ field: '__body__', issue: 'Append-only: existing records are immutable.' }); }
+        const existing = parseDocument(fs.readFileSync(abs, 'utf8')).body.replace(/\s+$/, '');
+        const next = parseDocument(envelope.content).body.replace(/\s+$/, '');
+        if (existing && next !== existing && !next.startsWith(existing + '\n')) {
+          errors.push(`Append-type '${resolvedType}' may not rewrite existing records.`);
+          repair.push({ field: '__body__', issue: 'Append-only: existing records are immutable.' });
+        }
       }
     } else if (envelope.type === 'patch') {
       if (!fs.existsSync(abs)) { errors.push(`Target file does not exist for patch: ${envelope.path}.`); repair.push({ field: 'path', issue: 'Patch target not found.' }); }
       else {
         const { data, body } = parseDocument(fs.readFileSync(abs, 'utf8'));
+        if (Object.prototype.hasOwnProperty.call(envelope.patches, 'type') && envelope.patches.type !== data.type) {
+          errors.push(`Patch may not change immutable field 'type' for ${envelope.path}.`);
+          repair.push({ field: 'type', issue: 'Use an explicit migration rather than patching the primitive discriminator.' });
+        }
         const merged = { ...data };
         for (const [k, v] of Object.entries(envelope.patches)) if (k !== '__body__') merged[k] = v;
         resolvedType = merged.type || null;
@@ -291,12 +367,17 @@ export function createEngine({ registryDir, leaseStore } = {}) {
       } else if (actorRole) {
         let perms = [];
         if (actorRole === 'admin') perms = ['write:*', 'read:*'];
-        const roleFile = path.join(vaultRoot, 'roles', actorRole, 'ROLE.md');
-        if (fs.existsSync(roleFile)) {
-          try {
-            const { data } = parseDocument(fs.readFileSync(roleFile, 'utf8'));
-            if (data.permissions) perms = data.permissions;
-          } catch {}
+        const safeRole = isSafeIdentifier(actorRole);
+        if (!safeRole) {
+          perms = [];
+        } else {
+          const roleFile = path.join(vaultRoot, 'roles', actorRole, 'ROLE.md');
+          if (fs.existsSync(roleFile)) {
+            try {
+              const { data } = parseDocument(fs.readFileSync(roleFile, 'utf8'));
+              if (data.permissions) perms = data.permissions;
+            } catch {}
+          }
         }
         allowed = perms.includes('*:*') || perms.includes('write:*') || perms.includes(`*:${permType}`) || perms.includes(requiredPerm);
       }
@@ -346,10 +427,10 @@ export function createEngine({ registryDir, leaseStore } = {}) {
     }
 
     // Stage 7 — Audit
-    try { audit(vaultRoot, eventLogDir, opId, committedAt, envelope, resolvedType); } catch { /* non-fatal */ }
+    try { audit(vaultRoot, eventLogDir, opId, committedAt, envelope, resolvedType, hash); } catch { /* non-fatal */ }
 
     const response = ok(envelope.type, opId, envelope.path, resolvedType, committedAt, warnings);
-    idempotencyCache.set(ck, { response, ts: Date.now() });
+    idempotencyCache.set(ck, { response, request_hash: hash, ts: Date.now() });
     return response;
   }
 
@@ -357,7 +438,9 @@ export function createEngine({ registryDir, leaseStore } = {}) {
 }
 
 function checkLease(envelope, leaseStore) {
-  const lp = path.join(leaseStore, envelope.workspace_id, `${String(envelope.path).replace(/\//g, '__')}.lease.json`);
+  if (!isSafeIdentifier(envelope.workspace_id)) return { ok: false, error: `Invalid workspace_id '${envelope.workspace_id}'.` };
+  const pathKey = crypto.createHash('sha256').update(String(envelope.path)).digest('hex');
+  const lp = path.join(leaseStore, envelope.workspace_id, `${pathKey}.lease.json`);
   if (!fs.existsSync(lp)) return { ok: true };
   try {
     const lease = JSON.parse(fs.readFileSync(lp, 'utf8'));
@@ -365,5 +448,5 @@ function checkLease(envelope, leaseStore) {
     if (!envelope.lease_id) return { ok: false, error: `Path '${envelope.path}' is leased (${lease.lease_id}). Supply a matching lease_id.` };
     if (envelope.lease_id !== lease.lease_id) return { ok: false, error: `Lease mismatch for '${envelope.path}'.` };
     return { ok: true };
-  } catch { return { ok: true }; }
+  } catch { return { ok: false, error: `Lease state for '${envelope.path}' is unreadable; refusing to fail open.` }; }
 }

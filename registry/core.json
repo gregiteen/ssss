@@ -1,7 +1,7 @@
 {
   "$schema": "https://ssss.dev/registry/v1",
   "registry": "core",
-  "spec_version": "0.5",
+  "spec_version": "0.6",
   "description": "The canonical SSSS core primitive registry. These 14 document primitives and 5 contract primitives are defined by the SSSS specification (docs/ssss-spec.md §5) and are owned by this standard. Every document primitive declares a portability class (§5.5); the registry also defines the workflow runtime contract (§11.8), the `.ucw` bundle format (§16), and the provisioning contract (§17). A conformant host MUST implement any core primitive it uses according to this registry. Applications extend the core with their own primitives via an extension registry (see registry/README.md); extensions MUST NOT redefine a core type.",
   "conformance": "A host is core-conformant for a primitive if a file of that type validates exactly when all required_fields are present and non-empty, and (for append_only types) writes only append.",
 
@@ -148,8 +148,8 @@
   },
 
   "universal_frontmatter": {
-    "required": ["type", "tags"],
-    "recommended_okf": ["title", "description", "aliases", "timestamp"],
+    "required": ["type", "title", "description", "timestamp"],
+    "recommended_okf": ["resource", "tags", "aliases"],
     "spec_ref": "§4.2"
   },
 
