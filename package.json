@@ -16,7 +16,7 @@
     "./package.json": "./package.json"
   },
   "bin": {
-    "ssss": "./scripts/ssss.mjs"
+    "ssss": "scripts/ssss.mjs"
   },
   "type": "module",
   "engines": {
