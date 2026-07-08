@@ -8,7 +8,7 @@ timestamp: 2026-07-02T00:00:00Z
 
 # push
 
-Use this skill when you need to push a new version of the `@ssss/cli` package to GitHub and npm.
+Use this skill when you need to push a new version of the `@gregiteen/ssss-cli` package to GitHub and npm.
 
 ## Step 1: Update Version and Changelog
 

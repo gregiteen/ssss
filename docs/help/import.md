@@ -12,8 +12,10 @@ ssss import --plan plan.json   --vault <dir>     # replay a plan from `ssss prov
 - `--vault <dir>` is required and is created if missing.
 - Without `--plan`, import provisions inline first (resolving `--param` flags); a
   failed provision (unresolved params / dangling links) aborts before any write.
-- `--dry-run` validates every envelope without committing.
-- The summary reports `committed`, `unchanged (idempotent)`, and `failed` counts.
+- `--dry-run` validates every envelope without committing and reports
+  `would commit` instead of `committed`.
+- The normal summary reports `committed`, `unchanged (idempotent)`, and `failed`
+  counts.
 
 Run `ssss import --help` for the full flag list.
 See also: `ssss help provisioning`, `ssss provision`.

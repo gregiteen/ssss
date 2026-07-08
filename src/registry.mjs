@@ -20,11 +20,12 @@ const APPEND_TYPES = new Set(['conversation', 'run']);
 /**
  * Load the core registry and merge extension registries.
  * @param {string} [registryDir] - directory containing core.json + extensions/
- * @returns {{ types: Map<string, object>, contractTypes: Set<string>, portabilityClasses: string[], core: object }}
+ * @returns {{ types: Map<string, object>, contractTypes: Set<string>, portabilityClasses: string[], core: object, extensions: Set<string> }}
  */
 export function loadRegistries(registryDir = DEFAULT_REGISTRY_DIR) {
   const corePath = path.join(registryDir, 'core.json');
   const core = JSON.parse(fs.readFileSync(corePath, 'utf8'));
+  const extensions = new Set();
 
   const types = new Map();
   for (const [name, def] of Object.entries(core.document_primitives || {})) {
@@ -35,6 +36,7 @@ export function loadRegistries(registryDir = DEFAULT_REGISTRY_DIR) {
   if (fs.existsSync(extDir)) {
     for (const file of fs.readdirSync(extDir).filter((f) => f.endsWith('.json'))) {
       const ext = JSON.parse(fs.readFileSync(path.join(extDir, file), 'utf8'));
+      if (ext.registry) extensions.add(ext.registry);
       for (const [name, def] of Object.entries(ext.document_primitives || {})) {
         if (types.has(name) && types.get(name).registry === 'core') continue; // core wins; extensions MUST NOT redefine
         types.set(name, { ...def, type: name, registry: ext.registry || file });
@@ -44,7 +46,7 @@ export function loadRegistries(registryDir = DEFAULT_REGISTRY_DIR) {
 
   const contractTypes = new Set(Object.keys(core.contract_primitives || {}));
   const portabilityClasses = Object.keys(core.portability?.classes || {});
-  return { types, contractTypes, portabilityClasses, core };
+  return { types, contractTypes, portabilityClasses, core, extensions };
 }
 
 /** Is this document type append-only (events appended, never rewritten)? */

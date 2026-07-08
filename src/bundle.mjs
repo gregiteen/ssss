@@ -17,7 +17,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import crypto from 'node:crypto';
 import { loadRegistries, resolvePortability } from './registry.mjs';
-import { parseDocument } from './frontmatter.mjs';
+import { parseDocument, serializeDocument } from './frontmatter.mjs';
 
 const PROFILE_INCLUDES = {
   backup: new Set(['structural', 'tenant_private', 'resource_bound']),
@@ -27,6 +27,13 @@ const PROFILE_INCLUDES = {
 const STEP_SYSTEMS = new Set(['workspace', 'branding', 'email', 'phone', 'domains', 'accounts', 'deployments', 'marketplace', 'tabs', 'automation']);
 const STEP_MODES = new Set(['existing', 'provision', 'install', 'generate', 'configure']);
 const PARAM_SOURCES = new Set(['user', 'llm', 'graph', 'system']);
+const RESOURCE_SYSTEM_BY_KIND = {
+  api_connection: 'automation',
+  domain: 'domains',
+  email: 'email',
+  mailbox: 'email',
+  phone: 'phone',
+};
 
 function isSafeBundlePath(p) {
   if (typeof p !== 'string' || !p || p.includes('\0')) return false;
@@ -39,6 +46,62 @@ function isSafeBundlePath(p) {
 function canonicalFiles(files) {
   const sorted = [...files].sort((a, b) => (a.path < b.path ? -1 : a.path > b.path ? 1 : 0));
   return sorted.map((f) => ({ path: f.path, content: f.content }));
+}
+
+function requirementParameterKey(type, field) {
+  return `${type}_${field}`.replace(/[^A-Za-z0-9_]+/g, '_');
+}
+
+function resourceFieldParameterAliases(type, field) {
+  const aliases = [requirementParameterKey(type, field), field];
+  if (type === 'domain' && field === 'domain_name') aliases.push('domain');
+  if (type === 'phone_number' && field === 'phone_number') aliases.push('phone');
+  return aliases;
+}
+
+function ensureRequirementDeclarations(manifest, typeDef, resourceFields) {
+  const type = typeDef.type;
+  const resource = typeDef.resource || {};
+  const existingParams = new Set((manifest.parameters || []).map((p) => p.key));
+  for (const field of resourceFields) {
+    if (resourceFieldParameterAliases(type, field).some((key) => existingParams.has(key))) continue;
+    const key = requirementParameterKey(type, field);
+    if (!existingParams.has(key)) {
+      manifest.parameters.push({
+        key,
+        label: `${resource.kind || type} ${field}`.replace(/_/g, ' '),
+        type: 'string',
+        scope: 'workspace',
+        source: 'user',
+        required: false,
+        description: `Satisfies the ${type} resource requirement field '${field}'.`,
+      });
+      existingParams.add(key);
+    }
+  }
+
+  const stepId = `bind-${type}`.replace(/[^A-Za-z0-9_-]+/g, '-');
+  if (!(manifest.provisioning || []).some((s) => s.id === stepId)) {
+    manifest.provisioning.push({
+      id: stepId,
+      label: `Bind ${resource.kind || type}`,
+      system: RESOURCE_SYSTEM_BY_KIND[resource.kind] || 'accounts',
+      mode: 'provision',
+      required: true,
+      notes: resource.provision_relation || 'resource_bound requirement',
+    });
+  }
+}
+
+function reduceResourceBoundFile(file, typeDef, profile) {
+  const binds = typeDef?.resource?.binds;
+  if (!Array.isArray(binds) || binds.length === 0) {
+    throw new Error(`Cannot export resource_bound '${file.path}' in ${profile}: registry type '${typeDef?.type || '(unknown)'}' does not declare resource.binds.`);
+  }
+  const { data, body } = parseDocument(file.content);
+  const reduced = { ...data, x_portability: 'resource_bound' };
+  for (const field of binds) reduced[field] = 'REQUIREMENT';
+  return { path: file.path, content: serializeDocument(reduced, body), resourceFields: binds };
 }
 
 /** sha256 over the canonical file serialization (§16.3). */
@@ -75,10 +138,13 @@ export function exportBundle(vaultRoot, opts = {}) {
   const includes = PROFILE_INCLUDES[profile];
   if (!includes) throw new Error(`Unknown export profile '${profile}'. Use backup | template | sale.`);
 
-  const { types } = loadRegistries(registryDir);
+  const { types, core } = loadRegistries(registryDir);
   const dropped = [];
   const kept = [];
   const inventory = {};
+  const manifestParameters = [...parameters];
+  const manifestProvisioning = [...provisioning];
+  const manifestDraft = { parameters: manifestParameters, provisioning: manifestProvisioning };
 
   for (const file of walkVault(vaultRoot)) {
     const { data } = parseDocument(file.content);
@@ -86,7 +152,13 @@ export function exportBundle(vaultRoot, opts = {}) {
     const typeDef = types.get(type);
     const klass = resolvePortability(typeDef, data);
     if (!includes.has(klass)) { dropped.push({ path: file.path, type, portability: klass }); continue; }
-    kept.push(file);
+    if ((profile === 'sale' || profile === 'template') && klass === 'resource_bound') {
+      const reduced = reduceResourceBoundFile(file, typeDef, profile);
+      kept.push({ path: reduced.path, content: reduced.content });
+      ensureRequirementDeclarations(manifestDraft, typeDef, reduced.resourceFields);
+    } else {
+      kept.push(file);
+    }
     if (type) inventory[type] = (inventory[type] || 0) + 1;
   }
 
@@ -94,12 +166,12 @@ export function exportBundle(vaultRoot, opts = {}) {
   const manifest = {
     name, description, version,
     exported_at: exportedAt,
-    ssss_core_version: loadRegistries(registryDir).core.spec_version,
+    ssss_core_version: core.spec_version,
     required_extensions: requiredExtensions,
     export_profile: profile,
     primitive_inventory: inventory,
-    provisioning,
-    parameters,
+    provisioning: manifestProvisioning,
+    parameters: manifestParameters,
     file_count: files.length,
     provenance: { content_hash: contentHash(files), exporter },
   };
@@ -114,22 +186,27 @@ export function exportBundle(vaultRoot, opts = {}) {
  */
 export function validateBundle(bundle, opts = {}) {
   const errors = [];
-  const { types, core } = loadRegistries(opts.registryDir);
+  const { types, core, extensions } = loadRegistries(opts.registryDir);
   const m = bundle && bundle.manifest;
   if (!m) return { valid: false, errors: ['bundle has no manifest'] };
+  const files = Array.isArray(bundle.files) ? bundle.files : [];
 
   for (const f of core.bundle.manifest_required_fields) {
     if (m[f] === undefined || m[f] === null) errors.push(`manifest missing required field '${f}'`);
+  }
+  if (!Array.isArray(bundle.files)) errors.push('bundle.files must be an array');
+  for (const ext of m.required_extensions || []) {
+    if (!extensions.has(ext)) errors.push(`required extension '${ext}' is not loaded`);
   }
   if (!PROFILE_INCLUDES[m.export_profile]) errors.push(`invalid export_profile '${m.export_profile}'`);
   if (m.ssss_core_version && m.ssss_core_version !== core.spec_version) {
     errors.push(`bundle targets ssss_core_version ${m.ssss_core_version}; host is ${core.spec_version}`);
   }
-  if (Array.isArray(bundle.files) && m.file_count !== bundle.files.length) {
-    errors.push(`file_count ${m.file_count} ≠ actual ${bundle.files.length}`);
+  if (m.file_count !== files.length) {
+    errors.push(`file_count ${m.file_count} ≠ actual ${files.length}`);
   }
   const seenPaths = new Set();
-  for (const file of bundle.files || []) {
+  for (const file of files) {
     if (!isSafeBundlePath(file.path)) {
       errors.push(`file '${file.path || '(missing)'}' has an unsafe bundle path`);
       continue;
@@ -142,7 +219,7 @@ export function validateBundle(bundle, opts = {}) {
     for (const f of core.bundle.provenance_required_fields) {
       if (m.provenance[f] === undefined) errors.push(`provenance missing '${f}'`);
     }
-    const recomputed = contentHash(bundle.files || []);
+    const recomputed = contentHash(files);
     if (m.provenance.content_hash && m.provenance.content_hash !== recomputed) {
       errors.push(`content_hash mismatch: manifest ${m.provenance.content_hash} ≠ recomputed ${recomputed}`);
     }
@@ -150,7 +227,7 @@ export function validateBundle(bundle, opts = {}) {
   // Portability conformance: no file may exceed what the profile permits (§5.5).
   const includes = PROFILE_INCLUDES[m.export_profile];
   if (includes) {
-    for (const file of bundle.files || []) {
+    for (const file of files) {
       if (!isSafeBundlePath(file.path)) continue;
       const base = path.basename(file.path || '');
       if (base === 'index.md' || base === 'log.md') continue;
@@ -174,6 +251,17 @@ export function validateBundle(bundle, opts = {}) {
       const klass = resolvePortability(types.get(data.type), data);
       if (!includes.has(klass)) {
         errors.push(`file '${file.path}' is ${klass}, excluded by profile '${m.export_profile}'`);
+      }
+      if ((m.export_profile === 'sale' || m.export_profile === 'template') && klass === 'resource_bound') {
+        const binds = def.resource?.binds || [];
+        if (!binds.length) {
+          errors.push(`file '${file.path}' is resource_bound but registry type '${data.type}' declares no resource.binds`);
+        }
+        for (const field of binds) {
+          if (data[field] !== 'REQUIREMENT') {
+            errors.push(`file '${file.path}' leaks resource_bound field '${field}' in ${m.export_profile} bundle`);
+          }
+        }
       }
     }
   }
@@ -256,6 +344,7 @@ export function provisionBundle(bundle, opts = {}) {
 export function importBundle(plan, vaultRoot, engine) {
   const results = [];
   for (const env of plan) results.push(engine.processOperation(env, vaultRoot));
-  const committed = results.filter((r) => r.success && !r.replay).length;
-  return { ok: results.every((r) => r.success), committed, results };
+  const committed = results.filter((r) => r.success && !r.replay && !r.dry_run).length;
+  const wouldCommit = results.filter((r) => r.success && !r.replay && r.dry_run).length;
+  return { ok: results.every((r) => r.success), committed, wouldCommit, results };
 }

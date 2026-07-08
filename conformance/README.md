@@ -31,12 +31,14 @@ npx ssss conformance --endpoint <url> --token <pat>   # run fixtures against a l
 
 The runner validates that the fixture file is well-formed and that every
 `expected_response` is internally consistent with the envelope rules. With
-`--engine`, it replays every fixture through the reference engine (`src/engine.mjs`)
-checks workflow runtime planning (`src/runtime.mjs`, spec §11.8), and round-trips
-the reference bundle (validate → provision → import → re-import, spec §16/§17)
-against a temp vault — proving idempotency and that no `tenant_private` file ever
-lands. With `--endpoint`, it POSTs each fixture's `request` to a host's Operation
-Contract endpoint and diffs the response.
+`--engine`, it replays every fixture through the reference engine (`src/engine.mjs`),
+checks workflow runtime planning (`src/runtime.mjs`, spec §11.8), runs regression
+coverage for patch serialization and leases (§6/§7), and round-trips the
+reference bundle (validate → provision → import → re-import, spec §16/§17)
+against a temp vault — proving idempotency, strict bundle shape validation, and
+that no `tenant_private` or seller-bound `resource_bound` value ever lands. With
+`--endpoint`, it POSTs each fixture's `request` to a host's Operation Contract
+endpoint and diffs the response.
 
 ## Core vs. extension registry
 

@@ -2,7 +2,7 @@
  * `ssss new` — scaffold a fresh repo wired for SSSS (and, optionally, Total Recall).
  *
  * Produces a ready-to-run project: a starter `vault/` of core primitives, the
- * `@ssss/cli` dependency pinned to this CLI's own version tag, a dependency-free
+ * `@gregiteen/ssss-cli` dependency pinned to this CLI's own version tag, a dependency-free
  * conformance test (`node --test`) that replays the canonical fixtures through the
  * engine AND round-trips the vault as a `sale` bundle, plus a CLAUDE.md describing
  * the conventions. With `--with-total-recall` it also wires the Total Recall
@@ -31,7 +31,7 @@ const HELP = usage({
     ['--with-total-recall', 'Also wire the Total Recall memory OS (total-recall-brain).'],
     ['--install', 'Run `npm install` after scaffolding (and Total Recall init if requested).'],
     ['--no-git', 'Do not run `git init`.'],
-    ['--ref <git-ref>', `Pin @ssss/cli to this ref (default: v${VERSION}).`],
+    ['--ref <git-ref>', `Pin @gregiteen/ssss-cli to this ref (default: v${VERSION}).`],
     ['--force', 'Allow scaffolding into a non-empty directory.'],
   ],
   examples: [
@@ -81,7 +81,7 @@ export async function run(argv) {
       export: 'ssss export vault --profile sale --out dist/bundle.ucw.json',
       validate: 'ssss conformance --engine',
     },
-    dependencies: { '@ssss/cli': `github:gregiteen/ssss#${ref}` },
+    dependencies: { '@gregiteen/ssss-cli': `github:gregiteen/ssss#${ref}` },
     ...(withTR ? { devDependencies: { 'total-recall-brain': 'latest' } } : {}),
   };
   W(root, 'package.json', JSON.stringify(pkg, null, 2) + '\n');
@@ -94,7 +94,7 @@ export async function run(argv) {
   W(root, 'vault/assistants/concierge.md',
     '---\ntype: assistant\ntitle: Concierge\ndescription: Starter assistant definition for the project.\ntimestamp: 2026-07-02T00:00:00Z\nname: Concierge\n---\n\n# Concierge\n\nA starter assistant definition.\n');
   W(root, 'vault/tasks/first-task.md',
-    '---\ntype: task\ntitle: First Task\ndescription: Starter private setup task that demonstrates tenant_private filtering.\ntimestamp: 2026-07-02T00:00:00Z\npriority: normal\ncategory: setup\nstatus: open\n---\n\n# First task\n\nThis is `tenant_private` (§5.5) — it is **dropped** from `template`/`sale` exports.\n');
+    '---\ntype: task\ntitle: First Task\ndescription: Starter private setup task that demonstrates tenant_private filtering.\ntimestamp: 2026-07-02T00:00:00Z\npriority: normal\ncategory: setup\nstatus: pending\n---\n\n# First task\n\nThis is `tenant_private` (§5.5) — it is **dropped** from `template`/`sale` exports.\n');
 
   // ── conformance test (zero-dependency: node --test) ─────────────────────
   W(root, 'test/ssss-conformance.test.mjs', CONFORMANCE_TEST);
@@ -107,7 +107,7 @@ export async function run(argv) {
   // ── git + install (best-effort, flag-gated, no shell) ───────────────────
   const log = (m) => console.error(m);
   log(`Scaffolded SSSS project → ${root}`);
-  log(`  @ssss/cli pinned to github:gregiteen/ssss#${ref}`);
+  log(`  @gregiteen/ssss-cli pinned to github:gregiteen/ssss#${ref}`);
   if (withTR) log('  Total Recall wired (total-recall-brain).');
 
   if (!flags['no-git'] && !fs.existsSync(path.join(root, '.git'))) {
@@ -153,11 +153,11 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { createEngine } from '@ssss/cli/engine';
-import { exportBundle, validateBundle, provisionBundle, importBundle } from '@ssss/cli/bundle';
+import { createEngine } from '@gregiteen/ssss-cli/engine';
+import { exportBundle, validateBundle, provisionBundle, importBundle } from '@gregiteen/ssss-cli/bundle';
 
 const require = createRequire(import.meta.url);
-const { fixtures } = require('@ssss/cli/conformance/fixtures.json');
+const { fixtures } = require('@gregiteen/ssss-cli/conformance/fixtures.json');
 const VAULT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', 'vault');
 
 test('engine implements the canonical Operation Contract (spec §6)', () => {
@@ -199,7 +199,7 @@ function readme(name, withTR) {
   return `# ${name}
 
 An [SSSS](https://github.com/gregiteen/ssss)-native project: a Markdown **vault** is
-the source of truth, validated and packaged by the dependency-free \`@ssss/cli\`.
+the source of truth, validated and packaged by the dependency-free \`@gregiteen/ssss-cli\`.
 
 ## Layout
 
@@ -240,9 +240,9 @@ This repo uses **SSSS** (Structured Semantic Syntax System) as its state contrac
 
 ## Source of truth
 - \`vault/\` is the only source of truth — typed Markdown documents with YAML
-  frontmatter. Every file declares a \`type\` defined in the \`@ssss/cli\` core registry.
+  frontmatter. Every file declares a \`type\` defined in the \`@gregiteen/ssss-cli\` core registry.
 - Mutate the vault through the standard, not by hand-writing files in bulk:
-  \`npx ssss\` for bundle/tenant tooling, or the \`@ssss/cli/engine\` Operation Contract
+  \`npx ssss\` for bundle/tenant tooling, or the \`@gregiteen/ssss-cli/engine\` Operation Contract
   in code.
 
 ## Portability (§5.5) — the rule that matters

@@ -54,11 +54,11 @@ database canonical.
 
 ## Reference helpers
 
-Use `@ssss/cli/runtime` when building a host daemon:
+Use `@gregiteen/ssss-cli/runtime` when building a host daemon:
 
 ```js
-import { createEngine } from '@ssss/cli/engine';
-import { planWorkflowTrigger } from '@ssss/cli/runtime';
+import { createEngine } from '@gregiteen/ssss-cli/engine';
+import { planWorkflowTrigger } from '@gregiteen/ssss-cli/runtime';
 
 const plan = planWorkflowTrigger({
   workflowPath: 'workflows/daily-digest/WORKFLOW.md',

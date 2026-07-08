@@ -57,11 +57,11 @@ timestamp: 2026-06-30T00:00:00Z
   fail-closed-on-missing-actor requirement
 - `[x]` Wrote `docs/help/roles.md` for the `security_role`/RBAC primitive (auto-discovered by
   `ssss help roles`)
-- `[ ]` Add lease acquire/conflict/expiry conformance fixtures and `docs/help/leases.md`
-  — **deferred**, larger scope (needs a lease-store test harness), not started this session
-- `[ ]` Fix silent nested-map drop in `src/frontmatter.mjs`'s `serializeDocument` (add warning/
-  repair signal, don't silently lose data); add regression fixture — **deferred**, not started
-  this session
+- `[~]` Add lease acquire/conflict/expiry conformance fixtures and `docs/help/leases.md`
+  — transferred to `docs/projects/completed/IMPROVEMENTS/` and implemented there.
+- `[~]` Fix silent nested-map drop in `src/frontmatter.mjs`'s `serializeDocument` (add warning/
+  repair signal, don't silently lose data); add regression fixture — transferred to
+  `docs/projects/completed/IMPROVEMENTS/` and implemented there.
 
 ### Phase 3 — Tooling, migration proof, and interoperability positioning ⬜ (mostly deferred)
 - `[ ]` Publish JSON Schema for `registry/core.json` and the `.ucw` bundle manifest; fix the dead

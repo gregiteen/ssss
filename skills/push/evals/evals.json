@@ -1,0 +1,14 @@
+[
+  {
+    "assertion": "The skill tells agents to run the SSSS conformance suite before release.",
+    "expected": "preflight-release.mjs runs scripts/conformance.mjs conformance --engine"
+  },
+  {
+    "assertion": "The skill preserves tag publishing as a required release step.",
+    "expected": "Release guidance includes git tag v<version> and pushing that tag."
+  },
+  {
+    "assertion": "The skill covers npm publication only after repository verification.",
+    "expected": "Release checklist includes npm publish --access public after checks and tag push."
+  }
+]

@@ -5,6 +5,27 @@ All notable changes to the SSSS (Structured Semantic Syntax System) spec will be
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.7.1] - 2026-07-08
+### Fixed
+- Reduced `resource_bound` primitives to requirement declarations in `template`
+  and `sale` exports, preventing seller-bound domain, phone, or integration
+  values from leaking into bundles.
+- Rejected malformed bundles with missing `files` arrays and unknown
+  `required_extensions`.
+- Preserved nested frontmatter maps and arrays during patch serialization.
+- Corrected `ssss import --dry-run` accounting to report `would commit` counts
+  while leaving target vaults empty.
+- Generated starter and reference task files now use the valid `pending` task
+  status.
+
+### Added
+- Conformance coverage for resource-bound export reduction, strict bundle
+  validation, lease conflict/expiry/unreadable-state behavior, nested
+  frontmatter patching, `ssss new` scaffold validation, and dry-run import
+  behavior.
+- `docs/help/leases.md` and completed `IMPROVEMENTS` project documentation.
+- Full package content for the `push` skill so skill conformance passes.
+
 ## [0.7.0] - 2026-07-02
 ### Changed
 - **BREAKING: universal frontmatter enforcement** — every SSSS document primitive
