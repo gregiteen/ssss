@@ -63,7 +63,11 @@ export async function run(argv) {
   const engine = createEngine({ registryDir: flags.registry });
   const result = importBundle(envelopes, vault, engine);
   const failed = result.results.filter((r) => !r.success);
-  console.log(`${result.ok ? '✓' : '✗'} import — ${result.committed} committed, ${envelopes.length - result.committed} unchanged (idempotent), ${failed.length} failed → ${vault}`);
+  if (flags['dry-run']) {
+    console.log(`${result.ok ? '✓' : '✗'} import dry-run — ${result.wouldCommit || 0} would commit, ${envelopes.length - (result.wouldCommit || 0)} unchanged (idempotent), ${failed.length} failed → ${vault}`);
+  } else {
+    console.log(`${result.ok ? '✓' : '✗'} import — ${result.committed} committed, ${envelopes.length - result.committed} unchanged (idempotent), ${failed.length} failed → ${vault}`);
+  }
   if (failed.length) {
     for (const r of failed) console.error(`  ✗ ${r.path}: ${(r.validation?.errors || []).join('; ')}`);
     process.exit(1);

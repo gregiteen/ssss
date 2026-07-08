@@ -20,8 +20,16 @@ restrictive of (type default, override) wins.
 | `template` | structural + resource_bound | A reusable template, private data stripped. |
 | `sale` | structural + resource_bound | A tradeable business, private data stripped. |
 
-> `template` and `sale` exports MUST drop every `tenant_private` primitive. The
-> reference bundle (`conformance/reference-bundle.ucw.json`) proves this: its
-> `task` ticket is dropped from the `sale` export.
+> `template` and `sale` exports MUST drop every `tenant_private` primitive and
+> reduce every `resource_bound` primitive to a requirement declaration. The
+> seller's actual domain, phone number, provider, or connection value must not
+> appear in the bundle.
+
+For resource-bound files, the reference exporter uses the extension registry's
+`resource.binds` metadata to replace bound fields with `REQUIREMENT` and add
+matching provisioning requirements. The reference bundle
+(`conformance/reference-bundle.ucw.json`) proves both guarantees: its `task`
+ticket is dropped from the `sale` export, and its `domain` file carries only
+requirement placeholders.
 
 See also: `ssss help bundle`, `ssss help export`.

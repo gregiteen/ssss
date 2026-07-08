@@ -4,7 +4,7 @@ The **Structured Semantic Syntax System** is a database-free, Markdown-first sch
 and mutation contract for AI-agent state. A vault is a directory of Markdown files
 with YAML frontmatter; every file declares a `type` defined in the registry.
 
-`@ssss/cli` is the reference implementation: a dependency-free Operation Contract
+`@gregiteen/ssss-cli` is the reference implementation: a dependency-free Operation Contract
 engine, a registry-driven validator, and the `.ucw` bundle/provisioning tooling.
 
 ## The pieces

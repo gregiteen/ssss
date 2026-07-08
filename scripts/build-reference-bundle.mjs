@@ -104,7 +104,7 @@ description: Private support task for an attendee seat-change request.
 timestamp: 2026-07-02T00:00:00Z
 priority: high
 category: support
-status: open
+status: pending
 ---
 Attendee jane@example.com requested a seat change.`,
 };

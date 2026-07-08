@@ -39,6 +39,14 @@
         "system": "email",
         "mode": "provision",
         "required": false
+      },
+      {
+        "id": "bind-domain",
+        "label": "Bind domain",
+        "system": "domains",
+        "mode": "provision",
+        "required": true,
+        "notes": "owns_domain"
       }
     ],
     "parameters": [
@@ -66,11 +74,20 @@
         "scope": "workspace",
         "source": "user",
         "required": false
+      },
+      {
+        "key": "domain_registrar",
+        "label": "domain registrar",
+        "type": "string",
+        "scope": "workspace",
+        "source": "user",
+        "required": false,
+        "description": "Satisfies the domain resource requirement field 'registrar'."
       }
     ],
     "file_count": 14,
     "provenance": {
-      "content_hash": "sha256:96380f618ee1e178331beca9507e1b3cd28a3d12cfa7f9898317f98da8295218",
+      "content_hash": "sha256:7febd673938a3dc04c068e0bf08097a9783c09e612606d2df9a4db8dcb8907f5",
       "exporter": "@ssss/cli@0.7.0"
     }
   },
@@ -85,7 +102,7 @@
     },
     {
       "path": "domains/festival.md",
-      "content": "---\ntype: domain\ntitle: Festival Domain Requirement\ndescription: Domain resource requirement that the buyer binds during provisioning.\ntimestamp: 2026-07-02T00:00:00Z\ndomain_name: REQUIREMENT\nregistrar: REQUIREMENT\nstatus: required\npayment_status: unbound\nx_portability: resource_bound\n---\nThis festival needs a domain. The buyer binds their own at provision (owns_domain)."
+      "content": "---\ntype: domain\ntitle: Festival Domain Requirement\ndescription: Domain resource requirement that the buyer binds during provisioning.\ntimestamp: \"2026-07-02T00:00:00Z\"\ndomain_name: REQUIREMENT\nregistrar: REQUIREMENT\nstatus: required\npayment_status: unbound\nx_portability: resource_bound\n---\nThis festival needs a domain. The buyer binds their own at provision (owns_domain)."
     },
     {
       "path": "domains/index.md",

@@ -14,6 +14,8 @@
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
+import crypto from 'node:crypto';
+import { execFileSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import { createEngine } from '../src/engine.mjs';
 import { validateBundle, provisionBundle, importBundle } from '../src/bundle.mjs';
@@ -194,6 +196,26 @@ function runBundleConformance() {
   check('reference bundle is schema- and hash-valid', valid, errors.join('; '));
   check('sale profile carries no tenant_private file',
     bundle.files.every((f) => parseDocument(f.content).data.type !== 'task' && parseDocument(f.content).data.type !== 'conversation'));
+  check('sale profile reduces resource_bound fields to requirement declarations',
+    bundle.files.every((f) => {
+      const data = parseDocument(f.content).data;
+      if (data.type !== 'domain') return true;
+      return data.domain_name === 'REQUIREMENT' && data.registrar === 'REQUIREMENT';
+    }));
+
+  const missingFilesBundle = JSON.parse(JSON.stringify(bundle));
+  delete missingFilesBundle.files;
+  const missingFilesValidation = validateBundle(missingFilesBundle, { registryDir: REGISTRY_DIR });
+  check('bundle validation rejects missing files array',
+    !missingFilesValidation.valid && missingFilesValidation.errors.some((e) => e.includes('bundle.files must be an array')),
+    missingFilesValidation.errors.join('; '));
+
+  const unknownExtensionBundle = JSON.parse(JSON.stringify(bundle));
+  unknownExtensionBundle.manifest.required_extensions = ['missing-extension'];
+  const unknownExtensionValidation = validateBundle(unknownExtensionBundle, { registryDir: REGISTRY_DIR });
+  check('bundle validation rejects unknown required_extensions entries',
+    !unknownExtensionValidation.valid && unknownExtensionValidation.errors.some((e) => e.includes("required extension 'missing-extension'")),
+    unknownExtensionValidation.errors.join('; '));
 
   const prov = provisionBundle(bundle, { workspaceId: 'ws-conf', parameters: { business_name: 'Demo', domain: 'demo.example' } });
   check('provision resolves params + link integrity (no dangling [[links]])', prov.ok,
@@ -222,6 +244,180 @@ function runBundleConformance() {
     else console.log(`  ❌ ${c.name}${c.detail ? ` — ${c.detail}` : ''}`);
   }
   console.log(`\n  ${pass}/${checks.length} bundle/provisioning checks passed (§16/§17)`);
+  return pass === checks.length;
+}
+
+function runOperationContractRegressionConformance() {
+  const checks = [];
+  const check = (name, cond, detail = '') => { checks.push({ name, cond, detail }); };
+
+  const vault = fs.mkdtempSync(path.join(os.tmpdir(), 'ssss-op-reg-'));
+  const leaseStore = fs.mkdtempSync(path.join(os.tmpdir(), 'ssss-lease-'));
+  try {
+    const engine = createEngine({ registryDir: REGISTRY_DIR, leaseStore });
+    const workflowPath = 'workflows/nested.md';
+    const createRes = engine.processOperation({
+      type: 'operation',
+      idempotency_key: 'nested-create',
+      workspace_id: 'ws-reg',
+      path: workflowPath,
+      actor: { role: 'system' },
+      content: [
+        '---',
+        'type: workflow',
+        'title: Nested Workflow',
+        'description: Exercises nested frontmatter patch serialization.',
+        'timestamp: 2026-07-02T00:00:00Z',
+        'name: Nested Workflow',
+        'triggers:',
+        '  - type: cron',
+        '    id: morning',
+        '    cron: "0 8 * * *"',
+        '    timezone: "America/Denver"',
+        '---',
+        '',
+        'Body.',
+        '',
+      ].join('\n'),
+    }, vault);
+    check('nested frontmatter fixture commits before patch', createRes.success === true, JSON.stringify(createRes.validation?.errors || []));
+
+    const patchRes = engine.processOperation({
+      type: 'patch',
+      idempotency_key: 'nested-patch',
+      workspace_id: 'ws-reg',
+      path: workflowPath,
+      actor: { role: 'system' },
+      patches: { description: 'Patched without dropping triggers.' },
+    }, vault);
+    const patched = fs.readFileSync(path.join(vault, workflowPath), 'utf8');
+    const patchedData = parseDocument(patched).data;
+    check('patch preserves nested frontmatter arrays of maps',
+      patchRes.success === true && Array.isArray(patchedData.triggers) && patchedData.triggers[0]?.cron === '0 8 * * *',
+      patched);
+
+    const leaseTarget = 'rules/leased.md';
+    const leasePathKey = crypto.createHash('sha256').update(leaseTarget).digest('hex');
+    const leaseDir = path.join(leaseStore, 'ws-reg');
+    fs.mkdirSync(leaseDir, { recursive: true });
+    fs.writeFileSync(path.join(leaseDir, `${leasePathKey}.lease.json`), JSON.stringify({
+      lease_id: 'lease-ok',
+      expires_at: '2999-01-01T00:00:00.000Z',
+    }));
+    const leasedEnvelope = {
+      type: 'operation',
+      idempotency_key: 'lease-missing',
+      workspace_id: 'ws-reg',
+      path: leaseTarget,
+      actor: { role: 'system' },
+      content: '---\ntype: rule\ntitle: Leased\ndescription: Lease test.\ntimestamp: 2026-07-02T00:00:00Z\nname: Leased\n---\nBody.\n',
+    };
+    const missingLease = engine.processOperation(leasedEnvelope, vault);
+    check('lease conflict rejects missing lease_id', missingLease.success === false && missingLease.validation.errors.some((e) => e.includes('leased')));
+
+    const mismatchLease = engine.processOperation({ ...leasedEnvelope, idempotency_key: 'lease-mismatch', lease_id: 'wrong' }, vault);
+    check('lease conflict rejects mismatched lease_id', mismatchLease.success === false && mismatchLease.validation.errors.some((e) => e.includes('Lease mismatch')));
+
+    const matchedLease = engine.processOperation({ ...leasedEnvelope, idempotency_key: 'lease-match', lease_id: 'lease-ok' }, vault);
+    check('lease allows matching lease_id', matchedLease.success === true, JSON.stringify(matchedLease.validation?.errors || []));
+
+    const expiredTarget = 'rules/expired.md';
+    const expiredPathKey = crypto.createHash('sha256').update(expiredTarget).digest('hex');
+    fs.writeFileSync(path.join(leaseDir, `${expiredPathKey}.lease.json`), JSON.stringify({
+      lease_id: 'expired',
+      expires_at: '2000-01-01T00:00:00.000Z',
+    }));
+    const expiredLease = engine.processOperation({ ...leasedEnvelope, idempotency_key: 'lease-expired', path: expiredTarget }, vault);
+    check('expired lease does not block writes', expiredLease.success === true, JSON.stringify(expiredLease.validation?.errors || []));
+
+    const unreadableTarget = 'rules/unreadable.md';
+    const unreadablePathKey = crypto.createHash('sha256').update(unreadableTarget).digest('hex');
+    fs.writeFileSync(path.join(leaseDir, `${unreadablePathKey}.lease.json`), '{not json');
+    const unreadableLease = engine.processOperation({ ...leasedEnvelope, idempotency_key: 'lease-unreadable', path: unreadableTarget }, vault);
+    check('unreadable lease state fails closed', unreadableLease.success === false && unreadableLease.validation.errors.some((e) => e.includes('unreadable')));
+  } finally {
+    fs.rmSync(vault, { recursive: true, force: true });
+    fs.rmSync(leaseStore, { recursive: true, force: true });
+  }
+
+  let pass = 0;
+  for (const c of checks) {
+    if (c.cond) { pass++; console.log(`  ✅ ${c.name}`); }
+    else console.log(`  ❌ ${c.name}${c.detail ? ` — ${c.detail}` : ''}`);
+  }
+  console.log(`\n  ${pass}/${checks.length} operation regression checks passed (§6/§7)`);
+  return pass === checks.length;
+}
+
+function runCliSmokeConformance() {
+  const checks = [];
+  const check = (name, cond, detail = '') => { checks.push({ name, cond, detail }); };
+  const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'ssss-cli-smoke-'));
+  try {
+    const starter = path.join(tmp, 'starter');
+    execFileSync('node', [path.join(__dirname, 'ssss.mjs'), 'new', starter, '--no-git'], { stdio: 'ignore' });
+    const vault = path.join(starter, 'vault');
+    const files = [];
+    (function walk(dir) {
+      for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
+        const abs = path.join(dir, entry.name);
+        if (entry.isDirectory()) walk(abs);
+        else if (entry.name.endsWith('.md')) files.push(abs);
+      }
+    })(vault);
+    const engine = createEngine({ registryDir: REGISTRY_DIR });
+    const failures = [];
+    for (const abs of files) {
+      const rel = path.relative(vault, abs);
+      const res = engine.processOperation({
+        type: 'operation',
+        idempotency_key: `scaffold-${rel.replace(/[^A-Za-z0-9._-]/g, '_')}`,
+        workspace_id: 'ws-scaffold',
+        path: rel,
+        content: fs.readFileSync(abs, 'utf8'),
+        dry_run: true,
+        actor: { role: 'system' },
+      }, vault);
+      if (!res.success) failures.push({ rel, errors: res.validation?.errors || [] });
+    }
+    check('ssss new starter vault files validate against the registry', files.length > 0 && failures.length === 0, JSON.stringify(failures));
+
+    const dryRunVault = path.join(tmp, 'dry-run-vault');
+    const dryRunOut = execFileSync('node', [
+      path.join(__dirname, 'ssss.mjs'),
+      'import',
+      REFERENCE_BUNDLE,
+      '--vault',
+      dryRunVault,
+      '--param',
+      'business_name=Demo',
+      '--param',
+      'domain=demo.example',
+      '--dry-run',
+    ], { encoding: 'utf8' });
+    const dryRunFiles = [];
+    if (fs.existsSync(dryRunVault)) {
+      (function walkDryRun(dir) {
+        for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
+          const abs = path.join(dir, entry.name);
+          if (entry.isDirectory()) walkDryRun(abs);
+          else if (entry.isFile()) dryRunFiles.push(abs);
+        }
+      })(dryRunVault);
+    }
+    check('ssss import --dry-run reports would-commit counts and leaves target empty',
+      dryRunOut.includes('would commit') && dryRunFiles.length === 0,
+      dryRunOut.trim());
+  } finally {
+    fs.rmSync(tmp, { recursive: true, force: true });
+  }
+
+  let pass = 0;
+  for (const c of checks) {
+    if (c.cond) { pass++; console.log(`  ✅ ${c.name}`); }
+    else console.log(`  ❌ ${c.name}${c.detail ? ` — ${c.detail}` : ''}`);
+  }
+  console.log(`\n  ${pass}/${checks.length} CLI smoke checks passed`);
   return pass === checks.length;
 }
 
@@ -395,9 +591,13 @@ async function main() {
     const engineOk = runAgainstEngine(doc);
     console.log('\nRunning workflow runtime conformance (src/runtime.mjs, §11.8) ...');
     const runtimeOk = runRuntimeConformance();
+    console.log('\nRunning operation regression conformance (src/engine.mjs, §6/§7) ...');
+    const operationRegressionOk = runOperationContractRegressionConformance();
     console.log('\nRunning bundle/provisioning conformance (src/bundle.mjs, §16/§17) ...');
     const bundleOk = runBundleConformance();
-    process.exit(engineOk && runtimeOk && bundleOk ? 0 : 1);
+    console.log('\nRunning CLI smoke conformance (scripts/ssss.mjs) ...');
+    const cliSmokeOk = runCliSmokeConformance();
+    process.exit(engineOk && runtimeOk && operationRegressionOk && bundleOk && cliSmokeOk ? 0 : 1);
   } else {
     console.log('\nℹ  No --endpoint/--engine given; ran structural + registry validation only.');
     console.log('   Reference engine:  ssss conformance --engine');

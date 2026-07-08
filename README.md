@@ -22,15 +22,15 @@ SSSS is the vendor-neutral standard and reference implementation shared by
 - **The `.ucw` bundle format** (§16) and **provisioning contract** (§17) — package a
   vault, then `export → provision → import` it into a fresh tenant, deterministically.
 
-This package, `@ssss/cli`, is **dependency-free**: a host needs neither Zod nor a YAML
+This package, `@gregiteen/ssss-cli`, is **dependency-free**: a host needs neither Zod nor a YAML
 library to be conformant. The reference engine *is* the validator.
 
 ## Install
 
 ```bash
-npm install -g @ssss/cli      # the `ssss` command
+npm install -g @gregiteen/ssss-cli      # the `ssss` command
 # or use it as a library:
-npm install @ssss/cli
+npm install @gregiteen/ssss-cli
 ```
 
 Requires Node 18+. No runtime dependencies.
@@ -79,16 +79,16 @@ ssss import festival.ucw.json --vault ./new-tenant \
 | `ssss import <bundle>` | Replay a bundle/plan into a vault via the engine (idempotent). |
 | `ssss autolink [dir]` | Generate OKF wiki-links across a vault. |
 | `ssss conformance` | Run the canonical conformance suite (§12). |
-| `ssss help [topic]` | Local docs: `runtime`, `portability`, `bundle`, `provisioning`, … |
+| `ssss help [topic]` | Local docs: `runtime`, `portability`, `bundle`, `provisioning`, `leases`, … |
 
 Run `ssss <command> --help` for flags, or `ssss help <topic>` for concepts.
 
 ## Use as a library
 
 ```js
-import { createEngine } from '@ssss/cli/engine';
-import { exportBundle, validateBundle, provisionBundle, importBundle } from '@ssss/cli/bundle';
-import { planWorkflowTrigger } from '@ssss/cli/runtime';
+import { createEngine } from '@gregiteen/ssss-cli/engine';
+import { exportBundle, validateBundle, provisionBundle, importBundle } from '@gregiteen/ssss-cli/bundle';
+import { planWorkflowTrigger } from '@gregiteen/ssss-cli/runtime';
 
 const bundle = exportBundle('./my-vault', { profile: 'sale', name: 'Festival in a Box' });
 const { valid, errors } = validateBundle(bundle);
@@ -115,9 +115,9 @@ const runtimePlan = planWorkflowTrigger({
 });
 ```
 
-Exports: `@ssss/cli` / `@ssss/cli/engine` (Operation Contract engine),
-`@ssss/cli/bundle` (export/provision/import), `@ssss/cli/registry`,
-`@ssss/cli/runtime`, `@ssss/cli/frontmatter`.
+Exports: `@gregiteen/ssss-cli` / `@gregiteen/ssss-cli/engine` (Operation Contract engine),
+`@gregiteen/ssss-cli/bundle` (export/provision/import), `@gregiteen/ssss-cli/registry`,
+`@gregiteen/ssss-cli/runtime`, `@gregiteen/ssss-cli/frontmatter`.
 
 ## Portability — why a vault is safe to sell
 

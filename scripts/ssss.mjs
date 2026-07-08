@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * @ssss/cli dispatcher — the `ssss` command.
+ * @gregiteen/ssss-cli dispatcher — the `ssss` command.
  *
  * Routes the first positional argument to a subcommand. The bundle/provisioning
  * commands (export/validate/inspect/provision/import/help) export a `run(argv)`
@@ -21,7 +21,7 @@ const VERSION = (() => {
   catch { return '0.0.0'; }
 })();
 
-const TOP_LEVEL_HELP = `@ssss/cli v${VERSION} — Structured Semantic Syntax System
+const TOP_LEVEL_HELP = `@gregiteen/ssss-cli v${VERSION} — Structured Semantic Syntax System
 
 Usage: ssss <command> [options]
 

@@ -103,4 +103,4 @@ When starting work on a new feature or project:
 
 ## References
 
-- SSSS Spec (current draft, v0.4): `docs/ssss-spec.md`
+- SSSS Spec (current draft, v0.6): `docs/ssss-spec.md`
