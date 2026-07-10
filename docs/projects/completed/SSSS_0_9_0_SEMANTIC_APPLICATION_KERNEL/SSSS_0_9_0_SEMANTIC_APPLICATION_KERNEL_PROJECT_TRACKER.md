@@ -333,3 +333,8 @@ Status legend: `[ ]` todo · `[x]` verified complete. A phase header changes fro
   project folder to completed after that polish.
 
 - 2026-07-10 — **Project completed.** Folder moved to `docs/projects/completed/`. Package `@gregiteen/ssss-cli@0.9.0` is the published release; host dual-path leftovers tracked in DEFERRED_BACKLOG.
+
+- 2026-07-10 — **Deferred backlog closed.** Host legacy pipelines deleted (Festech
+  processLegacy, UltraChat processOperationLegacy); defaults kernel; live Supabase
+  soak script green; SBOM artifact generated; 0.8.0 already deprecated.
+
