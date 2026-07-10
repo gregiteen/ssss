@@ -14,7 +14,7 @@ timestamp: 2026-07-10T00:00:00Z
 
 ---
 
-> **Current Phase:** Phase 8C — UltraChat rollout (8A TR ✅, 8B Festech ✅)  
+> **Current Phase:** Phase 8C — UltraChat rollout (in progress; 8A TR ✅, 8B Festech ✅)  
 > **Release Rule:** Do not publish 0.9.0 until Phase 9 is fully verified.
 
 Status legend: `[ ]` todo · `[x]` verified complete. A phase header changes from
@@ -178,17 +178,19 @@ Status legend: `[ ]` todo · `[x]` verified complete. A phase header changes fro
 
 ## ⏳ Phase 8C — UltraChat rollout
 
-- [ ] Separate UltraChat core consumption from qualified host extensions.
-- [ ] Wire system/account/workspace registry and VFS scope adapters.
-- [ ] Replace copied core validator, registry, and fixtures.
+- [x] Separate UltraChat core consumption from qualified host extensions (`ultrachatHostExtension`).
+- [x] Wire system/account/workspace registry and VFS scope adapters (`SsssScopeService` kept; `SupabaseVfs` + memory/filesystem modes).
+- [x] Dual-path package kernel bridge (`SsssKernelBridge`, default `UC_SSSS_KERNEL_MODE=legacy` until soak).
+- [ ] Replace copied core validator, registry, and fixtures after full parity.
 - [ ] Route definition changes and migrations through SSSS commands.
 - [ ] Wire replay, projection rebuild, and drift detection to package contracts.
-- [ ] Implement the trusted component/action registry and typed UI renderer.
-- [ ] Enable generative UI behind a feature flag with deterministic fallback.
-- [ ] Block or detect all direct canonical mutation paths.
+- [x] Implement the trusted component/action registry and typed UI renderer (`UltrachatUiBridge`).
+- [x] Enable generative UI behind a feature flag with deterministic fallback (`UC_SSSS_GEN_UI`).
+- [x] Block or detect all direct canonical mutation paths (package guard + host scanners).
 - [ ] Pass clean-account, scope-isolation, prompt-injection, accessibility, recovery,
       and production verification.
 - [ ] Prove a runtime workspace primitive can safely generate and execute its UI.
+- [ ] Flip default mode to `kernel-low-risk` after Supabase VFS soak.
 
 ## ⏳ Phase 9 — Testing, verification, and release
 
@@ -304,3 +306,10 @@ Status legend: `[ ]` todo · `[x]` verified complete. A phase header changes fro
   non-routed/resource-bound product primitives (SQL product projections not fully
   on package VFS yet). Inventory updated. **Next: Phase 8C UltraChat** (or Phase 9
   once all hosts ready). Do not npm-publish `@gregiteen/ssss-cli@0.9.0` until Phase 9.
+- 2026-07-10 — **Phase 8C started (UltraChat).** Inventory under
+  `ultrachat-ai-powered/docs/projects/in-progress/ssss-0-9-host-rollout/`. Added
+  `ultrachatHostExtension`, `SsssKernelBridge` (dual-path, Memory/FS/Supabase VFS),
+  `SupabaseVfs`, `UltrachatUiBridge` (trusted UI + gen-UI flag), direct-write
+  detector, 14 bridge tests green. Default `UC_SSSS_KERNEL_MODE=legacy` until
+  Supabase soak; `kernel-low-risk` proven via tests. Remaining: schema-command
+  routing, replay/drift package contracts, production UI proof, default flip.
