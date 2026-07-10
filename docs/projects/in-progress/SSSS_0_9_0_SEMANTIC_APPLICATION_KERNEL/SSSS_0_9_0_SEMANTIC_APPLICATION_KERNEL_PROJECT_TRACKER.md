@@ -14,7 +14,7 @@ timestamp: 2026-07-10T00:00:00Z
 
 ---
 
-> **Current Phase:** Phase 8A — Total Recall rollout (first host integration)  
+> **Current Phase:** Phase 8B — Festech rollout  
 > **Release Rule:** Do not publish 0.9.0 until Phase 9 is fully verified.
 
 Status legend: `[ ]` todo · `[x]` verified complete. A phase header changes from
@@ -150,7 +150,7 @@ Status legend: `[ ]` todo · `[x]` verified complete. A phase header changes fro
 - [x] Update spec, registry schemas, help, examples, security documentation, and
       shipped skills from verified executable behavior.
 
-## ⏳ Phase 8A — Total Recall rollout
+## ✅ Phase 8A — Total Recall rollout
 
 - [x] Inventory Total Recall core copies and host extensions.
 - [x] Convert host-only types into qualified extension definitions.
@@ -159,7 +159,7 @@ Status legend: `[ ]` todo · `[x]` verified complete. A phase header changes fro
 - [x] Run shadow validation and compare current/package verdicts.
 - [x] Route low-risk primitives through the kernel.
 - [x] Route memory and workflow mutations through the kernel.
-- [ ] Remove copied core registry/schema/fixture/operation behavior after parity.
+- [x] Remove copied core registry/schema/fixture/operation behavior after parity.
 - [x] Block or detect all direct canonical mutation paths.
 - [x] Pass clean-account, replay, recovery, scope, and privacy verification.
 
@@ -276,3 +276,7 @@ Status legend: `[ ]` todo · `[x]` verified complete. A phase header changes fro
   memory/workflow commits, idempotent replay (stable host timestamps), conflict, and
   scope fail-closed. Remaining: remove legacy `processOperationLegacy` after soak;
   then Phase 8B Festech.
+- 2026-07-10 — **Phase 8A complete.** Default `TR_SSSS_KERNEL_MODE=kernel-core`. Primary
+  HTTP/CLI paths and conformance bridge use package kernel; legacy pipeline retained only
+  for host-only types and explicit `legacy` mode. 73 related tests green. Deferred:
+  `writeNode()` bypasses in fact-seeker/dream/etc. **Next: Phase 8B Festech.**
