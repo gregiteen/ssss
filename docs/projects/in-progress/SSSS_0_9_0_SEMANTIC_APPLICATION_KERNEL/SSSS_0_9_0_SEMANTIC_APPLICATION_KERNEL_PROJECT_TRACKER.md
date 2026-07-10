@@ -280,3 +280,6 @@ Status legend: `[ ]` todo · `[x]` verified complete. A phase header changes fro
   HTTP/CLI paths and conformance bridge use package kernel; legacy pipeline retained only
   for host-only types and explicit `legacy` mode. 73 related tests green. Deferred:
   `writeNode()` bypasses in fact-seeker/dream/etc. **Next: Phase 8B Festech.**
+- 2026-07-10 — **Phase 8A cleanup complete.** Removed `processOperationLegacy` entirely;
+  all Total Recall vault writes go through package kernel (`writeNode` → contract,
+  `processOperationAsync` only). 68 related tests green.
