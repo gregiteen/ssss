@@ -152,12 +152,12 @@ Status legend: `[ ]` todo · `[x]` verified complete. A phase header changes fro
 
 ## ⏳ Phase 8A — Total Recall rollout
 
-- [ ] Inventory Total Recall core copies and host extensions.
-- [ ] Convert host-only types into qualified extension definitions.
-- [ ] Wire Total Recall VFS, identity, authorization, leases, events, semantics, and
+- [x] Inventory Total Recall core copies and host extensions.
+- [x] Convert host-only types into qualified extension definitions.
+- [x] Wire Total Recall VFS, identity, authorization, leases, events, semantics, and
       projection adapters.
-- [ ] Run shadow validation and compare current/package verdicts.
-- [ ] Route low-risk primitives through the kernel.
+- [x] Run shadow validation and compare current/package verdicts.
+- [x] Route low-risk primitives through the kernel.
 - [ ] Route memory and workflow mutations through the kernel.
 - [ ] Remove copied core registry/schema/fixture/operation behavior after parity.
 - [ ] Block or detect all direct canonical mutation paths.
@@ -260,3 +260,10 @@ Status legend: `[ ]` todo · `[x]` verified complete. A phase header changes fro
   reports package version `0.9.0`, green `adapter conformance`, and resolvable
   `/kernel` + `/vfs` exports. README/overview/changelog updated from executable
   behavior. **Next:** Phase 8A Total Recall host rollout in the Total Recall repo.
+- 2026-07-10 — **Phase 8A in progress (Total Recall).** Inventory written under
+  `total-recall/docs/projects/in-progress/ssss-0-9-host-rollout/`. Added host extension
+  registry, package kernel bridge (`processViaPackageKernel`, principal mapping,
+  `TR_SSSS_KERNEL_MODE=legacy|shadow|kernel-low-risk|kernel`), shadow comparison tests,
+  and low-risk kernel routing API. Default remains legacy. Remaining: memory/workflow
+  kernel cutover, remove local core pipeline after parity, direct-write detection for
+  canonical vault paths, clean-account verification.
