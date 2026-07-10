@@ -1,0 +1,79 @@
+{
+  "suite": "phase9-cross-host-corpus",
+  "package": "@gregiteen/ssss-cli",
+  "version": "0.9.0",
+  "generated_at": "2026-07-10T21:57:14.193Z",
+  "passed": true,
+  "results": [
+    {
+      "id": "corpus-rule-create",
+      "success": true,
+      "valid": true,
+      "replay": false,
+      "dry_run": false,
+      "type": "ssss:rule",
+      "errors": [],
+      "request_hash": "sha256:87413f39f9e80276cc86707591969414a403c777ae0959195831a5735cb5d92c",
+      "passed": true
+    },
+    {
+      "id": "corpus-rule-idempotent-replay",
+      "success": true,
+      "valid": true,
+      "replay": true,
+      "dry_run": false,
+      "type": "ssss:rule",
+      "errors": [],
+      "request_hash": "sha256:87413f39f9e80276cc86707591969414a403c777ae0959195831a5735cb5d92c",
+      "passed": true
+    },
+    {
+      "id": "corpus-rule-idempotent-conflict",
+      "success": false,
+      "valid": false,
+      "replay": false,
+      "dry_run": false,
+      "type": null,
+      "errors": [
+        "Idempotency key was already used for a different request."
+      ],
+      "request_hash": "sha256:86386421c993d8b51d5a28b249bfa1c2407fc3dc29207ffac1e03c8a2df77412",
+      "passed": true
+    },
+    {
+      "id": "corpus-dry-run",
+      "success": true,
+      "valid": true,
+      "replay": false,
+      "dry_run": true,
+      "type": "ssss:rule",
+      "errors": [],
+      "request_hash": "sha256:c3f9aa7cfc10d4c1d2fa69e8b4633bb6582dc0959c3d4d3d8a52d99a750b6069",
+      "passed": true
+    },
+    {
+      "id": "corpus-multilingual-rule",
+      "success": true,
+      "valid": true,
+      "replay": false,
+      "dry_run": false,
+      "type": "ssss:rule",
+      "errors": [],
+      "request_hash": "sha256:3922787c84097d723955c9bd2844ec027ecd6b935faaa3f3c9422bba780cde2b",
+      "passed": true
+    },
+    {
+      "id": "corpus-missing-actor-denied",
+      "success": false,
+      "valid": false,
+      "replay": false,
+      "dry_run": false,
+      "type": null,
+      "errors": [
+        "Missing actor"
+      ],
+      "request_hash": "sha256:2db321802250020447b964bbdfff813e1cf5fe54c7941e2261906f2eed3da1dd",
+      "passed": true
+    }
+  ]
+}

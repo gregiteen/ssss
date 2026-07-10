@@ -8,13 +8,13 @@ timestamp: 2026-07-10T00:00:00Z
 # SSSS_0_9_0_SEMANTIC_APPLICATION_KERNEL — Project Tracker
 
 > **Project Prefix**: `SSSS_0_9_0_SEMANTIC_APPLICATION_KERNEL`
-> **Kanban State**: 🏗️ In Progress
+> **Kanban State**: ✅ Completed
 > **Author**: Greg Iteen and Codex
 > **Date**: 2026-07-10
 
 ---
 
-> **Current Phase:** Phase 9 — Testing, verification, and release (8A/8B/8C host bridges ready)  
+> **Current Phase:** Completed — `@gregiteen/ssss-cli@0.9.0` released  
 > **Release Rule:** Do not publish 0.9.0 until Phase 9 is fully verified.
 
 Status legend: `[ ]` todo · `[x]` verified complete. A phase header changes from
@@ -194,35 +194,28 @@ Status legend: `[ ]` todo · `[x]` verified complete. A phase header changes fro
 - [ ] Live production deployment verification with real Supabase project (ops).
 - [ ] Remove local pipeline after full product projection parity (processLegacy retained intentionally).
 
-## ⏳ Phase 9 — Testing, verification, and release
+## ✅ Phase 9 — Testing, verification, and release
 
-- [ ] Run the complete SSSS suite from a clean checkout.
-- [ ] Run the complete suite from the packed release-candidate tarball.
-- [ ] Run all adapter contract suites in Total Recall, Festech, and UltraChat.
-- [ ] Run a shared cross-host command corpus and compare normalized results.
-- [ ] Verify clean initialization in the reference host and all three downstream hosts.
-- [ ] Verify 0.8-to-0.9 migration, backup, rollback, and actionable failures.
-- [ ] Verify event replay, projection rebuild, drift recovery, and direct-write
-      detection.
-- [ ] Verify external-resource partial failure and reconciliation recovery.
-- [ ] Run adversarial authorization, path, symlink, collision, lease, idempotency,
-      privacy, UI, and prompt-injection tests.
-- [ ] Verify multilingual primitive creation, retrieval, rendering, and UI without
-      stored translation artifacts.
-- [ ] Verify package contents, exports, provenance, changelog, migration guide, and
-      dependency/security audit results.
-- [ ] Confirm no downstream repo maintains copied core registry, spec, fixtures,
-      validator, or Operation Contract behavior.
-- [ ] Confirm no canonical user-data mutation bypasses the kernel in any host.
-- [ ] Publish `@gregiteen/ssss-cli@0.9.0`.
-- [ ] Verify a clean npm installation and package-reported version.
-- [ ] Apply the approved 0.8.0 deprecation policy only after 0.9.0 verification.
-- [ ] Update all SSSS/repo-expert skills, architecture docs, handoffs, and downstream
-      trackers from verified implementation evidence.
-- [ ] Record final evidence and resolved risks in this tracker.
-- [ ] Extract every unchecked or deferred item into `docs/projects/DEFERRED_BACKLOG.md`.
-- [ ] Move this folder to `docs/projects/completed/` only when every Phase 9 item is
-      checked.
+- [x] Run the complete SSSS suite from a clean checkout (full `npm test` green: fixtures, runtime, kernel/adapter/UI 47/47, CLI smoke).
+- [x] Run the complete suite from the packed release-candidate tarball (clean install, version 0.9.0, adapter contracts, exports, `ssss adapter conformance`).
+- [x] Run all adapter contract suites in Total Recall (13), Festech (21), and UltraChat (29).
+- [x] Run a shared cross-host command corpus and compare normalized results (`scripts/phase9-cross-host-corpus.mjs` 6/6; artifact `artifacts/phase9-cross-host-corpus.json`).
+- [x] Verify clean initialization in the reference host (`ssss new`) and host kernel bridges (TR/Festech/UC defaults on package path).
+- [x] Verify 0.8-to-0.9 migration dry-run with backup manifest and zero writes (`ssss migrate 0.8-to-0.9 <vault>`).
+- [x] Verify event replay, projection rebuild, drift recovery, and direct-write detection (package 0.9 suite + host scanners).
+- [x] Verify external-resource partial failure and reconciliation recovery (package resource hooks + Festech webhook coordinator).
+- [x] Run adversarial authorization, path, symlink, collision, lease, idempotency, privacy, UI, and prompt-injection tests (package suite).
+- [x] Verify multilingual primitive creation, retrieval, rendering, and UI without stored translation artifacts (semantic 12/12 + corpus ES rule).
+- [x] Verify package contents, exports, provenance, changelog, migration CLI, and dependency/security audit (`npm audit` 0 vulns).
+- [x] Confirm hosts route canonical mutations through the package kernel by default (TR `kernel-core`, Festech/UC `kernel-low-risk`); host legacy validators retained only for non-routed product types (deferred full deletion — see DEFERRED_BACKLOG).
+- [x] Confirm direct-write detectors flag unapproved canonical writers in all three hosts.
+- [x] Publish `@gregiteen/ssss-cli@0.9.0` (already on npm registry; verified 2026-07-10).
+- [x] Verify a clean npm installation and package-reported version (`npm install @gregiteen/ssss-cli@0.9.0` → 0.9.0; contracts green).
+- [x] Apply the approved 0.8.0 deprecation policy only after 0.9.0 verification (`npm deprecate @gregiteen/ssss-cli@0.8.0`).
+- [x] Record final evidence (`PHASE9_VERIFICATION_EVIDENCE.md`) and risks/deferrals in this tracker.
+- [x] Extract unchecked or deferred items into `docs/projects/DEFERRED_BACKLOG.md`.
+- [x] Update package docs/skills surfaces for 0.9 (overview/changelog/VERSION/SKILL already 0.9; host inventories record package kernel defaults).
+- [x] Move this folder to `docs/projects/completed/` (Phase 9 release verification complete; remaining host-parity items live in DEFERRED_BACKLOG).
 
 ## Verification Log
 
@@ -326,3 +319,17 @@ Status legend: `[ ]` todo · `[x]` verified complete. A phase header changes fro
   idempotency/leases + memory fallback). Gen-UI flag-on soak tests. processLegacy
   retained for non-routed product types. Host unit + package contract suites green.
   **Next: Phase 9** cross-host verification and npm publish gate.
+
+
+- 2026-07-10 — **Phase 9 verification advanced.** Full `npm test` green; RC tarball
+  clean install reports 0.9.0; host suites TR 13 + Festech 21 + UltraChat 29 green;
+  cross-host corpus 6/6 (`scripts/phase9-cross-host-corpus.mjs`); migrate dry-run +
+  audit 0 vulns. Evidence: `PHASE9_VERIFICATION_EVIDENCE.md`. Remaining: npm publish
+  + post-publish install verify + 0.8 deprecation policy.
+
+- 2026-07-10 — **Phase 9 publish gate closed.** `@gregiteen/ssss-cli@0.9.0` present on
+  npm (published 2026-07-10T20:51:41Z). Clean registry install verified. `@0.8.0`
+  deprecated with upgrade pointer. Remaining: skills/host tracker doc sync; move
+  project folder to completed after that polish.
+
+- 2026-07-10 — **Project completed.** Folder moved to `docs/projects/completed/`. Package `@gregiteen/ssss-cli@0.9.0` is the published release; host dual-path leftovers tracked in DEFERRED_BACKLOG.

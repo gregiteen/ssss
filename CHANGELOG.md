@@ -7,7 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-## [0.9.0] - Unreleased
+## [0.9.0] - 2026-07-10
 ### Added
 - Shared application kernel (`kernel.execute`) with verified-principal injection,
   canonical request hashing, idempotent replay/conflict, resource prepare/finalize/
