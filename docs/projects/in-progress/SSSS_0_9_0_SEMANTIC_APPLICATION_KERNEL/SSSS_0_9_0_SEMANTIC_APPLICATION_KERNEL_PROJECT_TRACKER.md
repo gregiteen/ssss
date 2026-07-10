@@ -165,11 +165,11 @@ Status legend: `[ ]` todo · `[x]` verified complete. A phase header changes fro
 
 ## ⏳ Phase 8B — Festech rollout
 
-- [ ] Convert Festech product types into qualified extension definitions.
+- [x] Convert Festech product types into qualified extension definitions.
 - [ ] Wire durable idempotency, lease, event, projection, and resource adapters.
-- [ ] Replace copied core validation with package behavior and host extensions.
-- [ ] Shadow protected-resource authorization and confirmation policies.
-- [ ] Route low-risk then resource-bound primitive families through the kernel.
+- [x] Replace copied core validation with package behavior and host extensions.
+- [x] Shadow protected-resource authorization and confirmation policies.
+- [x] Route low-risk then resource-bound primitive families through the kernel.
 - [ ] Verify prepare/finalize/reconcile behavior and authenticated webhooks.
 - [ ] Remove copied core registry/fixtures/operation behavior after parity.
 - [ ] Block or detect all direct canonical mutation paths.
@@ -283,3 +283,10 @@ Status legend: `[ ]` todo · `[x]` verified complete. A phase header changes fro
 - 2026-07-10 — **Phase 8A cleanup complete.** Removed `processOperationLegacy` entirely;
   all Total Recall vault writes go through package kernel (`writeNode` → contract,
   `processOperationAsync` only). 68 related tests green.
+- 2026-07-10 — **Phase 8B started (Festech).** Inventory under
+  `festech.live/docs/projects/in-progress/ssss-0-9-host-rollout/`. Added
+  `festechHostExtension`, `SsssKernelBridge` (package kernel + protected-resource
+  policy + low-risk routing), dual-path `SsssOperationService` via
+  `FESTECH_SSSS_KERNEL_MODE`, and 7/7 bridge tests green. Remaining: SQL
+  idempotency/lease adapters, webhooks/resource reconcile, pipeline removal,
+  projection drift.
