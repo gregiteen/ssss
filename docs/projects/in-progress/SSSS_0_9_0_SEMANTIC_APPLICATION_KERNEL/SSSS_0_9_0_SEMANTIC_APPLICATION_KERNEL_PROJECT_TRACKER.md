@@ -158,9 +158,9 @@ Status legend: `[ ]` todo · `[x]` verified complete. A phase header changes fro
       projection adapters.
 - [x] Run shadow validation and compare current/package verdicts.
 - [x] Route low-risk primitives through the kernel.
-- [ ] Route memory and workflow mutations through the kernel.
+- [x] Route memory and workflow mutations through the kernel.
 - [ ] Remove copied core registry/schema/fixture/operation behavior after parity.
-- [ ] Block or detect all direct canonical mutation paths.
+- [x] Block or detect all direct canonical mutation paths.
 - [ ] Pass clean-account, replay, recovery, scope, and privacy verification.
 
 ## ⏳ Phase 8B — Festech rollout
@@ -267,3 +267,7 @@ Status legend: `[ ]` todo · `[x]` verified complete. A phase header changes fro
   and low-risk kernel routing API. Default remains legacy. Remaining: memory/workflow
   kernel cutover, remove local core pipeline after parity, direct-write detection for
   canonical vault paths, clean-account verification.
+- 2026-07-10 — **Phase 8A advanced.** Memory/workflow host preflight + kernel commits
+  (`prepareEnvelopeForKernel`, `kernel-core` mode), optimizer capability expansion to
+  `ssss:memory:*`, direct-write / unapproved-writer scanners, 13/13 bridge tests green.
+  Remaining: delete legacy core pipeline after parity soak, clean-account/replay/privacy.
