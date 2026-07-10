@@ -6,8 +6,8 @@ Markdown. The projection is disposable: the vault remains the only source of tru
 ```bash
 ssss semantic ./vault
 ssss semantic ./vault --query "refund policy" --limit 5
-ssss semantic ./vault --locale es --query "política de reembolsos"
-ssss semantic ./vault --locale es --out ./derived/semantic-es.json
+ssss semantic ./vault --query "política de reembolsos"
+ssss semantic ./vault --out ./derived/semantic.json
 ```
 
 Records include stable identity, source path and hash, type, portability, surface
@@ -30,8 +30,9 @@ Symlinked vault entries and unsafe paths fail closed.
 ```js
 import { buildSemanticIndex, searchSemanticIndex } from '@gregiteen/ssss-cli/semantic';
 
-const index = buildSemanticIndex('./vault', { locale: 'es' });
+const index = buildSemanticIndex('./vault');
 const results = searchSemanticIndex(index, 'reembolsos', { limit: 10 });
 ```
 
-See also: `ssss help localization`.
+Hosts may inject a multilingual embedding adapter and runtime renderer. Presentation
+may change language and formatting, but never symbolic controls or authorization.

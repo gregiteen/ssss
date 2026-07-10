@@ -61,7 +61,7 @@ export async function run(argv) {
   }
 
   const engine = createEngine({ registryDir: flags.registry });
-  const result = importBundle(envelopes, vault, engine);
+  const result = await importBundle(envelopes, vault, engine);
   const failed = result.results.filter((r) => !r.success);
   if (flags['dry-run']) {
     console.log(`${result.ok ? '✓' : '✗'} import dry-run — ${result.wouldCommit || 0} would commit, ${envelopes.length - (result.wouldCommit || 0)} unchanged (idempotent), ${failed.length} failed → ${vault}`);

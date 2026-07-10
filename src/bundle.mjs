@@ -429,7 +429,7 @@ export function provisionBundle(bundle, opts = {}) {
  * import(plan, target) → replay (§17.1). Runs each envelope through the engine
  * (§6.3). Idempotent: each envelope's idempotency_key makes a re-run a no-op.
  */
-export function importBundle(plan, vaultRoot, engine) {
+export async function importBundle(plan, vaultRoot, engine) {
   const dryRunFlags = new Set(plan.map((envelope) => !!envelope.dry_run));
   if (dryRunFlags.size > 1) {
     return {
@@ -457,7 +457,7 @@ export function importBundle(plan, vaultRoot, engine) {
   // Two-phase import: validate the complete plan with in-plan references first.
   // A single invalid document prevents every commit, eliminating partial bundle
   // installation and allowing dry-run to validate cross-file constraints.
-  const preflight = plan.map((envelope) => {
+  const preflight = await Promise.all(plan.map((envelope) => {
     const preflightKey = 'preflight-' + crypto.createHash('sha256')
       .update(`${envelope.workspace_id}:${envelope.idempotency_key}:${envelope.path}`)
       .digest('hex')
@@ -467,7 +467,7 @@ export function importBundle(plan, vaultRoot, engine) {
       vaultRoot,
       operationOptions
     );
-  });
+  }));
   if (!preflight.every((result) => result.success)) {
     return { ok: false, committed: 0, wouldCommit: 0, results: preflight };
   }
@@ -480,7 +480,7 @@ export function importBundle(plan, vaultRoot, engine) {
     };
   }
   const results = [];
-  for (const env of plan) results.push(engine.processOperation(env, vaultRoot, operationOptions));
+  for (const env of plan) results.push(await engine.processOperation(env, vaultRoot, operationOptions));
   const committed = results.filter((r) => r.success && !r.replay && !r.dry_run).length;
   return { ok: results.every((r) => r.success), committed, wouldCommit: 0, results };
 }

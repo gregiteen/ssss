@@ -36,9 +36,12 @@ Vault → bundle → tenant lifecycle:
   import <bundle>       Replay a bundle/plan into a target vault (idempotent).
 
 Authoring & conformance:
+  primitive <verb>      Create, validate, inspect, migrate, or emit types.
+  registry <verb>       Compose, lock, or verify an effective registry.
+  adapter conformance   Run machine-readable adapter contract suites.
+  migrate 0.8-to-0.9    Diagnose and plan a non-destructive 0.9 migration.
   autolink [dir]        Generate OKF wiki links across a vault.
   semantic <vault>      Build/query a deterministic semantic projection (§11.9).
-  localize <vault>      Materialize approved locale overlays outside the vault.
   conformance           Run the canonical conformance suite (spec §12).
                         --engine | --endpoint <url> [--token <pat>]
 
@@ -63,7 +66,10 @@ const MODULES = {
   provision: './cmd-provision.mjs',
   import: './cmd-import.mjs',
   semantic: './cmd-semantic.mjs',
-  localize: './cmd-localize.mjs',
+  primitive: './cmd-primitive.mjs',
+  registry: './cmd-registry.mjs',
+  adapter: './cmd-adapter.mjs',
+  migrate: './cmd-migrate.mjs',
   help: './cmd-help.mjs',
 };
 

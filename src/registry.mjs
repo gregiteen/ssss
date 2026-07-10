@@ -18,7 +18,7 @@ const DEFAULT_REGISTRY_DIR = path.resolve(__dirname, '..', 'registry');
 
 const APPEND_TYPES = new Set(['conversation', 'run']);
 const SAFE_REGISTRY_NAME = /^[a-z][a-z0-9_-]{0,63}$/;
-const SAFE_TYPE_NAME = /^[a-z][a-z0-9_-]{0,127}$/;
+const SAFE_TYPE_NAME = /^(?:[a-z][a-z0-9_-]{0,63}:)?[a-z][a-z0-9_-]{0,127}$/;
 const SAFE_FIELD_NAME = /^[A-Za-z_][A-Za-z0-9_-]*$/;
 
 function isRecord(value) {
@@ -109,58 +109,124 @@ function validatePrimitiveDefinition(name, def, source, portabilityClasses) {
   }
 }
 
-/**
- * Load the core registry and merge extension registries.
- * @param {string} [registryDir] - directory containing core.json + extensions/
- * @returns {{ types: Map<string, object>, contractTypes: Set<string>, portabilityClasses: string[], core: object, extensions: Set<string> }}
- */
-export function loadRegistries(registryDir = DEFAULT_REGISTRY_DIR) {
-  const corePath = path.join(registryDir, 'core.json');
-  const core = JSON.parse(fs.readFileSync(corePath, 'utf8'));
-  const portabilityClasses = Object.keys(core.portability?.classes || {});
-  if (!portabilityClasses.length) throw new Error('core.json: portability.classes must not be empty.');
-  const extensions = new Set();
+/** Return true when a primitive identifier is a safe local or qualified name. */
+export function isPrimitiveTypeName(value) {
+  return typeof value === 'string' && SAFE_TYPE_NAME.test(value);
+}
 
+function normalizeExtensionInput(item, index) {
+  if (item?.document_primitives) return { source: item.source || `extension[${index}]`, value: item };
+  if (item?.registry?.document_primitives) {
+    return { source: item.source || `extension[${index}]`, value: item.registry };
+  }
+  throw new Error(`extension[${index}] must be an extension registry object.`);
+}
+
+function semverSatisfies(version, range) {
+  if (range === '*' || range === undefined) return true;
+  if (version === range) return true;
+  const current = String(version || '').match(/^(\d+)\.(\d+)\.(\d+)/);
+  const wanted = String(range).match(/^([~^])(\d+)\.(\d+)\.(\d+)$/);
+  if (!current || !wanted) return false;
+  const [, operator, major, minor, patch] = wanted;
+  const [cm, cn, cp] = current.slice(1).map(Number);
+  const [wm, wn, wp] = [major, minor, patch].map(Number);
+  if (operator === '^') return cm === wm && (cn > wn || (cn === wn && cp >= wp));
+  return cm === wm && cn === wn && cp >= wp;
+}
+
+/**
+ * Compose the package core with extension/repository/workspace registry objects.
+ * This is the runtime composition path; hosts do not copy core.json into their repos.
+ */
+export function composeRegistries({ core, extensions: extensionInputs = [] } = {}) {
+  if (!isRecord(core)) throw new Error('core registry must be an object.');
+  const portabilityClasses = Object.keys(core.portability?.classes || {});
+  if (!portabilityClasses.length) throw new Error('core registry: portability.classes must not be empty.');
+
+  const extensions = new Set();
+  const extensionVersions = new Map();
+  const extensionRequirements = [];
   const types = new Map();
+  const aliases = new Map();
+
   for (const [name, def] of Object.entries(core.document_primitives || {})) {
-    validatePrimitiveDefinition(name, def, 'core.json', portabilityClasses);
-    types.set(name, { ...def, type: name, registry: 'core' });
+    validatePrimitiveDefinition(name, def, 'core registry', portabilityClasses);
+    const value = { ...def, type: name, qualified_type: `ssss:${name}`, registry: 'core' };
+    types.set(name, value);
+    aliases.set(`ssss:${name}`, name);
   }
 
-  const extDir = path.join(registryDir, 'extensions');
-  if (fs.existsSync(extDir)) {
-    for (const file of fs.readdirSync(extDir).filter((f) => f.endsWith('.json')).sort()) {
-      const extPath = path.join(extDir, file);
-      if (fs.lstatSync(extPath).isSymbolicLink()) {
-        throw new Error(`extensions/${file}: symlinked registries are not allowed.`);
+  for (const [index, item] of extensionInputs.entries()) {
+    const { source, value: ext } = normalizeExtensionInput(item, index);
+    if (!SAFE_REGISTRY_NAME.test(ext.registry || '')) {
+      throw new Error(`${source}: registry must be a safe identifier.`);
+    }
+    if (ext.registry === 'core' || ext.registry === 'ssss' || extensions.has(ext.registry)) {
+      throw new Error(`${source}: duplicate or reserved registry name '${ext.registry}'.`);
+    }
+    if (ext.extends !== undefined && ext.extends !== 'core' && ext.extends !== 'ssss') {
+      throw new Error(`${source}: extends must be 'core' or 'ssss'.`);
+    }
+    if (ext.version !== undefined &&
+        (typeof ext.version !== 'string' || !/^\d+\.\d+\.\d+(?:-[0-9A-Za-z.-]+)?$/.test(ext.version))) {
+      throw new Error(`${source}: version must be a semantic version string.`);
+    }
+    assertRecord(ext.requires, `${source}: requires`);
+    extensions.add(ext.registry);
+    extensionVersions.set(ext.registry, ext.version || '0.0.0');
+    extensionRequirements.push({ source, registry: ext.registry, requires: ext.requires || {} });
+
+    for (const [name, def] of Object.entries(ext.document_primitives || {})) {
+      validatePrimitiveDefinition(name, def, source, portabilityClasses);
+      const qualified = name.includes(':') ? name : `${ext.registry}:${name}`;
+      if (name.includes(':') && !name.startsWith(`${ext.registry}:`)) {
+        throw new Error(`${source}: primitive '${name}' must use registry namespace '${ext.registry}'.`);
       }
-      const ext = JSON.parse(fs.readFileSync(extPath, 'utf8'));
-      if (!SAFE_REGISTRY_NAME.test(ext.registry || '')) {
-        throw new Error(`extensions/${file}: registry must be a safe identifier.`);
+      if (types.has(name) || aliases.has(name) || types.has(qualified) || aliases.has(qualified)) {
+        const existing = types.get(name) || types.get(aliases.get(name)) ||
+          types.get(qualified) || types.get(aliases.get(qualified));
+        throw new Error(
+          `${source}: primitive '${name}' collides with registry '${existing?.registry || 'unknown'}'.`
+        );
       }
-      if (ext.registry === 'core' || extensions.has(ext.registry)) {
-        throw new Error(`extensions/${file}: duplicate or reserved registry name '${ext.registry}'.`);
-      }
-      if (ext.extends !== undefined && ext.extends !== 'core') {
-        throw new Error(`extensions/${file}: extends must be 'core'.`);
-      }
-      extensions.add(ext.registry);
-      for (const [name, def] of Object.entries(ext.document_primitives || {})) {
-        validatePrimitiveDefinition(name, def, `extensions/${file}`, portabilityClasses);
-        if (types.has(name)) {
-          throw new Error(
-            `extensions/${file}: primitive '${name}' collides with registry '${types.get(name).registry}'.`
-          );
-        }
-        types.set(name, { ...def, type: name, registry: ext.registry });
+      const value = { ...def, type: name, qualified_type: qualified, registry: ext.registry };
+      types.set(name, value);
+      if (qualified !== name) aliases.set(qualified, name);
+      for (const alias of def.aliases || []) {
+        if (!isPrimitiveTypeName(alias)) throw new Error(`${source}: primitive '${name}' has unsafe alias '${alias}'.`);
+        if (types.has(alias) || aliases.has(alias)) throw new Error(`${source}: primitive alias '${alias}' collides with an existing primitive.`);
+        aliases.set(alias, name);
       }
     }
   }
 
+  for (const requirement of extensionRequirements) {
+    for (const [dependency, range] of Object.entries(requirement.requires)) {
+      if (!extensionVersions.has(dependency)) throw new Error(`${requirement.source}: missing required extension '${dependency}'.`);
+      if (typeof range !== 'string' || !semverSatisfies(extensionVersions.get(dependency), range)) {
+        throw new Error(`${requirement.source}: extension '${dependency}' version '${extensionVersions.get(dependency)}' does not satisfy '${range}'.`);
+      }
+    }
+  }
+
+  const registrySet = {
+    types,
+    aliases,
+    contractTypes: new Set(Object.keys(core.contract_primitives || {})),
+    portabilityClasses,
+    core,
+    extensions,
+    extensionVersions,
+  };
+  // Backward-compatible Map surface used by the existing engine/bundle APIs.
+  // The alias table lets shared validators resolve qualified 0.9 identifiers.
+  types.aliases = aliases;
+
   for (const def of types.values()) {
     for (const [field, constraint] of Object.entries(def.references || {})) {
       for (const target of [...(constraint.allowed_types || []), ...(constraint.disallowed_types || [])]) {
-        if (!SAFE_TYPE_NAME.test(target) || !types.has(target)) {
+        if (!isPrimitiveTypeName(target) || !resolvePrimitiveDefinition(registrySet, target)) {
           throw new Error(
             `registry '${def.registry}' primitive '${def.type}' reference '${field}' names unknown type '${target}'.`
           );
@@ -169,8 +235,91 @@ export function loadRegistries(registryDir = DEFAULT_REGISTRY_DIR) {
     }
   }
 
-  const contractTypes = new Set(Object.keys(core.contract_primitives || {}));
-  return { types, contractTypes, portabilityClasses, core, extensions };
+  return registrySet;
+}
+
+/** Compose named ownership layers without giving lower scopes override semantics. */
+export function composeRegistryLayers({ core, installed = [], repository = [], workspace = [], user = [], policyFloors = {} } = {}) {
+  const extensions = [
+    ...installed.map((registry) => ({ source: 'installed', registry })),
+    ...repository.map((registry) => ({ source: 'repository', registry })),
+    ...workspace.map((registry) => ({ source: 'workspace', registry })),
+    ...user.map((registry) => ({ source: 'user', registry })),
+  ];
+  const registrySet = composeRegistries({ core, extensions });
+  for (const [type, actions] of Object.entries(policyFloors)) {
+    const definition = resolvePrimitiveDefinition(registrySet, type);
+    if (!definition) throw new Error(`Policy floor names unknown primitive '${type}'.`);
+    for (const [action, required] of Object.entries(actions || {})) {
+      assertStringArray(required, `policy floor '${type}.${action}'`);
+      const declared = new Set(definition.capabilities?.[action] || []);
+      const missing = required.filter((capability) => !declared.has(capability));
+      if (missing.length) throw new Error(`Primitive '${type}' weakens policy floor for '${action}': ${missing.join(', ')}.`);
+    }
+  }
+  return registrySet;
+}
+
+function stableObject(value) {
+  if (Array.isArray(value)) return value.map(stableObject);
+  if (value && typeof value === 'object') return Object.fromEntries(Object.keys(value).sort().map((key) => [key, stableObject(value[key])]));
+  return value;
+}
+
+export function createRegistryLock(registrySet) {
+  const primitives = [...registrySet.types.values()]
+    .map((definition) => ({ ...definition }))
+    .sort((a, b) => a.qualified_type.localeCompare(b.qualified_type));
+  const payload = {
+    version: 1,
+    core_spec_version: registrySet.core.spec_version,
+    extensions: Object.fromEntries([...registrySet.extensionVersions.entries()].sort()),
+    primitives,
+  };
+  return { ...payload, integrity: `sha256:${crypto.createHash('sha256').update(JSON.stringify(stableObject(payload))).digest('hex')}` };
+}
+
+export function verifyRegistryLock(registrySet, lock) {
+  const expected = createRegistryLock(registrySet);
+  return {
+    valid: !!lock && lock.integrity === expected.integrity,
+    expected_integrity: expected.integrity,
+    actual_integrity: lock?.integrity || null,
+  };
+}
+
+/** Resolve local, qualified, or explicit migration-alias primitive identifiers. */
+export function resolvePrimitiveDefinition(registrySet, type) {
+  if (!registrySet || typeof type !== 'string') return null;
+  const direct = registrySet.types?.get(type);
+  if (direct) return direct;
+  const local = registrySet.aliases?.get(type);
+  return local ? registrySet.types.get(local) || null : null;
+}
+
+/**
+ * Load the core registry and merge extension registries.
+ * @param {string} [registryDir] - directory containing core.json + extensions/
+ * @returns {{ types: Map<string, object>, contractTypes: Set<string>, portabilityClasses: string[], core: object, extensions: Set<string> }}
+ */
+export function loadRegistries(registryDir = DEFAULT_REGISTRY_DIR) {
+  const corePath = path.join(registryDir, 'core.json');
+  const core = JSON.parse(fs.readFileSync(corePath, 'utf8'));
+  const extensionInputs = [];
+  const extDir = path.join(registryDir, 'extensions');
+  if (fs.existsSync(extDir)) {
+    for (const file of fs.readdirSync(extDir).filter((f) => f.endsWith('.json')).sort()) {
+      const extPath = path.join(extDir, file);
+      if (fs.lstatSync(extPath).isSymbolicLink()) {
+        throw new Error(`extensions/${file}: symlinked registries are not allowed.`);
+      }
+      extensionInputs.push({
+        source: `extensions/${file}`,
+        registry: JSON.parse(fs.readFileSync(extPath, 'utf8')),
+      });
+    }
+  }
+  return composeRegistries({ core, extensions: extensionInputs });
 }
 
 /** Is this document type append-only (events appended, never rewritten)? */
@@ -258,6 +407,8 @@ export function validateDataConstraints(typeDef, data, universalRequired = []) {
  */
 export function validateReferenceConstraints(typeDef, data, resolveReference, types) {
   const issues = [];
+  const lookupType = (name) => types.get(name) ||
+    (types.aliases?.get(name) ? types.get(types.aliases.get(name)) : null);
   for (const [field, constraint] of Object.entries(typeDef?.references || {})) {
     const referencePath = data[field];
     if (referencePath === undefined || referencePath === null || referencePath === '') continue;
@@ -278,7 +429,7 @@ export function validateReferenceConstraints(typeDef, data, resolveReference, ty
       continue;
     }
     const referencedType = referenced.data?.type;
-    if (!types.has(referencedType)) {
+    if (!lookupType(referencedType)) {
       issues.push({ field, issue: `Referenced document declares unknown type '${referencedType || '(missing)'}'.` });
       continue;
     }
@@ -288,7 +439,7 @@ export function validateReferenceConstraints(typeDef, data, resolveReference, ty
     if (constraint.disallowed_types?.includes(referencedType)) {
       issues.push({ field, issue: `Referenced type '${referencedType}' is forbidden.` });
     }
-    const referencedPortability = resolvePortability(types.get(referencedType), referenced.data);
+    const referencedPortability = resolvePortability(lookupType(referencedType), referenced.data);
     if (constraint.allowed_portability && !constraint.allowed_portability.includes(referencedPortability)) {
       issues.push({
         field,

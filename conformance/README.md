@@ -33,7 +33,7 @@ The runner validates that the fixture file is well-formed and that every
 `expected_response` is internally consistent with the envelope rules. With
 `--engine`, it replays every fixture through the reference engine (`src/engine.mjs`),
 checks workflow runtime planning (`src/runtime.mjs`, spec §11.8), extension-registry
-collision/schema/symlink safety, semantic search and localization (`src/semantic.mjs`,
+collision/schema/symlink safety and multilingual semantic retrieval/rendering (`src/semantic.mjs`,
 §11.9), runs regression coverage for patch serialization and leases (§6/§7), and
 round-trips the
 reference bundle (validate → provision → import → re-import, spec §16/§17)

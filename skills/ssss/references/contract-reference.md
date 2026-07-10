@@ -11,7 +11,7 @@ This is an operational map. The normative source is the current
 | `registry/extensions/*.json` | Host/application types that cannot redefine core primitives. |
 | `src/engine.mjs` | Operation Contract, validation, authorization, leases, idempotency, atomic commit, audit. |
 | `src/runtime.mjs` | Workflow trigger planning and deterministic event/task/run envelopes. |
-| `src/semantic.mjs` | Deterministic semantic records/edges, localized search, and safe materialization. |
+| `src/semantic.mjs` | Deterministic records/edges, multilingual embeddings, hybrid retrieval, and invariant rendering. |
 | `src/bundle.mjs` | Export, validate, provision, import, portability filtering, link/hash integrity. |
 | `src/registry.mjs` | Registry loading and type/portability resolution. |
 | `src/frontmatter.mjs` | Dependency-free parse/serialize with unknown-field preservation. |
@@ -35,8 +35,7 @@ document types.
 Current core document families include knowledge (`memory`), capability
 (`skill`, `page`), governance (`rule`, `security_role`), work (`task`,
 `workflow`), actors/catalog (`assistant`, `model`), transcripts (`conversation`,
-`run`), localization (`translation`), and lifecycle/meta (`conflict`, `migration`,
-`release`).
+`run`), and lifecycle/meta (`conflict`, `migration`, `release`, `primitive`).
 
 The contract primitives are `operation`, `patch`, `event`, `delete`, and
 `lease`.
@@ -77,15 +76,15 @@ For a bundle:
 7. Internal links resolve after remapping.
 8. Re-import replays without new commits.
 
-For a semantic/localization projection:
+For a multilingual semantic projection:
 
 1. Records and index hashes are deterministic for identical inputs.
 2. Stable identity, tokens, content hashes, portability, and graph edges are retained.
 3. Private and resource-bound documents are excluded unless explicitly authorized.
-4. A translation targets one structural, non-translation source by safe relative path.
-5. The source hash is exact and only natural-language surface fields change.
-6. Duplicate, stale, traversing, symlinked, or recursive overlays fail closed.
-7. Materialization occurs outside the source vault and remains rebuildable.
+4. Embedding records retain model identity and vector dimensions.
+5. Lexical and semantic evidence remain separately inspectable.
+6. Runtime rendering preserves all symbolic control fields.
+7. Language selection never widens authorization or portability scope.
 
 ## Drift checklist
 

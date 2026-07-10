@@ -26,12 +26,12 @@
   },
   {
     "name": "ssss-semantic-default-is-private",
-    "assertion": "The skill requires structural-only semantic and localization projections by default, with explicit authorization before private or resource-bound indexing.",
+    "assertion": "The skill requires structural-only semantic projections by default, with explicit authorization before private or resource-bound indexing.",
     "severity": "error"
   },
   {
-    "name": "ssss-translations-preserve-controls",
-    "assertion": "The skill limits translations to title, description, and body; requires an exact structural source hash; and preserves symbolic control fields.",
+    "name": "ssss-runtime-rendering-preserves-controls",
+    "assertion": "The skill requires runtime multilingual rendering and preserves all symbolic control fields.",
     "severity": "error"
   }
 ]

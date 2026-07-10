@@ -1,7 +1,6 @@
 #!/usr/bin/env node
 import fs from 'node:fs';
 import path from 'node:path';
-import crypto from 'node:crypto';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 
 const FALLBACK_UNIVERSAL = ['type', 'title', 'description', 'timestamp'];
@@ -20,7 +19,7 @@ const FALLBACK_REQUIRED = {
   page: ['slug', 'name', 'sandbox_entry'],
   migration: ['migration_id', 'from_version', 'to_version', 'status'],
   release: ['release_id', 'version', 'schema_version', 'summary', 'released_at'],
-  translation: ['translation_id', 'source_path', 'source_hash', 'locale', 'status', 'translated_fields'],
+  primitive: ['primitive_id', 'namespace', 'version', 'name', 'mutation', 'portability', 'scopes', 'fields'],
 };
 const CONTRACT_TYPES = new Set(['operation', 'patch', 'event', 'delete', 'lease']);
 const APPEND_TYPES = new Set(['conversation', 'run']);
@@ -120,46 +119,6 @@ function isSafeReferencePath(value) {
     value.split('/').every((segment) => segment && segment !== '.' && segment !== '..');
 }
 
-function inferVaultRoot(target) {
-  let cursor = path.dirname(target);
-  while (path.dirname(cursor) !== cursor) {
-    if (path.basename(cursor) === 'translations') return path.dirname(cursor);
-    cursor = path.dirname(cursor);
-  }
-  return null;
-}
-
-async function validateTranslationReference(target, data, registry, kernelRoot, errors, warnings) {
-  if (data.type !== 'translation' || isEmpty(data.source_path)) return;
-  if (!isSafeReferencePath(data.source_path)) {
-    errors.push(`Field 'source_path' must be a safe vault-relative Markdown path.`);
-    return;
-  }
-  const vaultRoot = inferVaultRoot(target);
-  if (!vaultRoot) {
-    warnings.push("Cannot resolve translation source outside the canonical translations/<locale>/ layout.");
-    return;
-  }
-  const source = path.resolve(vaultRoot, data.source_path);
-  const relative = path.relative(vaultRoot, source);
-  if (relative.startsWith('..') || path.isAbsolute(relative)) {
-    errors.push("Translation source_path escapes the vault.");
-    return;
-  }
-  if (!fs.existsSync(source) || !fs.statSync(source).isFile() || fs.lstatSync(source).isSymbolicLink()) {
-    errors.push(`Translation source does not exist as a regular non-symlinked file: ${data.source_path}.`);
-    return;
-  }
-  const raw = fs.readFileSync(source, 'utf8');
-  const parsed = await parseDocument(raw, kernelRoot);
-  if (parsed.data.type === 'translation') errors.push('Translations may not target another translation.');
-  const sourceDefinition = registry?.document_primitives?.[parsed.data.type];
-  const portability = parsed.data.x_portability || sourceDefinition?.portability;
-  if (portability !== 'structural') errors.push('Translations may target structural documents only.');
-  const hash = `sha256:${crypto.createHash('sha256').update(raw).digest('hex')}`;
-  if (data.source_hash !== hash) errors.push(`Translation source_hash is stale; expected '${hash}'.`);
-}
-
 export async function validateNode(filePath) {
   const target = path.resolve(filePath);
   const kernelRoot = findKernelRoot(path.dirname(target)) || findKernelRoot(process.cwd());
@@ -209,8 +168,6 @@ export async function validateNode(filePath) {
       errors.push(`Registry pattern for '${field}' is invalid.`);
     }
   }
-
-  await validateTranslationReference(target, data, registry, kernelRoot, errors, warnings);
 
   if (APPEND_TYPES.has(data.type) && body.trim() === '') {
     warnings.push(`Append-only primitive '${data.type}' has an empty body.`);

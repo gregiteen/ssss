@@ -20,17 +20,25 @@ import { fileURLToPath } from 'node:url';
 import { createEngine } from '../src/engine.mjs';
 import {
   DEFAULT_EXPORTER,
+  contentHash,
   exportBundle,
   validateBundle,
   provisionBundle,
   importBundle,
 } from '../src/bundle.mjs';
 import { parseDocument } from '../src/frontmatter.mjs';
-import { documentHash, loadRegistries } from '../src/registry.mjs';
+import { loadRegistries } from '../src/registry.mjs';
 import { createRunEnvelope, planWorkflowTrigger } from '../src/runtime.mjs';
-import { buildSemanticIndex, materializeLocale, searchSemanticIndex } from '../src/semantic.mjs';
+import {
+  buildSemanticIndex,
+  enrichSemanticIndex,
+  renderSemanticRecord,
+  searchSemanticIndex,
+  searchSemanticIndexWithAdapter,
+} from '../src/semantic.mjs';
 import { auditRegistryFieldUsage } from './audit-registry-field-usage.mjs';
 import { validateSkills } from './validate-skills.mjs';
+import { runKernel09Conformance } from './conformance-09.mjs';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const FIXTURES = path.resolve(__dirname, '..', 'conformance', 'fixtures.json');
@@ -155,14 +163,14 @@ function validateRegistry() {
  * (spec §12) without needing a live host. Fixtures run in array order so that
  * create → patch → delete dependencies resolve.
  */
-function runAgainstEngine(doc) {
+async function runAgainstEngine(doc) {
   const vault = fs.mkdtempSync(path.join(os.tmpdir(), 'ssss-vault-'));
   const engine = createEngine();
   let pass = 0, fail = 0;
   try {
     for (const f of doc.fixtures) {
       const want = f.expected_response || {};
-      const res = engine.processOperation(f.request, vault);
+      const res = await engine.processOperation(f.request, vault);
       const okSuccess = want.success == null || res.success === want.success;
       const wantType = want.validation && want.validation.type;
       const okType = wantType == null || (res.validation && res.validation.type === wantType);
@@ -192,7 +200,7 @@ function runAgainstEngine(doc) {
  *   - no `tenant_private` primitive ever lands (the §5.5 keystone).
  * Returns true on full pass.
  */
-function runBundleConformance() {
+async function runBundleConformance() {
   if (!fs.existsSync(REFERENCE_BUNDLE)) {
     console.log('  ⚠  No reference bundle; run `node scripts/build-reference-bundle.mjs` first.');
     return false;
@@ -260,15 +268,23 @@ function runBundleConformance() {
     !unknownExtensionValidation.valid && unknownExtensionValidation.errors.some((e) => e.includes("required extension 'missing-extension'")),
     unknownExtensionValidation.errors.join('; '));
 
-  const invalidTranslationBundle = JSON.parse(JSON.stringify(bundle));
-  const invalidTranslation = invalidTranslationBundle.files.find((file) =>
-    parseDocument(file.content).data.type === 'translation');
-  invalidTranslation.content = invalidTranslation.content.replace('locale: es', 'locale: invalid_locale!');
-  const invalidTranslationValidation = validateBundle(invalidTranslationBundle, { registryDir: REGISTRY_DIR });
+  const invalidPatternBundle = JSON.parse(JSON.stringify(bundle));
+  const invalidPattern = invalidPatternBundle.files.find((file) => parseDocument(file.content).data.type === 'rule');
+  invalidPattern.path = 'primitives/invalid.md';
+  invalidPattern.content = [
+    '---', 'type: primitive', 'title: Invalid Primitive', 'description: Invalid namespace pattern.',
+    'timestamp: 2026-07-10T00:00:00Z', 'primitive_id: invalid!:thing', 'namespace: invalid!',
+    'version: 1', 'name: Invalid', 'mutation: replace', 'portability: structural',
+    'scopes: [workspace]', 'fields: [placeholder]', '---', '', 'Invalid.', '',
+  ].join('\n');
+  invalidPatternBundle.manifest.primitive_inventory.rule--;
+  invalidPatternBundle.manifest.primitive_inventory.primitive = 1;
+  invalidPatternBundle.manifest.provenance.content_hash = contentHash(invalidPatternBundle.files);
+  const invalidPatternValidation = validateBundle(invalidPatternBundle, { registryDir: REGISTRY_DIR });
   check('bundle validation enforces registry patterns before import',
-    !invalidTranslationValidation.valid &&
-    invalidTranslationValidation.errors.some((error) => error.includes('registry pattern')),
-    invalidTranslationValidation.errors.join('; '));
+    !invalidPatternValidation.valid &&
+    invalidPatternValidation.errors.some((error) => error.includes('registry pattern')),
+    invalidPatternValidation.errors.join('; '));
 
   const prov = provisionBundle(bundle, { workspaceId: 'ws-conf', parameters: { business_name: 'Demo', domain: 'demo.example' } });
   check('provision resolves params + link integrity (no dangling [[links]])', prov.ok,
@@ -277,11 +293,11 @@ function runBundleConformance() {
   const vault = fs.mkdtempSync(path.join(os.tmpdir(), 'ssss-bundle-'));
   try {
     const engine = createEngine({ registryDir: REGISTRY_DIR });
-    const first = importBundle(prov.plan, vault, engine);
+    const first = await importBundle(prov.plan, vault, engine);
     check('import commits every file', first.ok && first.committed === bundle.files.length,
       `ok=${first.ok} committed=${first.committed}/${bundle.files.length}`);
 
-    const second = importBundle(prov.plan, vault, engine);
+    const second = await importBundle(prov.plan, vault, engine);
     check('re-import is idempotent (0 new commits)', second.ok && second.committed === 0,
       `committed=${second.committed}`);
 
@@ -305,17 +321,17 @@ function runBundleConformance() {
       },
       {
         type: 'operation', idempotency_key: 'atomic-invalid', workspace_id: 'ws-atomic',
-        path: 'translations/bad/rules/atomic.md', actor: { role: 'system' },
+        path: 'primitives/invalid.md', actor: { role: 'system' },
         content: [
-          '---', 'type: translation', 'title: Invalid Translation',
+          '---', 'type: primitive', 'title: Invalid Primitive',
           'description: Must fail before the source commits.', 'timestamp: 2026-07-10T00:00:00Z',
-          'translation_id: invalid-atomic', 'source_path: rules/atomic.md',
-          `source_hash: ${documentHash(sourceContent)}`, 'locale: invalid_locale!',
-          'status: approved', 'translated_fields: [body]', '---', '', 'Translated.', '',
+          'primitive_id: invalid!:thing', 'namespace: invalid!', 'version: 1', 'name: Invalid',
+          'mutation: replace', 'portability: structural', 'scopes: [workspace]',
+          'fields: [placeholder]', '---', '', 'Invalid.', '',
         ].join('\n'),
       },
     ];
-    const atomicResult = importBundle(badPlan, atomicVault, engine);
+    const atomicResult = await importBundle(badPlan, atomicVault, engine);
     check('two-phase import prevents partial commits on a late invalid envelope',
       atomicResult.ok === false && atomicResult.committed === 0 &&
       !fs.existsSync(path.join(atomicVault, 'rules', 'atomic.md')),
@@ -333,7 +349,7 @@ function runBundleConformance() {
   return pass === checks.length;
 }
 
-function runOperationContractRegressionConformance() {
+async function runOperationContractRegressionConformance() {
   const checks = [];
   const check = (name, cond, detail = '') => { checks.push({ name, cond, detail }); };
 
@@ -342,7 +358,7 @@ function runOperationContractRegressionConformance() {
   try {
     const engine = createEngine({ registryDir: REGISTRY_DIR, leaseStore });
     const workflowPath = 'workflows/nested.md';
-    const createRes = engine.processOperation({
+    const createRes = await engine.processOperation({
       type: 'operation',
       idempotency_key: 'nested-create',
       workspace_id: 'ws-reg',
@@ -368,7 +384,7 @@ function runOperationContractRegressionConformance() {
     }, vault);
     check('nested frontmatter fixture commits before patch', createRes.success === true, JSON.stringify(createRes.validation?.errors || []));
 
-    const patchRes = engine.processOperation({
+    const patchRes = await engine.processOperation({
       type: 'patch',
       idempotency_key: 'nested-patch',
       workspace_id: 'ws-reg',
@@ -398,13 +414,13 @@ function runOperationContractRegressionConformance() {
       actor: { role: 'system' },
       content: '---\ntype: rule\ntitle: Leased\ndescription: Lease test.\ntimestamp: 2026-07-02T00:00:00Z\nname: Leased\n---\nBody.\n',
     };
-    const missingLease = engine.processOperation(leasedEnvelope, vault);
+    const missingLease = await engine.processOperation(leasedEnvelope, vault);
     check('lease conflict rejects missing lease_id', missingLease.success === false && missingLease.validation.errors.some((e) => e.includes('leased')));
 
-    const mismatchLease = engine.processOperation({ ...leasedEnvelope, idempotency_key: 'lease-mismatch', lease_id: 'wrong' }, vault);
+    const mismatchLease = await engine.processOperation({ ...leasedEnvelope, idempotency_key: 'lease-mismatch', lease_id: 'wrong' }, vault);
     check('lease conflict rejects mismatched lease_id', mismatchLease.success === false && mismatchLease.validation.errors.some((e) => e.includes('Lease mismatch')));
 
-    const matchedLease = engine.processOperation({ ...leasedEnvelope, idempotency_key: 'lease-match', lease_id: 'lease-ok' }, vault);
+    const matchedLease = await engine.processOperation({ ...leasedEnvelope, idempotency_key: 'lease-match', lease_id: 'lease-ok' }, vault);
     check('lease allows matching lease_id', matchedLease.success === true, JSON.stringify(matchedLease.validation?.errors || []));
 
     const expiredTarget = 'rules/expired.md';
@@ -413,13 +429,13 @@ function runOperationContractRegressionConformance() {
       lease_id: 'expired',
       expires_at: '2000-01-01T00:00:00.000Z',
     }));
-    const expiredLease = engine.processOperation({ ...leasedEnvelope, idempotency_key: 'lease-expired', path: expiredTarget }, vault);
+    const expiredLease = await engine.processOperation({ ...leasedEnvelope, idempotency_key: 'lease-expired', path: expiredTarget }, vault);
     check('expired lease does not block writes', expiredLease.success === true, JSON.stringify(expiredLease.validation?.errors || []));
 
     const unreadableTarget = 'rules/unreadable.md';
     const unreadablePathKey = crypto.createHash('sha256').update(unreadableTarget).digest('hex');
     fs.writeFileSync(path.join(leaseDir, `${unreadablePathKey}.lease.json`), '{not json');
-    const unreadableLease = engine.processOperation({ ...leasedEnvelope, idempotency_key: 'lease-unreadable', path: unreadableTarget }, vault);
+    const unreadableLease = await engine.processOperation({ ...leasedEnvelope, idempotency_key: 'lease-unreadable', path: unreadableTarget }, vault);
     check('unreadable lease state fails closed', unreadableLease.success === false && unreadableLease.validation.errors.some((e) => e.includes('unreadable')));
   } finally {
     fs.rmSync(vault, { recursive: true, force: true });
@@ -435,160 +451,77 @@ function runOperationContractRegressionConformance() {
   return pass === checks.length;
 }
 
-function runSemanticLocalizationConformance() {
+async function runSemanticLocalizationConformance() {
   const checks = [];
   const check = (name, cond, detail = '') => { checks.push({ name, cond, detail }); };
   const vault = fs.mkdtempSync(path.join(os.tmpdir(), 'ssss-semantic-'));
-  const projection = fs.mkdtempSync(path.join(os.tmpdir(), 'ssss-locale-'));
   try {
     const engine = createEngine({ registryDir: REGISTRY_DIR });
     const sourcePath = 'rules/refund-policy.md';
     const sourceContent = [
-      '---',
-      'type: rule',
-      'title: Refund Policy',
-      'description: Explains when festival ticket refunds are available.',
-      'timestamp: 2026-07-10T00:00:00Z',
-      'name: Refund Policy',
-      'aliases: [refund terms, cancellation policy]',
-      'tags: [tickets, finance]',
-      'relations:',
-      '  - relation: applies_to',
-      '    target: workflows/box-office.md',
-      '---',
-      '',
-      'Refunds are available until fourteen days before the event.',
-      '',
+      '---', 'type: rule', 'title: Política de reembolsos',
+      'description: Explica cuándo están disponibles los reembolsos de boletos.',
+      'timestamp: 2026-07-10T00:00:00Z', 'name: Refund Policy', 'language: es',
+      'aliases: [términos de reembolso, política de cancelación]', 'tags: [boletos, finanzas]',
+      'relations:', '  - relation: applies_to', '    target: workflows/box-office.md',
+      '---', '', 'Los reembolsos están disponibles hasta catorce días antes del evento.', '',
     ].join('\n');
-    const sourceWrite = engine.processOperation({
+    const sourceWrite = await engine.processOperation({
       type: 'operation', idempotency_key: 'sem-source', workspace_id: 'ws-sem',
       path: sourcePath, content: sourceContent, actor: { role: 'system' },
     }, vault);
-    check('structural semantic source commits', sourceWrite.success === true,
-      JSON.stringify(sourceWrite.validation?.errors || []));
+    check('non-English structural source commits', sourceWrite.success === true, JSON.stringify(sourceWrite.validation?.errors || []));
 
     const privateContent = [
-      '---',
-      'type: task',
-      'title: Private Refund Request',
-      'description: Private customer refund task.',
-      'timestamp: 2026-07-10T00:00:00Z',
-      'priority: high',
-      'category: support',
-      'status: pending',
-      '---',
-      '',
-      'Customer account and payment details.',
-      '',
+      '---', 'type: task', 'title: Solicitud privada', 'description: Datos privados del cliente.',
+      'timestamp: 2026-07-10T00:00:00Z', 'priority: high', 'category: support', 'status: pending',
+      '---', '', 'Cuenta y detalles de pago.', '',
     ].join('\n');
-    const privateWrite = engine.processOperation({
+    const privateWrite = await engine.processOperation({
       type: 'operation', idempotency_key: 'sem-private', workspace_id: 'ws-sem',
       path: 'tasks/private-refund.md', content: privateContent, actor: { role: 'system' },
     }, vault);
-    check('tenant-private semantic source commits', privateWrite.success === true,
-      JSON.stringify(privateWrite.validation?.errors || []));
+    check('tenant-private semantic source commits', privateWrite.success === true, JSON.stringify(privateWrite.validation?.errors || []));
 
-    const overlayPath = 'translations/es-MX/rules/refund-policy.md';
-    const overlayContent = [
-      '---',
-      'type: translation',
-      'title: Spanish Refund Policy Translation',
-      'description: Approved Spanish presentation overlay for the refund policy.',
-      'timestamp: 2026-07-10T00:00:00Z',
-      'translation_id: refund-policy-es-mx',
-      `source_path: ${sourcePath}`,
-      `source_hash: ${documentHash(sourceContent)}`,
-      'locale: es-MX',
-      'status: approved',
-      'translated_fields: [title, description, body]',
-      'translated_title: Política de reembolsos',
-      'translated_description: Explica cuándo están disponibles los reembolsos de boletos.',
-      '---',
-      '',
-      'Los reembolsos están disponibles hasta catorce días antes del evento.',
-      '',
-    ].join('\n');
-    const overlayWrite = engine.processOperation({
-      type: 'operation', idempotency_key: 'sem-overlay', workspace_id: 'ws-sem',
-      path: overlayPath, content: overlayContent, actor: { role: 'system' },
-    }, vault);
-    check('hash-bound translation overlay commits', overlayWrite.success === true,
-      JSON.stringify(overlayWrite.validation?.errors || []));
-
-    const staleOverlay = overlayContent.replace(documentHash(sourceContent), `sha256:${'0'.repeat(64)}`)
-      .replace('translation_id: refund-policy-es-mx', 'translation_id: stale-es-mx');
-    const staleWrite = engine.processOperation({
-      type: 'operation', idempotency_key: 'sem-stale', workspace_id: 'ws-sem',
-      path: 'translations/es-MX/rules/stale.md', content: staleOverlay, actor: { role: 'system' },
-    }, vault);
-    check('stale translation source hash is rejected', staleWrite.success === false &&
-      staleWrite.validation.errors.some((error) => error.includes('Source hash mismatch')),
-      JSON.stringify(staleWrite.validation?.errors || []));
-
-    const traversalOverlay = overlayContent
-      .replace('translation_id: refund-policy-es-mx', 'translation_id: traversal-es-mx')
-      .replace(`source_path: ${sourcePath}`, 'source_path: ../secrets.md');
-    const traversalWrite = engine.processOperation({
-      type: 'operation', idempotency_key: 'sem-traversal', workspace_id: 'ws-sem',
-      path: 'translations/es-MX/rules/traversal.md', content: traversalOverlay, actor: { role: 'system' },
-    }, vault);
-    check('translation reference traversal is rejected', traversalWrite.success === false &&
-      traversalWrite.validation.errors.some((error) => error.includes('safe vault-relative path')),
-      JSON.stringify(traversalWrite.validation?.errors || []));
-
-    const immutablePatch = engine.processOperation({
-      type: 'patch', idempotency_key: 'sem-immutable', workspace_id: 'ws-sem',
-      path: overlayPath, patches: { locale: 'fr' }, actor: { role: 'system' },
-    }, vault);
-    check('translation identity fields are immutable', immutablePatch.success === false &&
-      immutablePatch.validation.errors.some((error) => error.includes("immutable field 'locale'")),
-      JSON.stringify(immutablePatch.validation?.errors || []));
-
-    const first = buildSemanticIndex(vault, { locale: 'es-MX', registryDir: REGISTRY_DIR });
-    const second = buildSemanticIndex(vault, { locale: 'es-mx', registryDir: REGISTRY_DIR });
-    check('semantic index is deterministic and locale-normalized',
-      first.index_hash === second.index_hash && first.locale === 'es-MX');
+    const first = buildSemanticIndex(vault, { registryDir: REGISTRY_DIR });
+    const second = buildSemanticIndex(vault, { registryDir: REGISTRY_DIR });
+    check('semantic index is deterministic', first.index_hash === second.index_hash);
     check('safe semantic default excludes tenant-private documents',
       first.documents.every((document) => document.portability === 'structural') &&
       !first.documents.some((document) => document.path.startsWith('tasks/')));
-    check('semantic graph captures explicit relations',
-      first.edges.some((edge) => edge.source === sourcePath && edge.relation === 'applies_to'));
-    const matches = searchSemanticIndex(first, 'reembolsos boletos', { limit: 3 });
-    check('localized semantic search ranks the translated source',
-      matches[0]?.document.path === sourcePath && matches[0].document.title === 'Política de reembolsos',
-      JSON.stringify(matches.map((match) => ({ path: match.document.path, score: match.score }))));
+    check('semantic graph captures explicit relations', first.edges.some((edge) => edge.source === sourcePath && edge.relation === 'applies_to'));
+    const lexical = searchSemanticIndex(first, 'reembolsos boletos', { limit: 3 });
+    check('lexical evidence ranks same-language content', lexical[0]?.document.path === sourcePath && lexical[0].evidence.lexical > 0);
+
+    const embed = async (texts) => texts.map((text) => /refund|reembols/i.test(text) ? [1, 0] : [0, 1]);
+    const enriched = await enrichSemanticIndex(first, { embed, model: 'conformance-multilingual-v1' });
+    check('embedding provenance records model and dimension', enriched.embedding.model === 'conformance-multilingual-v1' && enriched.embedding.dimension === 2);
+    const crossLanguage = await searchSemanticIndexWithAdapter(enriched, 'refund policy', { embed, limit: 3 });
+    check('cross-language semantic evidence ranks the authored source',
+      crossLanguage[0]?.document.path === sourcePath && crossLanguage[0].evidence.semantic > 0,
+      JSON.stringify(crossLanguage.map((match) => ({ path: match.document.path, evidence: match.evidence }))));
+
+    const rendered = await renderSemanticRecord(first.documents[0], {
+      language: 'ja', render: async () => ({ title: '返金ポリシー', description: 'チケット返金の条件。', body: 'イベントの14日前まで返金できます。' }),
+    });
+    check('runtime rendering changes presentation without changing controls',
+      rendered.presentation.language === 'ja' && rendered.presentation.title === '返金ポリシー' &&
+      rendered.invariant.type === first.documents[0].type && rendered.invariant.path === sourcePath);
+    let forbiddenRejected = false;
+    try { await renderSemanticRecord(first.documents[0], { language: 'fr', render: async () => ({ type: 'assistant', title: 'Politique' }) }); }
+    catch (error) { forbiddenRejected = error.message.includes('forbidden field'); }
+    check('renderer cannot change symbolic controls', forbiddenRejected);
 
     const privateIndex = buildSemanticIndex(vault, { includePrivate: true, registryDir: REGISTRY_DIR });
-    check('private semantic indexing requires explicit opt-in',
-      privateIndex.documents.some((document) => document.path === 'tasks/private-refund.md'));
+    check('private semantic indexing requires explicit opt-in', privateIndex.documents.some((document) => document.path === 'tasks/private-refund.md'));
 
-    const manifest = materializeLocale(vault, 'es-mx', projection, { registryDir: REGISTRY_DIR });
-    const localizedContent = fs.readFileSync(path.join(projection, sourcePath), 'utf8');
-    const localizedDocument = parseDocument(localizedContent);
-    check('localization projection preserves symbolic control fields',
-      localizedDocument.data.type === 'rule' && localizedDocument.data.name === 'Refund Policy' &&
-      localizedDocument.data.title === 'Política de reembolsos' &&
-      localizedDocument.data.locale === 'es-MX');
-    check('localization projection excludes private documents by default',
-      manifest.document_count >= 1 && !fs.existsSync(path.join(projection, 'tasks', 'private-refund.md')));
-    check('localization publishes a complete projection without staging residue',
-      fs.existsSync(path.join(projection, '.ssss-projection.json')) &&
-      !fs.readdirSync(path.dirname(projection)).some((name) =>
-        name.startsWith(`.${path.basename(projection)}.`) && name.endsWith('.stage')));
-    let insideRejected = false;
-    try { materializeLocale(vault, 'es-MX', path.join(vault, 'derived', 'es'), { registryDir: REGISTRY_DIR }); }
-    catch (error) { insideRejected = error.message.includes('outside the source vault'); }
-    check('localization output inside the source vault is rejected', insideRejected);
-
-    const invalidRawPath = path.join(vault, 'rules', 'invalid-raw.md');
-    fs.writeFileSync(invalidRawPath, '---\ntype: rule\nname: Invalid\n---\nBody.\n');
+    fs.writeFileSync(path.join(vault, 'rules', 'invalid-raw.md'), '---\ntype: rule\nname: Invalid\n---\nBody.\n');
     let invalidRawRejected = false;
     try { buildSemanticIndex(vault, { registryDir: REGISTRY_DIR }); }
     catch (error) { invalidRawRejected = error.message.includes("Missing required field 'title'"); }
     check('semantic projection rejects raw documents that violate the registry', invalidRawRejected);
   } finally {
     fs.rmSync(vault, { recursive: true, force: true });
-    fs.rmSync(projection, { recursive: true, force: true });
   }
 
   let pass = 0;
@@ -596,7 +529,7 @@ function runSemanticLocalizationConformance() {
     if (c.cond) { pass++; console.log(`  ✅ ${c.name}`); }
     else console.log(`  ❌ ${c.name}${c.detail ? ` — ${c.detail}` : ''}`);
   }
-  console.log(`\n  ${pass}/${checks.length} semantic/localization checks passed (§11.9)`);
+  console.log(`\n  ${pass}/${checks.length} semantic/multilingual rendering checks passed (§11.9)`);
   return pass === checks.length;
 }
 
@@ -688,7 +621,7 @@ function runRegistryExtensionConformance() {
   return pass === checks.length;
 }
 
-function runCliSmokeConformance() {
+async function runCliSmokeConformance() {
   const checks = [];
   const check = (name, cond, detail = '') => { checks.push({ name, cond, detail }); };
   const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'ssss-cli-smoke-'));
@@ -708,7 +641,7 @@ function runCliSmokeConformance() {
     const failures = [];
     for (const abs of files) {
       const rel = path.relative(vault, abs);
-      const res = engine.processOperation({
+      const res = await engine.processOperation({
         type: 'operation',
         idempotency_key: `scaffold-${rel.replace(/[^A-Za-z0-9._-]/g, '_')}`,
         workspace_id: 'ws-scaffold',
@@ -731,21 +664,6 @@ function runCliSmokeConformance() {
     check('ssss semantic returns ranked structural results',
       semanticOutput.results?.some((result) => result.document.path === 'rules/welcome.md'),
       JSON.stringify(semanticOutput.results || []));
-
-    const localizedVault = path.join(tmp, 'localized-es');
-    const localizationOutput = JSON.parse(execFileSync('node', [
-      path.join(__dirname, 'ssss.mjs'),
-      'localize',
-      vault,
-      '--locale',
-      'es',
-      '--out',
-      localizedVault,
-    ], { encoding: 'utf8' }));
-    check('ssss localize materializes a safe structural projection',
-      localizationOutput.locale === 'es' &&
-      fs.existsSync(path.join(localizedVault, 'rules', 'welcome.md')) &&
-      !fs.existsSync(path.join(localizedVault, 'tasks', 'first-task.md')));
 
     const dryRunVault = path.join(tmp, 'dry-run-vault');
     const dryRunOut = execFileSync('node', [
@@ -791,7 +709,7 @@ function runCliSmokeConformance() {
  * workflow frontmatter as the canonical schedule source, then derive trigger,
  * task, and run envelopes without introducing a scheduler database of record.
  */
-function runRuntimeConformance() {
+async function runRuntimeConformance() {
   const checks = [];
   const check = (name, cond, detail = '') => { checks.push({ name, cond, detail }); };
 
@@ -854,15 +772,15 @@ function runRuntimeConformance() {
   const vault = fs.mkdtempSync(path.join(os.tmpdir(), 'ssss-runtime-'));
   try {
     const engine = createEngine({ registryDir: REGISTRY_DIR });
-    const eventRes = engine.processOperation(firstPlan.envelopes[0], vault);
-    const taskRes = engine.processOperation(firstPlan.envelopes[1], vault);
+    const eventRes = await engine.processOperation(firstPlan.envelopes[0], vault);
+    const taskRes = await engine.processOperation(firstPlan.envelopes[1], vault);
     check('trigger event commits through Operation Contract', eventRes.success === true,
       JSON.stringify(eventRes.validation?.errors || []));
     check('instantiated task commits through Operation Contract', taskRes.success === true,
       JSON.stringify(taskRes.validation?.errors || []));
 
-    const replayEvent = engine.processOperation(secondPlan.envelopes[0], vault);
-    const replayTask = engine.processOperation(secondPlan.envelopes[1], vault);
+    const replayEvent = await engine.processOperation(secondPlan.envelopes[0], vault);
+    const replayTask = await engine.processOperation(secondPlan.envelopes[1], vault);
     check('duplicate daemon tick replays trigger event idempotently', replayEvent.replay != null);
     check('duplicate daemon tick replays task write idempotently', replayTask.replay != null);
 
@@ -873,7 +791,7 @@ function runRuntimeConformance() {
       status: 'queued',
       startedAt: scheduledFor,
     });
-    const runRes = engine.processOperation(runEnvelope, vault);
+    const runRes = await engine.processOperation(runEnvelope, vault);
     check('worker-created run commits through Operation Contract', runRes.success === true,
       JSON.stringify(runRes.validation?.errors || []));
   } finally {
@@ -953,22 +871,24 @@ async function main() {
     process.exit(ok ? 0 : 1);
   } else if (opts.engine) {
     console.log('\nRunning fixtures through the reference engine (src/engine.mjs) ...');
-    const engineOk = runAgainstEngine(doc);
+    const engineOk = await runAgainstEngine(doc);
     console.log('\nRunning workflow runtime conformance (src/runtime.mjs, §11.8) ...');
-    const runtimeOk = runRuntimeConformance();
+    const runtimeOk = await runRuntimeConformance();
     console.log('\nRunning operation regression conformance (src/engine.mjs, §6/§7) ...');
-    const operationRegressionOk = runOperationContractRegressionConformance();
+    const operationRegressionOk = await runOperationContractRegressionConformance();
     console.log('\nRunning extension-registry conformance (src/registry.mjs) ...');
     const extensionRegistryOk = runRegistryExtensionConformance();
-    console.log('\nRunning semantic/localization conformance (src/semantic.mjs, §11.9) ...');
-    const semanticOk = runSemanticLocalizationConformance();
+    console.log('\nRunning semantic/multilingual rendering conformance (src/semantic.mjs, §11.9) ...');
+    const semanticOk = await runSemanticLocalizationConformance();
+    console.log('\nRunning SSSS 0.9 kernel/adapter/UI conformance ...');
+    const kernel09Ok = await runKernel09Conformance();
     console.log('\nRunning bundle/provisioning conformance (src/bundle.mjs, §16/§17) ...');
-    const bundleOk = runBundleConformance();
+    const bundleOk = await runBundleConformance();
     console.log('\nRunning CLI smoke conformance (scripts/ssss.mjs) ...');
-    const cliSmokeOk = runCliSmokeConformance();
+    const cliSmokeOk = await runCliSmokeConformance();
     process.exit(
       engineOk && runtimeOk && operationRegressionOk && extensionRegistryOk &&
-      semanticOk && bundleOk && cliSmokeOk ? 0 : 1
+      semanticOk && kernel09Ok && bundleOk && cliSmokeOk ? 0 : 1
     );
   } else {
     console.log('\nℹ  No --endpoint/--engine given; ran structural + registry validation only.');

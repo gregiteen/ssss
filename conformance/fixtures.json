@@ -747,66 +747,22 @@
     },
     {
       "id": "fixture-024",
-      "name": "Translation source — valid structural rule",
-      "description": "Creates the exact structural source used by the translation overlay fixtures.",
+      "name": "Multilingual source — valid Spanish structural rule",
+      "description": "Natural-language fields may be authored in any language while symbolic controls remain stable.",
       "request": {
         "type": "operation",
         "idempotency_key": "35353535-3535-3535-3535-353535353535",
         "path": "rules/translatable-refund-rule.md",
         "workspace_id": "TEST_WORKSPACE_ID",
         "actor": { "role": "system" },
-        "content": "---\ntype: rule\ntitle: \"Translatable Refund Rule\"\ndescription: \"Structural source used by the translation conformance fixture.\"\ntimestamp: \"2026-07-10T00:00:00Z\"\nname: \"Translatable Refund Rule\"\n---\nRefunds are available before the deadline.",
-        "intent": "Conformance fixture: create a structural translation source"
+        "content": "---\ntype: rule\ntitle: \"Política de reembolsos\"\ndescription: \"Explica cuándo están disponibles los reembolsos.\"\ntimestamp: \"2026-07-10T00:00:00Z\"\nname: refund-policy\nlanguage: es\n---\nLos reembolsos están disponibles antes de la fecha límite.",
+        "intent": "Conformance fixture: create a non-English structural source"
       },
       "expected_response": {
         "success": true,
         "type": "operation",
         "validation": { "valid": true, "type": "rule", "errors": [] }
       }
-    },
-    {
-      "id": "fixture-025",
-      "name": "Translation overlay — valid hash-bound Spanish projection",
-      "description": "A translation overlay with a safe source path, exact source hash, valid locale, and approved translatable fields must validate.",
-      "preconditions": ["fixture-024 must be committed first"],
-      "request": {
-        "type": "operation",
-        "idempotency_key": "36363636-3636-3636-3636-363636363636",
-        "path": "translations/es/rules/translatable-refund-rule.md",
-        "workspace_id": "TEST_WORKSPACE_ID",
-        "actor": { "role": "system" },
-        "content": "---\ntype: translation\ntitle: \"Spanish Refund Rule Translation\"\ndescription: \"Approved Spanish translation overlay conformance fixture.\"\ntimestamp: \"2026-07-10T00:00:00Z\"\ntranslation_id: translatable-refund-rule-es\nsource_path: rules/translatable-refund-rule.md\nsource_hash: sha256:bc61f36adc3aa1fa2c4da7a48841cb16bc56df0ec052f70d4ee8514a98dc6e62\nlocale: es\nstatus: approved\ntranslated_fields: [title, body]\ntranslated_title: Regla de reembolsos traducible\n---\nLos reembolsos están disponibles antes de la fecha límite.",
-        "intent": "Conformance fixture: valid translation primitive"
-      },
-      "expected_response": {
-        "success": true,
-        "type": "operation",
-        "validation": { "valid": true, "type": "translation", "errors": [] }
-      }
-    },
-    {
-      "id": "fixture-026",
-      "name": "Translation overlay — invalid locale is denied",
-      "description": "Registry pattern enforcement rejects non-BCP47 locale syntax before an invalid overlay can enter the vault.",
-      "preconditions": ["fixture-024 must be committed first"],
-      "request": {
-        "type": "operation",
-        "idempotency_key": "37373737-3737-3737-3737-373737373737",
-        "path": "translations/invalid/rules/translatable-refund-rule.md",
-        "workspace_id": "TEST_WORKSPACE_ID",
-        "actor": { "role": "system" },
-        "content": "---\ntype: translation\ntitle: \"Invalid Locale Translation\"\ndescription: \"Translation fixture that must be rejected.\"\ntimestamp: \"2026-07-10T00:00:00Z\"\ntranslation_id: invalid-locale-translation\nsource_path: rules/translatable-refund-rule.md\nsource_hash: sha256:bc61f36adc3aa1fa2c4da7a48841cb16bc56df0ec052f70d4ee8514a98dc6e62\nlocale: not_a_locale\nstatus: approved\ntranslated_fields: [title]\ntranslated_title: Invalid\n---\nInvalid.",
-        "intent": "Conformance fixture: invalid translation locale"
-      },
-      "expected_response": {
-        "success": false,
-        "validation": {
-          "valid": false,
-          "type": "translation",
-          "errors": ["Invalid format for field 'locale' on type 'translation'."]
-        }
-      },
-      "expected_http_status": 422
     }
   ],
   "error_codes": {

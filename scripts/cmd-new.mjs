@@ -160,12 +160,12 @@ const require = createRequire(import.meta.url);
 const { fixtures } = require('@gregiteen/ssss-cli/conformance/fixtures.json');
 const VAULT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', 'vault');
 
-test('engine implements the canonical Operation Contract (spec §6)', () => {
+test('engine implements the canonical Operation Contract (spec §6)', async () => {
   const vault = fs.mkdtempSync(path.join(os.tmpdir(), 'ssss-conf-'));
   const engine = createEngine();
   try {
     for (const f of fixtures) {
-      const res = engine.processOperation(JSON.parse(JSON.stringify(f.request)), vault);
+      const res = await engine.processOperation(JSON.parse(JSON.stringify(f.request)), vault);
       const exp = f.expected_response;
       if (exp.success !== undefined) assert.equal(res.success, exp.success, f.id + ' success');
       if (exp.validation && exp.validation.valid !== undefined) {
@@ -175,7 +175,7 @@ test('engine implements the canonical Operation Contract (spec §6)', () => {
   } finally { fs.rmSync(vault, { recursive: true, force: true }); }
 });
 
-test('this vault exports, validates, and round-trips as a sale bundle (spec §16/§17)', () => {
+test('this vault exports, validates, and round-trips as a sale bundle (spec §16/§17)', async () => {
   const bundle = exportBundle(VAULT, { profile: 'sale', name: 'starter' });
   const { valid, errors } = validateBundle(bundle);
   assert.ok(valid, 'bundle invalid: ' + errors.join('; '));
@@ -187,9 +187,9 @@ test('this vault exports, validates, and round-trips as a sale bundle (spec §16
   const target = fs.mkdtempSync(path.join(os.tmpdir(), 'ssss-import-'));
   try {
     const engine = createEngine();
-    const r1 = importBundle(plan.plan, target, engine);
+    const r1 = await importBundle(plan.plan, target, engine);
     assert.ok(r1.ok && r1.committed === bundle.files.length, 'import did not commit every file');
-    const r2 = importBundle(plan.plan, target, engine);
+    const r2 = await importBundle(plan.plan, target, engine);
     assert.equal(r2.committed, 0, 're-import was not idempotent');
   } finally { fs.rmSync(target, { recursive: true, force: true }); }
 });
