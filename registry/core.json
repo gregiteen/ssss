@@ -1,8 +1,8 @@
 {
   "$schema": "https://ssss.dev/registry/v1",
   "registry": "core",
-  "spec_version": "0.6",
-  "description": "The canonical SSSS core primitive registry. These 14 document primitives and 5 contract primitives are defined by the SSSS specification (docs/ssss-spec.md §5) and are owned by this standard. Every document primitive declares a portability class (§5.5); the registry also defines the workflow runtime contract (§11.8), the `.ucw` bundle format (§16), and the provisioning contract (§17). A conformant host MUST implement any core primitive it uses according to this registry. Applications extend the core with their own primitives via an extension registry (see registry/README.md); extensions MUST NOT redefine a core type.",
+  "spec_version": "0.9",
+  "description": "The canonical SSSS core registry and semantic application-kernel contract. Core primitives are qualified as ssss:<name>; applications define namespaced primitives through layered extension registries without copying or redefining core behavior.",
   "conformance": "A host is core-conformant for a primitive if a file of that type validates exactly when all required_fields are present and non-empty, and (for append_only types) writes only append.",
 
   "document_primitives": {
@@ -136,6 +136,27 @@
       "portability": "structural",
       "required_fields": ["type", "release_id", "version", "schema_version", "summary", "released_at"],
       "spec_ref": "§5.4 release"
+    },
+    "primitive": {
+      "family": "meta",
+      "canonical_path": "primitives/<namespace>/<id>.md",
+      "append_only": false,
+      "portability": "structural",
+      "required_fields": ["type", "primitive_id", "namespace", "version", "name", "mutation", "portability", "scopes", "fields"],
+      "optional_fields": ["language", "aliases", "path_template", "capabilities", "events", "projections", "ui", "migrations", "requires"],
+      "immutable_fields": ["primitive_id", "namespace"],
+      "enums": {
+        "mutation": ["replace", "append"],
+        "portability": ["structural", "tenant_private", "resource_bound"],
+        "scopes": ["system", "account", "workspace", "user"]
+      },
+      "patterns": {
+        "primitive_id": "^[a-z][a-z0-9_-]{0,63}:[a-z][a-z0-9_-]{0,127}$",
+        "namespace": "^[a-z][a-z0-9_-]{0,63}$",
+        "language": "^[A-Za-z]{2,3}(?:-[A-Za-z0-9]{2,8})*$"
+      },
+      "notes": "A governed, versioned definition for a repository, extension, workspace, or user primitive. Natural-language labels may use any language; stable field, enum, capability, and action identifiers are never translated.",
+      "spec_ref": "§5.4 primitive"
     }
   },
 
@@ -150,6 +171,7 @@
   "universal_frontmatter": {
     "required": ["type", "title", "description", "timestamp"],
     "recommended_okf": ["resource", "tags", "aliases"],
+    "recommended_semantic": ["semantic_id", "resource", "tags", "aliases", "relations", "language"],
     "spec_ref": "§4.2"
   },
 
@@ -219,7 +241,18 @@
     "spec_ref": "§11.8"
   },
 
-  "reserved_keys": ["type", "slug", "schema_version", "status", "feedback", "confidence"],
+  "semantic": {
+    "version": 1,
+    "identity_fields": ["semantic_id", "resource", "type", "path"],
+    "surface_fields": ["title", "description", "name", "slug", "aliases", "tags"],
+    "relation_fields": ["relations", "wiki_links", "markdown_links"],
+    "renderable_fields": ["title", "description", "body"],
+    "language_pattern": "^[A-Za-z]{2,3}(?:-[A-Za-z0-9]{2,8})*$",
+    "safe_default": "Semantic adapters exclude tenant_private and resource_bound documents unless an authorized context explicitly includes them. Runtime rendering never changes symbolic controls.",
+    "spec_ref": "§11.9"
+  },
+
+  "reserved_keys": ["type", "slug", "schema_version", "status", "feedback", "confidence", "semantic_id", "language", "relations"],
   "host_field_prefix": "x_",
   "spec_ref_reserved": "Appendix A"
 }

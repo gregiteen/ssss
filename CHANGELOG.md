@@ -5,6 +5,72 @@ All notable changes to the SSSS (Structured Semantic Syntax System) spec will be
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+## [0.9.0] - Unreleased
+### Added
+- Shared application kernel (`kernel.execute`) with verified-principal injection,
+  canonical request hashing, idempotent replay/conflict, resource prepare/finalize/
+  reconcile hooks, and TypeScript command contracts under `@gregiteen/ssss-cli/kernel`.
+- Host adapter contracts and dual reference implementations for VFS, identity/
+  capability authorization, leases, idempotency, events, projections, semantic
+  retrieval/rendering, and generative UI manifests.
+- Runtime primitive authoring (`ssss:primitive` meta-schema), layered registry
+  composition, aliases, dependency ranges, policy floors, and registry integrity locks.
+- CLI surfaces: `ssss primitive`, `ssss registry`, `ssss adapter conformance`, and
+  `ssss migrate 0.8-to-0.9` dry-run diagnostics with backup manifests.
+- Bundle `manifest.dependencies` for primitives, extensions, migrations, and
+  integrity digests aligned with provenance.
+- Dedicated 0.9 conformance suite covering adapters, kernel leases, projection
+  rebuild/drift isolation, UI adversarial cases, and CLI smoke paths.
+
+### Changed
+- Core registry/spec version is now `0.9`. Canonical documents are authored once;
+  multilingual presentation uses embedding/render adapters instead of stored
+  translation trees.
+- The reference engine is a compatibility façade over the shared kernel; hosts must
+  inject adapters rather than re-implement mutation stages.
+
+### Removed
+- The `translation` document primitive and required localized-vault materialization
+  workflow from the 0.9 core surface.
+
+## [0.8.0] - 2026-07-10
+### Changed
+- Core registry/spec version is now `0.7`. Registry `patterns`,
+  `immutable_fields`, and `references` are enforced by the reference engine and
+  covered by the parity auditor.
+- Bundle import now preflights the complete envelope plan before committing, so a
+  late invalid document cannot leave a partial installation.
+- Bundle validation now applies all registry field constraints and returns
+  structured errors for malformed file entries instead of throwing.
+
+### Fixed
+- Bundle provenance now uses the real published package identity,
+  `@gregiteen/ssss-cli`, instead of an unavailable package alias. The
+  reference bundle derives its exporter name and version from `package.json`.
+
+### Added
+- A tracked, first-class `ssss` skill package with evidence-first canon routing,
+  a dependency-free document validator, contract reference, evals, and audit
+  prompt. The skill is included in the npm package allowlist.
+- Conformance checks that pin default and reference-bundle exporter identities
+  to current package metadata.
+- The `translation` document primitive and spec §11.9 semantic/localization
+  contract: exact-hash structural sources, immutable overlay identity, and
+  natural-language-only translated fields.
+- `@gregiteen/ssss-cli/semantic`, `ssss semantic`, and `ssss localize` for
+  deterministic Unicode search/graph projections and non-destructive localized
+  materialization through a whole-projection staging directory.
+- Fail-closed extension registry composition for malformed fields, invalid
+  regular expressions, symlinks, reserved ids, and core/sibling collisions.
+- Privacy-safe semantic defaults that exclude `tenant_private` and
+  `resource_bound` data unless explicitly requested in an authorized context.
+- Conformance fixtures 024–026 plus dedicated extension-registry,
+  semantic/localization, and expanded CLI smoke groups.
+- Offline help for semantic search and localization, plus a security/UX impact
+  report for downstream host implementers.
+
 ## [0.7.1] - 2026-07-08
 ### Fixed
 - Reduced `resource_bound` primitives to requirement declarations in `template`
@@ -62,7 +128,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   trigger evaluation across daemon, cron, webhook, file-change, event, condition,
   and manual runtimes. Workflows own `triggers[]`; external schedulers are only
   wake-up mechanisms.
-- **`@ssss/cli/runtime` helpers** — deterministic `planWorkflowTrigger()` and
+- **`@gregiteen/ssss-cli/runtime` helpers** — deterministic `planWorkflowTrigger()` and
   `createRunEnvelope()` helpers derive `workflow_triggered` events, task
   documents, and run documents through the Operation Contract.
 - **Runtime conformance metadata/checks** — `conformance/fixtures.json` v1.3.0
@@ -79,7 +145,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   a starter `vault/` of core primitives (incl. a `tenant_private` task to demonstrate
   the sale-drop), a dependency-free conformance test (`node --test`) that replays the
   canonical fixtures through the engine and round-trips the vault as a `sale` bundle,
-  plus `package.json` (pinned to the matching `@ssss/cli` tag), `CLAUDE.md`, `README`,
+  plus `package.json` (pinned to the matching `@gregiteen/ssss-cli` tag), `CLAUDE.md`, `README`,
   and `.gitignore`. Flags: `--with-total-recall` (wire the Total Recall memory OS),
   `--install` (npm install + Total Recall init + verify), `--ref`, `--name`, `--force`,
   `--no-git`. All shelling-out uses `execFileSync` with fixed argv (no shell). Docs:
@@ -114,7 +180,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `ssss help [topic]` serving offline docs from `docs/help/` and `ssss version`. Each
   command has its own `--help`. Shared parsing/formatting in `scripts/lib/cli.mjs`.
 - **Open-source packaging** — `README.md`, `LICENSE` (ISC), `.gitignore`, and
-  `package.json` metadata (`engines`, `repository`, `files`) so `@ssss/cli` is
+  `package.json` metadata (`engines`, `repository`, `files`) so `@gregiteen/ssss-cli` is
   publishable and the runtime-read paths (`VERSION`, `docs/help`) ship in the tarball.
 
 ### Changed
@@ -133,7 +199,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   the canonical Operation Contract as the fourth envelope type. Removes a replace-type file,
   rejects append-type targets, and emits a deletion event for audit. Idempotent.
 - **Reference engine (`src/engine.mjs`, `src/registry.mjs`, `src/frontmatter.mjs`)** — the
-  canonical, dependency-free `@ssss/cli` Operation Contract engine. Harvested from total-recall
+  canonical, dependency-free `@gregiteen/ssss-cli` Operation Contract engine. Harvested from total-recall
   (§6.3 pipeline, idempotency replay from the audit log, `buildRepair`/§9 repair blocks) and
   festech (`delete` envelope, `resolveContainedPath` path-traversal guard, registry-driven
   content validation). Validates content against `registry/core.json` + `registry/extensions/*`

@@ -54,7 +54,7 @@ exact standard we need; nobody has unified them:
   typed template variables and a provisioning dependency graph in `server/types/workspace.ts`,
   and a live export→provision→import path at `accountAssistant.ts:257`.
 
-The work is to **canonicalize the best of each into the spec + `@ssss/cli`, then re-derive all
+The work is to **canonicalize the best of each into the spec + `@gregiteen/ssss-cli`, then re-derive all
 three apps from it.** See the Architecture doc for the layer-by-layer harvest map.
 
 ## 3. Problem Statement
@@ -104,4 +104,4 @@ The vision is blocked by five gaps — in the *standard*, not the implementation
 - Exporting with the `sale` profile provably strips all `tenant_private` primitives.
 - A `resource_bound` primitive (e.g. a phone number) provisions against the buyer's resources, never the seller's.
 - A v2 bundle upgrades a running v1 instance via `patch`/`migration` without destroying tenant data.
-- `@ssss/cli` validates a bundle and resolves its links after id-remap.
+- `@gregiteen/ssss-cli` validates a bundle and resolves its links after id-remap.

@@ -19,6 +19,9 @@ import { generateIndexes } from './autolink.mjs';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const OUT = path.resolve(__dirname, '..', 'conformance', 'reference-bundle.ucw.json');
+const PACKAGE = JSON.parse(
+  fs.readFileSync(path.resolve(__dirname, '..', 'package.json'), 'utf8')
+);
 
 // ─── The reference vault ────────────────────────────────────────────────────
 const VAULT = {
@@ -134,7 +137,7 @@ try {
     name: 'Festival in a Box',
     description: 'A complete music-festival operation as a tradeable SSSS bundle.',
     version: '1.0.0',
-    exporter: '@ssss/cli@0.7.0',
+    exporter: `${PACKAGE.name}@${PACKAGE.version}`,
     requiredExtensions: ['festech'],
     parameters: [
       { key: 'business_name', label: 'Festival name', type: 'string', scope: 'workspace', source: 'user', required: true },

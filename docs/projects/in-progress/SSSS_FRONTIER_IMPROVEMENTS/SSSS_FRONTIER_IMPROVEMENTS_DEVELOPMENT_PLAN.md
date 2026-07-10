@@ -2,7 +2,7 @@
 type: project_document
 title: SSSS_FRONTIER_IMPROVEMENTS — Development Plan
 tags: ["project-management", "SSSS_FRONTIER_IMPROVEMENTS"]
-timestamp: 2026-06-30T00:00:00Z
+timestamp: 2026-07-10T00:00:00Z
 ---
 
 # SSSS_FRONTIER_IMPROVEMENTS — Development Plan
@@ -95,3 +95,18 @@ correct. Phase 2 depends on Phase 1's corrected behavior being the thing the spe
 3 has no hard dependency on Phase 2 but is intentionally sequenced last: it is real, valuable
 tooling work (schema, lock file, migration proof) rather than a correctness or security fix, and
 none of it should compete for attention with Phase 1.
+
+## Phase 4 — Semantic, translation, and extension hardening (completed 2026-07-10)
+
+1. Make registry declarations executable by enforcing regex patterns, immutable fields, and
+   document reference constraints in the engine and bundle paths.
+2. Fail extension composition closed on malformed schemas, symlinks, reserved names, invalid
+   regexes, and core/sibling type collisions.
+3. Add the `translation` primitive and spec §11.9 with exact source hashes, structural-only
+   targets, approved-by-default overlays, and immutable symbolic control fields.
+4. Build dependency-free semantic search and graph projection with stable identities, Unicode
+   tokens, localized surfaces, and structural-only privacy defaults.
+5. Materialize localized trees only outside the source vault and record a rebuildable manifest.
+6. Preflight every bundle import envelope before the first commit.
+7. Ship CLI/help/library/skill surfaces and positive, negative, privacy, collision, stale-hash,
+   traversal, deterministic, and idempotency conformance coverage.

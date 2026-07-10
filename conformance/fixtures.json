@@ -1,6 +1,6 @@
 {
   "$schema": "https://ssss.dev/conformance/v1",
-  "version": "1.4.0",
+  "version": "1.5.0",
   "description": "Canonical SSSS Operation Contract conformance fixtures. These define the canonical request/response shapes for the Operation Contract (spec §6) and are the shared test contract every SSSS implementation MUST pass. A host is conformant only if, for every fixture, it produces the expected response and status code (spec §12).",
   "spec_url": "../docs/ssss-spec.md",
   "operation_types": {
@@ -86,6 +86,9 @@
       "Required fields for each primitive type must be present and non-empty",
       "required_when-conditional fields must be present when their condition matches (spec §9)",
       "Fields with a registry-declared enum must take one of the declared values",
+      "Fields with a registry-declared pattern must match it",
+      "Registry-declared immutable fields cannot change through operation replacement or patch",
+      "Registry-declared document references must be safe, resolvable, type/portability-compatible, and hash-valid",
       "See /api/v1/ssss/schema for the full type schema definitions"
     ],
     "authorization": [
@@ -741,6 +744,25 @@
         }
       },
       "expected_http_status": 409
+    },
+    {
+      "id": "fixture-024",
+      "name": "Multilingual source — valid Spanish structural rule",
+      "description": "Natural-language fields may be authored in any language while symbolic controls remain stable.",
+      "request": {
+        "type": "operation",
+        "idempotency_key": "35353535-3535-3535-3535-353535353535",
+        "path": "rules/translatable-refund-rule.md",
+        "workspace_id": "TEST_WORKSPACE_ID",
+        "actor": { "role": "system" },
+        "content": "---\ntype: rule\ntitle: \"Política de reembolsos\"\ndescription: \"Explica cuándo están disponibles los reembolsos.\"\ntimestamp: \"2026-07-10T00:00:00Z\"\nname: refund-policy\nlanguage: es\n---\nLos reembolsos están disponibles antes de la fecha límite.",
+        "intent": "Conformance fixture: create a non-English structural source"
+      },
+      "expected_response": {
+        "success": true,
+        "type": "operation",
+        "validation": { "valid": true, "type": "rule", "errors": [] }
+      }
     }
   ],
   "error_codes": {
@@ -759,5 +781,5 @@
   ],
   "maintained_by": "SSSS standard (canonical: this repo)",
   "provenance": "Seeded from the festech.live reference implementation, which authored the original shared contract; canonicalized here as the vendor-neutral source of truth.",
-  "last_updated": "2026-07-02"
+  "last_updated": "2026-07-10"
 }

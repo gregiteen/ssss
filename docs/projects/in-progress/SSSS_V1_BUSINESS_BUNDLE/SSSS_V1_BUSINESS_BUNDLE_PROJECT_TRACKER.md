@@ -19,7 +19,7 @@ timestamp: 2026-06-24T16:00:00Z
 
 ### Track 0 — Foundations (was SSSS_V1_STANDARDIZATION) ✅
 - `[x]` Document `language_convention` in `ssss-spec.md` §11.7 (structural presentation overlay; never translates control keys)
-- `[x]` Port festech `SsssValidator.ts` → `@ssss/cli`: satisfied by `src/registry.mjs` + `src/engine.mjs` (registry-driven validation over `registry/core.json`, no per-type code — supersedes a literal Zod/Proxy port)
+- `[x]` Port festech `SsssValidator.ts` → `@gregiteen/ssss-cli`: satisfied by `src/registry.mjs` + `src/engine.mjs` (registry-driven validation over `registry/core.json`, no per-type code — supersedes a literal Zod/Proxy port)
 - `[x]` Finalize `scripts/autolink.mjs` (deterministic + semantic layers, bundle-relative absolute paths, idempotent)
 
 ### Track A — Portability Classification (keystone)
@@ -30,7 +30,7 @@ timestamp: 2026-06-24T16:00:00Z
 - `[x]` Registry conformance check: `portability` required on all primitives (`scripts/conformance.mjs` `validateRegistry`)
 
 ### Track B — Operation Contract Reconciliation ✅
-- `[x]` Lift TR pipeline into `@ssss/cli` canonical engine — `src/engine.mjs` (registry-driven, dependency-free): §6.3 pipeline, idempotency replay, `buildRepair`, leases, all 4 envelope types
+- `[x]` Lift TR pipeline into `@gregiteen/ssss-cli` canonical engine — `src/engine.mjs` (registry-driven, dependency-free): §6.3 pipeline, idempotency replay, `buildRepair`, leases, all 4 envelope types
 - `[x]` Promote festech `delete` envelope → spec §6.2 + engine handler + registry contract primitive (fixtures already cover it as fixture-009)
 - `[x]` Lift festech `resolveContainedPath` path-traversal guard into canon (`src/engine.mjs` `resolveContainedPath`)
 - `[x]` Bump `spec_version` (0.2 → 0.3), VERSION, CHANGELOG, package.json, spec header + §14; error codes unchanged (still valid)
@@ -54,8 +54,8 @@ timestamp: 2026-06-24T16:00:00Z
 - `[~]` Cross-host proof (ultrachat ↔ festech engines) → reference engine is the in-repo oracle; live cross-host diff happens during Track F roll-out (`--endpoint` mode ready)
 
 ### Track F — Roll-out (re-derive apps from canon) ⬜ (cross-repo — only remaining track)
-- `[ ]` total-recall: publish core as `@ssss/cli`; consume package
-- `[ ]` festech: swap `SsssValidator.ts` + `primitive-registry.json` for `@ssss/cli` + registries
+- `[ ]` total-recall: publish core as `@gregiteen/ssss-cli`; consume package
+- `[ ]` festech: swap `SsssValidator.ts` + `primitive-registry.json` for `@gregiteen/ssss-cli` + registries
 - `[ ]` ultrachat: swap `VfsPackage*` types for canonical §16 bundle types
 
 ### Track G — Reference Bundle ("Festival in a Box") ✅

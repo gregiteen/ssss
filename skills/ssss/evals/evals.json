@@ -1,0 +1,37 @@
+[
+  {
+    "name": "ssss-skill-validates-as-primitive",
+    "assertion": "SKILL.md includes universal SSSS frontmatter plus type: skill, name: ssss, and a trigger-optimized description.",
+    "severity": "error"
+  },
+  {
+    "name": "ssss-canon-is-evidence-first",
+    "assertion": "The skill tells agents to inspect package metadata, registry, spec, implementation, and conformance instead of trusting a copied snapshot.",
+    "severity": "error"
+  },
+  {
+    "name": "ssss-validator-is-dependency-free",
+    "assertion": "scripts/validate-schema.mjs runs with Node built-ins and validates universal plus primitive-specific fields.",
+    "severity": "error"
+  },
+  {
+    "name": "ssss-host-boundaries-are-explicit",
+    "assertion": "The skill distinguishes the vendor-neutral reference kernel from Total Recall and other host adapters.",
+    "severity": "error"
+  },
+  {
+    "name": "ssss-full-gate-is-named",
+    "assertion": "The skill requires npm test in the reference repository and the host-specific SSSS conformance gate for adapters.",
+    "severity": "error"
+  },
+  {
+    "name": "ssss-semantic-default-is-private",
+    "assertion": "The skill requires structural-only semantic projections by default, with explicit authorization before private or resource-bound indexing.",
+    "severity": "error"
+  },
+  {
+    "name": "ssss-runtime-rendering-preserves-controls",
+    "assertion": "The skill requires runtime multilingual rendering and preserves all symbolic control fields.",
+    "severity": "error"
+  }
+]

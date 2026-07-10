@@ -18,17 +18,17 @@ timestamp: 2026-06-24T16:00:00Z
 
 SSSS is not greenfield. All three apps already ship working SSSS engines, and each one
 independently invented a different layer of the standard. The job is to **lift the strongest
-implementation of each layer into the canonical spec + `@ssss/cli`, then re-derive all three
+implementation of each layer into the canonical spec + `@gregiteen/ssss-cli`, then re-derive all three
 apps from it** so they stop drifting.
 
 | Layer | Strongest existing implementation | Canonical home |
 | --- | --- | --- |
-| Operation Contract (pipeline, idempotency, repair) | **total-recall** `src/core/operation-validator.mjs` | spec §6 + `@ssss/cli` |
-| Envelope schemas (operation/patch/event/migration/release) | **total-recall** `src/core/schema.mjs` (Zod) | `registry/core.json` + `@ssss/cli` |
-| Registry-driven validation | **festech** `apps/web/server/services/ssss/SsssValidator.ts` | `@ssss/cli` `SsssValidator` |
+| Operation Contract (pipeline, idempotency, repair) | **total-recall** `src/core/operation-validator.mjs` | spec §6 + `@gregiteen/ssss-cli` |
+| Envelope schemas (operation/patch/event/migration/release) | **total-recall** `src/core/schema.mjs` (Zod) | `registry/core.json` + `@gregiteen/ssss-cli` |
+| Registry-driven validation | **festech** `apps/web/server/services/ssss/SsssValidator.ts` | `@gregiteen/ssss-cli` `SsssValidator` |
 | `delete` envelope + path-traversal safety | **festech** `SsssOperationService.ts` | spec §6 reconciliation |
 | `resource_bound` primitives (`domain`, `phone_number`, …) | **festech** `docs/ssss/primitive-registry.json` | `registry/core.json` + `extensions/festech.json` |
-| `.ucw` bundle (manifest + files + branding) | **ultrachat** `server/services/workspace/WorkspaceVfsPackageService.ts` | spec §16 + `@ssss/cli` |
+| `.ucw` bundle (manifest + files + branding) | **ultrachat** `server/services/workspace/WorkspaceVfsPackageService.ts` | spec §16 + `@gregiteen/ssss-cli` |
 | Provisioning (capabilities, template vars, dep graph) | **ultrachat** `server/types/workspace.ts` | spec §16.x |
 | Marketplace submission metadata | **total-recall** `metadata.schema.json` | spec §16 listing schema |
 
@@ -61,7 +61,7 @@ repo" — that data is `tenant_private` and must never be in a `template`/`sale`
 ## 2. The Operation Contract (lift from total-recall, reconcile festech)
 
 `total-recall/src/core/operation-validator.mjs` is the most complete reference and should become
-the canonical `@ssss/cli` engine. Its `processOperation(envelope, vaultRoot, options)`:
+the canonical `@gregiteen/ssss-cli` engine. Its `processOperation(envelope, vaultRoot, options)`:
 
 - Dispatches on a `schemaMap = { operation, patch, event }` of Zod schemas from `schema.mjs`.
 - On schema failure returns a response **plus a `repair` block** (`buildRepair(zodError)`) — this
@@ -156,11 +156,11 @@ export → provision → import already exists end-to-end: `accountAssistant.ts:
 After the canon lands, each app sheds its bespoke copy:
 
 - **total-recall** — already closest to canon; export its `operation-validator`/`schema` as the
-  `@ssss/cli` core, then consume `@ssss/cli` instead of local copies.
-- **festech** — replace `SsssValidator.ts` + `primitive-registry.json` with `@ssss/cli` +
+  `@gregiteen/ssss-cli` core, then consume `@gregiteen/ssss-cli` instead of local copies.
+- **festech** — replace `SsssValidator.ts` + `primitive-registry.json` with `@gregiteen/ssss-cli` +
   `registry/core.json` + `extensions/festech.json`; keep the `delete` envelope (now canonical).
 - **ultrachat** — replace `VfsPackage*` types with the canonical §16 bundle types from
-  `@ssss/cli`; keep its provisioning orchestrator, now typed against the standard.
+  `@gregiteen/ssss-cli`; keep its provisioning orchestrator, now typed against the standard.
 
 ## 7. Validation Strategy
 

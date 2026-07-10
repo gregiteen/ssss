@@ -2,7 +2,7 @@
 type: project_document
 title: SSSS_FRONTIER_IMPROVEMENTS — Tracker
 tags: ["project-management", "SSSS_FRONTIER_IMPROVEMENTS"]
-timestamp: 2026-06-30T00:00:00Z
+timestamp: 2026-07-10T00:00:00Z
 ---
 
 # SSSS_FRONTIER_IMPROVEMENTS — Tracker
@@ -87,7 +87,7 @@ it just had zero fixture coverage and was actively contradicted by this repo's o
 - `[x]` Created a new **tracked, non-gitignored** `skills/` directory at repo root — until this
   phase, `.claude/`, `.agent/`, and `.agents/` were ALL wholesale gitignored, so none of this
   repo's 8+ skills were part of the published, open-source project at all.
-- `[x]` Migrated the 5 SSSS-relevant skills into it, adding the missing `type: skill`
+- `[x]` Migrated the original 5 SSSS-relevant skills into it, adding the missing `type: skill`
   discriminator to every one: `skill`, `okf`, `ssss-project-management`,
   `ssss-registry-parity-auditor`, `rbac-fail-open-auditor`. Also stripped a prompt-injection
   payload (`<!-- BEGIN INJECTED MEMORY -->` block containing directives like "do not mention
@@ -113,12 +113,37 @@ it just had zero fixture coverage and was actively contradicted by this repo's o
 - `[x]` Repointed `.claude/skills/{skill,okf,ssss-project-management,ssss-registry-parity-auditor,
   rbac-fail-open-auditor}` symlinks to the new tracked `skills/<name>/` locations; deleted the
   now-stale duplicate copies that used to live under gitignored `.agent/`/`.agents/`.
+- `[x]` Added the missing core `skills/ssss/` package as the sixth tracked SSSS skill and included
+  it in the npm package allowlist. It now
+  routes agents to live package/registry/spec/conformance evidence, distinguishes the reference
+  kernel from host adapters, ships a dependency-free validator, and replaces the installed
+  global stub whose validator failed at startup on a missing `gray-matter` dependency.
 - `[ ]` **Not done this phase — explicit follow-up, different repo**: build an actual "skill
   deployer" in `~/Github/total-recall` (a push/publish command, complementing its existing
   pull-only `sync-repo.mjs`) so Total-Recall-personal skills (`total-recall`, `research`,
   `cli-agents` — deliberately NOT migrated into this repo's `skills/`, since they're about a
   different system, not SSSS) can be shared across projects the same way. Out of this repo's
   scope; requires its own session against that repo.
+
+### Phase 5 — Semantic, translatable, secure extension kernel ✅
+
+- `[x]` Promoted registry `patterns`, `immutable_fields`, and `references` into enforced engine
+  behavior and extended the parity auditor so future schema fields cannot remain decorative.
+- `[x]` Hardened extension loading: validates definition shape and regexes, sorts deterministically,
+  rejects symlinks/reserved names, and fails on core or sibling primitive collisions.
+- `[x]` Added the core `translation` primitive and spec §11.9: exact-hash structural sources,
+  immutable overlay identity, approved-by-default application, and natural-language-only fields.
+- `[x]` Added `src/semantic.mjs` plus `ssss semantic`: deterministic Unicode tokens, stable
+  identities, explicit/wiki/Markdown graph edges, localized ranking, and structural-only privacy
+  defaults with an explicit high-trust private opt-in.
+- `[x]` Added `ssss localize`: atomic materialization outside the source vault into an empty,
+  non-symlinked derived tree with a rebuildable projection manifest.
+- `[x]` Made bundle validation enforce registry references and changed import to validate the
+  complete plan before its first commit, preventing partial installs on late failures.
+- `[x]` Added fixtures 024–026 and dedicated extension-registry (7 checks), semantic/localization
+  (16 checks), bundle/provisioning (14 checks), and CLI (4 checks) conformance groups.
+- `[x]` Updated the tracked/package SSSS skill, validator, reference, evals, offline help, README,
+  spec v0.7, security/UX impact report, reference bundle, and active/global skill mirrors.
 
 ### Related tooling built this session (agent skills, not part of the 4-phase plan above)
 The two audit skills referenced in Phase 1.5/Phase 4 are now shipped at `skills/` (tracked,
@@ -134,7 +159,7 @@ otherwise unchanged from when they were first built:
   a scratch copy of `src/engine.mjs` and re-running the probe produces exactly 1 fail-open
   finding, 0 against every other scenario.
 
-All 5 shipped skills pass `node scripts/validate-skills.mjs` (wired into `npm test`) cleanly.
+All 6 shipped skills pass `node scripts/validate-skills.mjs` (wired into `npm test`) cleanly.
 
 ### Cross-Project Notes
 - This project does **not** own Track F (cross-repo rollout). See
@@ -175,3 +200,13 @@ All 5 shipped skills pass `node scripts/validate-skills.mjs` (wired into `npm te
   tested against this repo (clean on the fixed state, and `rbac-fail-open-auditor`'s probe was
   additionally verified to catch the original bug when deliberately reintroduced into a scratch
   copy). Full details in the "Related tooling" section above.
+- 2026-07-10 — Added tracked `skills/ssss/`, synchronized the active/global SSSS skill surfaces,
+  removed the installed validator's undeclared `gray-matter` dependency, corrected bundle
+  exporter identity to `@gregiteen/ssss-cli@0.7.1`, and extended bundle conformance to pin both
+  default and reference provenance to package metadata. `npm test` passes with 6 shipped skills
+  and 11/11 bundle/provisioning checks.
+- 2026-07-10 — **Phase 5 landed.** Core spec/registry moved to v0.7 with translation overlays,
+  deterministic semantic search/localization, strict extension composition, executable pattern/
+  immutable/reference constraints, and two-phase bundle import. Expanded conformance passes
+  26/26 fixtures, 8/8 runtime, 7/7 operation regressions, 7/7 extension registries, 16/16
+  semantic/localization, 14/14 bundle/provisioning, and 4/4 CLI checks.

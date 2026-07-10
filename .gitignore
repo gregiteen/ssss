@@ -19,3 +19,6 @@ CLAUDE.md
 *.ucw.json
 !conformance/reference-bundle.ucw.json
 .agent/scratch/
+
+# Local npm pack artifacts (release candidates are built, not committed)
+*.tgz

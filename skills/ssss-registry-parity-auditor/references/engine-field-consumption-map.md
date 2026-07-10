@@ -12,6 +12,9 @@ match, not the other way around.
 | `required_fields` | `engine.mjs` `validateContent()` | Every listed field must be present and non-empty. |
 | `required_when` | `engine.mjs` `validateContent()` | Fields required only when a `"field==value"` condition on the document matches. Supports multiple condition keys per primitive. |
 | `enums` | `engine.mjs` `validateContent()` | A present field's value(s) must be drawn from the declared list. |
+| `patterns` | `engine.mjs` `validateContent()` | String fields must match the registry-declared Unicode regular expression. Invalid patterns fail during registry load. |
+| `immutable_fields` | `engine.mjs` operation/patch validation | Existing identity fields cannot be changed by replacement or patch; an explicit migration is required. |
+| `references` | `engine.mjs` + `registry.mjs` `validateReferenceConstraints()` | Referenced paths are contained, non-symlink files and may enforce source type, portability, and exact content hashes. |
 | `append_only` | `registry.mjs` `isAppendType()`, called from `engine.mjs` | Rejects any `operation`/`patch` write that doesn't extend the existing body verbatim; rejects `delete` entirely. |
 
 ## Consumed elsewhere, NOT by write-time validation (do not flag as a gap)

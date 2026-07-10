@@ -15,7 +15,7 @@ timestamp: 2026-06-24T16:00:00Z
 ---
 
 Shape of the work: **harvest** the strongest implementation of each layer from the three repos →
-**canonicalize** it in `ssss-spec.md` + `registry/core.json` + `@ssss/cli` → **conform** with
+**canonicalize** it in `ssss-spec.md` + `registry/core.json` + `@gregiteen/ssss-cli` → **conform** with
 cross-host fixtures → **roll out** by re-deriving each app from the canon. Sequencing puts the
 cheap keystone first, then the contract everything else rests on.
 
@@ -45,12 +45,12 @@ cheap keystone first, then the contract everything else rests on.
 >   `scripts/build-reference-bundle.mjs`.
 > - ⬜ **Track F** — Roll-out (re-derive festech/ultrachat/total-recall from the canon). This is
 >   the only remaining track and is **cross-repo** — it edits the three application repos to
->   consume `@ssss/cli` instead of their local copies. Version 0.4.0.
+>   consume `@gregiteen/ssss-cli` instead of their local copies. Version 0.4.0.
 
 ### Track 0 — Foundations (absorbed from SSSS_V1_STANDARDIZATION)
 1. Formalize `language_convention` in `ssss-spec.md` (festech already ships this primitive in
    `docs/ssss/primitive-registry.json` — document it, don't invent it).
-2. Implement `@ssss/cli` `SsssValidator` — port festech's registry-driven validator
+2. Implement `@gregiteen/ssss-cli` `SsssValidator` — port festech's registry-driven validator
    (`apps/web/server/services/ssss/SsssValidator.ts`) onto `registry/core.json`; add the Proxy
    localization wrapper.
 3. Finalize `scripts/autolink.mjs` (glossary, aliases, bundle-relative link rewriting) — this is
@@ -66,7 +66,7 @@ cheap keystone first, then the contract everything else rests on.
 4. Registry conformance check: every primitive MUST declare `portability`.
 
 ### Track B — Operation Contract Reconciliation (one engine)
-1. Lift total-recall `src/core/operation-validator.mjs` + `src/core/schema.mjs` into `@ssss/cli`
+1. Lift total-recall `src/core/operation-validator.mjs` + `src/core/schema.mjs` into `@gregiteen/ssss-cli`
    as the canonical engine (idempotency replay, `buildRepair` → §9, lease + authz hooks).
 2. Promote festech's `delete` envelope into spec §6.2 and add `DeleteEnvelopeSchema`.
 3. Lift festech's `resolveContainedPath` path-traversal guard into the canonical engine.
@@ -96,8 +96,8 @@ cheap keystone first, then the contract everything else rests on.
    drift in `conformance/README.md`.
 
 ### Track F — Roll-out (re-derive apps from the canon)
-1. total-recall: publish its core as `@ssss/cli`; consume the package instead of local copies.
-2. festech: swap `SsssValidator.ts` + `primitive-registry.json` for `@ssss/cli` + core/extension
+1. total-recall: publish its core as `@gregiteen/ssss-cli`; consume the package instead of local copies.
+2. festech: swap `SsssValidator.ts` + `primitive-registry.json` for `@gregiteen/ssss-cli` + core/extension
    registries; keep `delete` (now canonical).
 3. ultrachat: swap `VfsPackage*` types for canonical §16 bundle types; keep the provisioning
    orchestrator, now standard-typed.

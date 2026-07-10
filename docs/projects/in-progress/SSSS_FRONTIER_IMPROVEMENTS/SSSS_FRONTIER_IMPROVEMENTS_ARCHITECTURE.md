@@ -2,7 +2,7 @@
 type: project_document
 title: SSSS_FRONTIER_IMPROVEMENTS — Architecture
 tags: ["project-management", "SSSS_FRONTIER_IMPROVEMENTS"]
-timestamp: 2026-06-30T00:00:00Z
+timestamp: 2026-07-10T00:00:00Z
 ---
 
 # SSSS_FRONTIER_IMPROVEMENTS — Architecture
@@ -186,11 +186,11 @@ rather than published to a central store.
 
 This maps directly onto the exact problem Track F rollout exists to solve: `conformance/README.md`'s
 drift table exists because festech/ultrachat/total-recall each hold a private, divergent copy of
-the Operation Contract instead of consuming `@ssss/cli`. A pinned lock file gives Track F a
+the Operation Contract instead of consuming `@gregiteen/ssss-cli`. A pinned lock file gives Track F a
 concrete artifact to detect drift with, instead of relying on manual drift-table upkeep.
 
 **Design**: define an `ssss-lock.json` format (or equivalent) that a consuming repo commits,
-recording the exact `@ssss/cli` package version plus a content hash of the registry it has
+recording the exact `@gregiteen/ssss-cli` package version plus a content hash of the registry it has
 adopted. Add `ssss lock` (write the lock file from the currently installed package) and
 `ssss verify-lock` (fail — for CI — if the local registry's hash no longer matches the pinned
 value). This is scoped as tooling this repo ships; it does not require touching festech/ultrachat/
@@ -214,3 +214,26 @@ currently unproven under test.
 round-trip pattern in `scripts/conformance.mjs`) that provisions a v1 vault, applies a migration
 document patching only `structural` files, and asserts byte-for-byte that every `tenant_private`
 file's `content_hash` is unchanged before/after.
+
+## P4 — Semantic and translation architecture (implemented 2026-07-10)
+
+The canonical Markdown layer remains unchanged by localization. `translation` documents are
+structural overlays whose identity (`translation_id`, `source_path`, `locale`) is immutable and
+whose `source_hash` binds them to exact source bytes. The semantic engine may overlay only title,
+description, and body; all control fields come from the source.
+
+`src/semantic.mjs` builds a deterministic projection:
+
+```text
+validated structural Markdown
+  -> stable semantic identity + source hash
+  -> localized surface overlay (optional, approved, hash-current)
+  -> Unicode token record + explicit/wiki/Markdown graph edges
+  -> query result or derived locale tree outside the vault
+```
+
+The trust boundary is portability-aware. Structural documents are eligible by default;
+tenant-private and resource-bound documents require an explicit authorized opt-in. Registry
+extension composition fails during load on malformed fields, invalid regexes, symlinks, or type
+collisions. Bundle import preflights the entire envelope plan before committing, so registry and
+reference failures are atomic at the plan boundary.
