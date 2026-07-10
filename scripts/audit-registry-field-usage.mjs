@@ -37,7 +37,15 @@ const ENGINE_FILES = [
 // spec §6.3 + §9). If a primitive declares one, the engine source MUST
 // reference it — otherwise the registry is making a promise the engine
 // doesn't keep.
-const ENGINE_ENFORCED_KEYS = ['required_fields', 'required_when', 'enums', 'append_only'];
+const ENGINE_ENFORCED_KEYS = [
+  'required_fields',
+  'required_when',
+  'enums',
+  'patterns',
+  'immutable_fields',
+  'references',
+  'append_only',
+];
 
 // Keys that are real and load-bearing but are intentionally consumed
 // elsewhere (export/bundle time, documentation, or the registry loader
@@ -75,6 +83,7 @@ function engineReferencesKey(engineSources, key) {
   const patterns = [
     new RegExp(`\\bdef\\.${key}\\b`),
     new RegExp(`\\btypeDef\\.${key}\\b`),
+    new RegExp(`(?:\\.|\\?\\.)${key}\\b`),
     new RegExp(`\\['${key}'\\]`),
     new RegExp(`\\["${key}"\\]`),
   ];

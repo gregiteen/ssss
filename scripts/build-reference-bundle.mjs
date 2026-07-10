@@ -15,10 +15,14 @@ import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { exportBundle, validateBundle } from '../src/bundle.mjs';
+import { documentHash } from '../src/registry.mjs';
 import { generateIndexes } from './autolink.mjs';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const OUT = path.resolve(__dirname, '..', 'conformance', 'reference-bundle.ucw.json');
+const PACKAGE = JSON.parse(
+  fs.readFileSync(path.resolve(__dirname, '..', 'package.json'), 'utf8')
+);
 
 // ─── The reference vault ────────────────────────────────────────────────────
 const VAULT = {
@@ -109,6 +113,25 @@ status: pending
 Attendee jane@example.com requested a seat change.`,
 };
 
+// Structural translation overlay — hash-bound to the exact source document and
+// applied only by the semantic/localization projection (§11.9).
+VAULT['translations/es/rules/refund-policy.md'] =
+`---
+type: translation
+title: Spanish Refund Policy Translation
+description: Approved Spanish presentation overlay for the festival refund policy.
+timestamp: 2026-07-10T00:00:00Z
+translation_id: refund-policy-es
+source_path: rules/refund-policy.md
+source_hash: ${documentHash(VAULT['rules/refund-policy.md'])}
+locale: es
+status: approved
+translated_fields: [title, description, body]
+translated_title: Política de reembolsos
+translated_description: Explica cuándo están disponibles los reembolsos para asistentes.
+---
+Los reembolsos están disponibles hasta catorce días antes del evento.`;
+
 function buildVault() {
   const root = fs.mkdtempSync(path.join(os.tmpdir(), 'ssss-refvault-'));
   const files = [];
@@ -134,7 +157,7 @@ try {
     name: 'Festival in a Box',
     description: 'A complete music-festival operation as a tradeable SSSS bundle.',
     version: '1.0.0',
-    exporter: '@ssss/cli@0.7.0',
+    exporter: `${PACKAGE.name}@${PACKAGE.version}`,
     requiredExtensions: ['festech'],
     parameters: [
       { key: 'business_name', label: 'Festival name', type: 'string', scope: 'workspace', source: 'user', required: true },

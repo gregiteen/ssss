@@ -18,9 +18,17 @@ import crypto from 'node:crypto';
 import { execFileSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import { createEngine } from '../src/engine.mjs';
-import { validateBundle, provisionBundle, importBundle } from '../src/bundle.mjs';
+import {
+  DEFAULT_EXPORTER,
+  exportBundle,
+  validateBundle,
+  provisionBundle,
+  importBundle,
+} from '../src/bundle.mjs';
 import { parseDocument } from '../src/frontmatter.mjs';
+import { documentHash, loadRegistries } from '../src/registry.mjs';
 import { createRunEnvelope, planWorkflowTrigger } from '../src/runtime.mjs';
+import { buildSemanticIndex, materializeLocale, searchSemanticIndex } from '../src/semantic.mjs';
 import { auditRegistryFieldUsage } from './audit-registry-field-usage.mjs';
 import { validateSkills } from './validate-skills.mjs';
 
@@ -28,6 +36,7 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const FIXTURES = path.resolve(__dirname, '..', 'conformance', 'fixtures.json');
 const REFERENCE_BUNDLE = path.resolve(__dirname, '..', 'conformance', 'reference-bundle.ucw.json');
 const REGISTRY_DIR = path.resolve(__dirname, '..', 'registry');
+const PACKAGE = JSON.parse(fs.readFileSync(path.resolve(__dirname, '..', 'package.json'), 'utf8'));
 const PORTABILITY_CLASSES = ['structural', 'tenant_private', 'resource_bound'];
 
 function parseArgs(argv) {
@@ -194,6 +203,32 @@ function runBundleConformance() {
 
   const { valid, errors } = validateBundle(bundle, { registryDir: REGISTRY_DIR });
   check('reference bundle is schema- and hash-valid', valid, errors.join('; '));
+  check('reference bundle provenance matches the published package identity',
+    bundle.manifest.provenance.exporter === `${PACKAGE.name}@${PACKAGE.version}`,
+    `got=${bundle.manifest.provenance.exporter}`);
+
+  const defaultExportRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'ssss-exporter-'));
+  try {
+    fs.mkdirSync(path.join(defaultExportRoot, 'rules'), { recursive: true });
+    fs.writeFileSync(path.join(defaultExportRoot, 'rules', 'identity.md'), [
+      '---',
+      'type: rule',
+      'title: Exporter Identity',
+      'description: Proves the default exporter uses the published package name.',
+      'timestamp: 2026-07-10T00:00:00Z',
+      'name: Exporter Identity',
+      '---',
+      '',
+      'Identity fixture.',
+      '',
+    ].join('\n'));
+    const defaultExport = exportBundle(defaultExportRoot, { registryDir: REGISTRY_DIR });
+    check('default bundle exporter matches the published package name',
+      defaultExport.manifest.provenance.exporter === DEFAULT_EXPORTER,
+      `got=${defaultExport.manifest.provenance.exporter}`);
+  } finally {
+    fs.rmSync(defaultExportRoot, { recursive: true, force: true });
+  }
   check('sale profile carries no tenant_private file',
     bundle.files.every((f) => parseDocument(f.content).data.type !== 'task' && parseDocument(f.content).data.type !== 'conversation'));
   check('sale profile reduces resource_bound fields to requirement declarations',
@@ -210,12 +245,30 @@ function runBundleConformance() {
     !missingFilesValidation.valid && missingFilesValidation.errors.some((e) => e.includes('bundle.files must be an array')),
     missingFilesValidation.errors.join('; '));
 
+  const malformedFileBundle = JSON.parse(JSON.stringify(bundle));
+  malformedFileBundle.files[0] = null;
+  const malformedFileValidation = validateBundle(malformedFileBundle, { registryDir: REGISTRY_DIR });
+  check('bundle validation returns structured errors for malformed file entries',
+    !malformedFileValidation.valid &&
+    malformedFileValidation.errors.some((error) => error.includes('file entries must be objects')),
+    malformedFileValidation.errors.join('; '));
+
   const unknownExtensionBundle = JSON.parse(JSON.stringify(bundle));
   unknownExtensionBundle.manifest.required_extensions = ['missing-extension'];
   const unknownExtensionValidation = validateBundle(unknownExtensionBundle, { registryDir: REGISTRY_DIR });
   check('bundle validation rejects unknown required_extensions entries',
     !unknownExtensionValidation.valid && unknownExtensionValidation.errors.some((e) => e.includes("required extension 'missing-extension'")),
     unknownExtensionValidation.errors.join('; '));
+
+  const invalidTranslationBundle = JSON.parse(JSON.stringify(bundle));
+  const invalidTranslation = invalidTranslationBundle.files.find((file) =>
+    parseDocument(file.content).data.type === 'translation');
+  invalidTranslation.content = invalidTranslation.content.replace('locale: es', 'locale: invalid_locale!');
+  const invalidTranslationValidation = validateBundle(invalidTranslationBundle, { registryDir: REGISTRY_DIR });
+  check('bundle validation enforces registry patterns before import',
+    !invalidTranslationValidation.valid &&
+    invalidTranslationValidation.errors.some((error) => error.includes('registry pattern')),
+    invalidTranslationValidation.errors.join('; '));
 
   const prov = provisionBundle(bundle, { workspaceId: 'ws-conf', parameters: { business_name: 'Demo', domain: 'demo.example' } });
   check('provision resolves params + link integrity (no dangling [[links]])', prov.ok,
@@ -236,6 +289,39 @@ function runBundleConformance() {
     check('no tenant_private task file on disk after import', landed.length === 0, `found=${JSON.stringify(landed)}`);
   } finally {
     fs.rmSync(vault, { recursive: true, force: true });
+  }
+
+  const atomicVault = fs.mkdtempSync(path.join(os.tmpdir(), 'ssss-bundle-atomic-'));
+  try {
+    const engine = createEngine({ registryDir: REGISTRY_DIR });
+    const sourceContent = [
+      '---', 'type: rule', 'title: Atomic Source', 'description: Preflight source.',
+      'timestamp: 2026-07-10T00:00:00Z', 'name: Atomic Source', '---', '', 'Body.', '',
+    ].join('\n');
+    const badPlan = [
+      {
+        type: 'operation', idempotency_key: 'atomic-source', workspace_id: 'ws-atomic',
+        path: 'rules/atomic.md', content: sourceContent, actor: { role: 'system' },
+      },
+      {
+        type: 'operation', idempotency_key: 'atomic-invalid', workspace_id: 'ws-atomic',
+        path: 'translations/bad/rules/atomic.md', actor: { role: 'system' },
+        content: [
+          '---', 'type: translation', 'title: Invalid Translation',
+          'description: Must fail before the source commits.', 'timestamp: 2026-07-10T00:00:00Z',
+          'translation_id: invalid-atomic', 'source_path: rules/atomic.md',
+          `source_hash: ${documentHash(sourceContent)}`, 'locale: invalid_locale!',
+          'status: approved', 'translated_fields: [body]', '---', '', 'Translated.', '',
+        ].join('\n'),
+      },
+    ];
+    const atomicResult = importBundle(badPlan, atomicVault, engine);
+    check('two-phase import prevents partial commits on a late invalid envelope',
+      atomicResult.ok === false && atomicResult.committed === 0 &&
+      !fs.existsSync(path.join(atomicVault, 'rules', 'atomic.md')),
+      JSON.stringify(atomicResult.results.map((result) => result.validation?.errors || [])));
+  } finally {
+    fs.rmSync(atomicVault, { recursive: true, force: true });
   }
 
   let pass = 0;
@@ -349,6 +435,259 @@ function runOperationContractRegressionConformance() {
   return pass === checks.length;
 }
 
+function runSemanticLocalizationConformance() {
+  const checks = [];
+  const check = (name, cond, detail = '') => { checks.push({ name, cond, detail }); };
+  const vault = fs.mkdtempSync(path.join(os.tmpdir(), 'ssss-semantic-'));
+  const projection = fs.mkdtempSync(path.join(os.tmpdir(), 'ssss-locale-'));
+  try {
+    const engine = createEngine({ registryDir: REGISTRY_DIR });
+    const sourcePath = 'rules/refund-policy.md';
+    const sourceContent = [
+      '---',
+      'type: rule',
+      'title: Refund Policy',
+      'description: Explains when festival ticket refunds are available.',
+      'timestamp: 2026-07-10T00:00:00Z',
+      'name: Refund Policy',
+      'aliases: [refund terms, cancellation policy]',
+      'tags: [tickets, finance]',
+      'relations:',
+      '  - relation: applies_to',
+      '    target: workflows/box-office.md',
+      '---',
+      '',
+      'Refunds are available until fourteen days before the event.',
+      '',
+    ].join('\n');
+    const sourceWrite = engine.processOperation({
+      type: 'operation', idempotency_key: 'sem-source', workspace_id: 'ws-sem',
+      path: sourcePath, content: sourceContent, actor: { role: 'system' },
+    }, vault);
+    check('structural semantic source commits', sourceWrite.success === true,
+      JSON.stringify(sourceWrite.validation?.errors || []));
+
+    const privateContent = [
+      '---',
+      'type: task',
+      'title: Private Refund Request',
+      'description: Private customer refund task.',
+      'timestamp: 2026-07-10T00:00:00Z',
+      'priority: high',
+      'category: support',
+      'status: pending',
+      '---',
+      '',
+      'Customer account and payment details.',
+      '',
+    ].join('\n');
+    const privateWrite = engine.processOperation({
+      type: 'operation', idempotency_key: 'sem-private', workspace_id: 'ws-sem',
+      path: 'tasks/private-refund.md', content: privateContent, actor: { role: 'system' },
+    }, vault);
+    check('tenant-private semantic source commits', privateWrite.success === true,
+      JSON.stringify(privateWrite.validation?.errors || []));
+
+    const overlayPath = 'translations/es-MX/rules/refund-policy.md';
+    const overlayContent = [
+      '---',
+      'type: translation',
+      'title: Spanish Refund Policy Translation',
+      'description: Approved Spanish presentation overlay for the refund policy.',
+      'timestamp: 2026-07-10T00:00:00Z',
+      'translation_id: refund-policy-es-mx',
+      `source_path: ${sourcePath}`,
+      `source_hash: ${documentHash(sourceContent)}`,
+      'locale: es-MX',
+      'status: approved',
+      'translated_fields: [title, description, body]',
+      'translated_title: Política de reembolsos',
+      'translated_description: Explica cuándo están disponibles los reembolsos de boletos.',
+      '---',
+      '',
+      'Los reembolsos están disponibles hasta catorce días antes del evento.',
+      '',
+    ].join('\n');
+    const overlayWrite = engine.processOperation({
+      type: 'operation', idempotency_key: 'sem-overlay', workspace_id: 'ws-sem',
+      path: overlayPath, content: overlayContent, actor: { role: 'system' },
+    }, vault);
+    check('hash-bound translation overlay commits', overlayWrite.success === true,
+      JSON.stringify(overlayWrite.validation?.errors || []));
+
+    const staleOverlay = overlayContent.replace(documentHash(sourceContent), `sha256:${'0'.repeat(64)}`)
+      .replace('translation_id: refund-policy-es-mx', 'translation_id: stale-es-mx');
+    const staleWrite = engine.processOperation({
+      type: 'operation', idempotency_key: 'sem-stale', workspace_id: 'ws-sem',
+      path: 'translations/es-MX/rules/stale.md', content: staleOverlay, actor: { role: 'system' },
+    }, vault);
+    check('stale translation source hash is rejected', staleWrite.success === false &&
+      staleWrite.validation.errors.some((error) => error.includes('Source hash mismatch')),
+      JSON.stringify(staleWrite.validation?.errors || []));
+
+    const traversalOverlay = overlayContent
+      .replace('translation_id: refund-policy-es-mx', 'translation_id: traversal-es-mx')
+      .replace(`source_path: ${sourcePath}`, 'source_path: ../secrets.md');
+    const traversalWrite = engine.processOperation({
+      type: 'operation', idempotency_key: 'sem-traversal', workspace_id: 'ws-sem',
+      path: 'translations/es-MX/rules/traversal.md', content: traversalOverlay, actor: { role: 'system' },
+    }, vault);
+    check('translation reference traversal is rejected', traversalWrite.success === false &&
+      traversalWrite.validation.errors.some((error) => error.includes('safe vault-relative path')),
+      JSON.stringify(traversalWrite.validation?.errors || []));
+
+    const immutablePatch = engine.processOperation({
+      type: 'patch', idempotency_key: 'sem-immutable', workspace_id: 'ws-sem',
+      path: overlayPath, patches: { locale: 'fr' }, actor: { role: 'system' },
+    }, vault);
+    check('translation identity fields are immutable', immutablePatch.success === false &&
+      immutablePatch.validation.errors.some((error) => error.includes("immutable field 'locale'")),
+      JSON.stringify(immutablePatch.validation?.errors || []));
+
+    const first = buildSemanticIndex(vault, { locale: 'es-MX', registryDir: REGISTRY_DIR });
+    const second = buildSemanticIndex(vault, { locale: 'es-mx', registryDir: REGISTRY_DIR });
+    check('semantic index is deterministic and locale-normalized',
+      first.index_hash === second.index_hash && first.locale === 'es-MX');
+    check('safe semantic default excludes tenant-private documents',
+      first.documents.every((document) => document.portability === 'structural') &&
+      !first.documents.some((document) => document.path.startsWith('tasks/')));
+    check('semantic graph captures explicit relations',
+      first.edges.some((edge) => edge.source === sourcePath && edge.relation === 'applies_to'));
+    const matches = searchSemanticIndex(first, 'reembolsos boletos', { limit: 3 });
+    check('localized semantic search ranks the translated source',
+      matches[0]?.document.path === sourcePath && matches[0].document.title === 'Política de reembolsos',
+      JSON.stringify(matches.map((match) => ({ path: match.document.path, score: match.score }))));
+
+    const privateIndex = buildSemanticIndex(vault, { includePrivate: true, registryDir: REGISTRY_DIR });
+    check('private semantic indexing requires explicit opt-in',
+      privateIndex.documents.some((document) => document.path === 'tasks/private-refund.md'));
+
+    const manifest = materializeLocale(vault, 'es-mx', projection, { registryDir: REGISTRY_DIR });
+    const localizedContent = fs.readFileSync(path.join(projection, sourcePath), 'utf8');
+    const localizedDocument = parseDocument(localizedContent);
+    check('localization projection preserves symbolic control fields',
+      localizedDocument.data.type === 'rule' && localizedDocument.data.name === 'Refund Policy' &&
+      localizedDocument.data.title === 'Política de reembolsos' &&
+      localizedDocument.data.locale === 'es-MX');
+    check('localization projection excludes private documents by default',
+      manifest.document_count >= 1 && !fs.existsSync(path.join(projection, 'tasks', 'private-refund.md')));
+    check('localization publishes a complete projection without staging residue',
+      fs.existsSync(path.join(projection, '.ssss-projection.json')) &&
+      !fs.readdirSync(path.dirname(projection)).some((name) =>
+        name.startsWith(`.${path.basename(projection)}.`) && name.endsWith('.stage')));
+    let insideRejected = false;
+    try { materializeLocale(vault, 'es-MX', path.join(vault, 'derived', 'es'), { registryDir: REGISTRY_DIR }); }
+    catch (error) { insideRejected = error.message.includes('outside the source vault'); }
+    check('localization output inside the source vault is rejected', insideRejected);
+
+    const invalidRawPath = path.join(vault, 'rules', 'invalid-raw.md');
+    fs.writeFileSync(invalidRawPath, '---\ntype: rule\nname: Invalid\n---\nBody.\n');
+    let invalidRawRejected = false;
+    try { buildSemanticIndex(vault, { registryDir: REGISTRY_DIR }); }
+    catch (error) { invalidRawRejected = error.message.includes("Missing required field 'title'"); }
+    check('semantic projection rejects raw documents that violate the registry', invalidRawRejected);
+  } finally {
+    fs.rmSync(vault, { recursive: true, force: true });
+    fs.rmSync(projection, { recursive: true, force: true });
+  }
+
+  let pass = 0;
+  for (const c of checks) {
+    if (c.cond) { pass++; console.log(`  ✅ ${c.name}`); }
+    else console.log(`  ❌ ${c.name}${c.detail ? ` — ${c.detail}` : ''}`);
+  }
+  console.log(`\n  ${pass}/${checks.length} semantic/localization checks passed (§11.9)`);
+  return pass === checks.length;
+}
+
+function runRegistryExtensionConformance() {
+  const checks = [];
+  const check = (name, cond, detail = '') => { checks.push({ name, cond, detail }); };
+  const registry = fs.mkdtempSync(path.join(os.tmpdir(), 'ssss-registry-'));
+  const extensions = path.join(registry, 'extensions');
+  fs.mkdirSync(extensions, { recursive: true });
+  fs.copyFileSync(path.join(REGISTRY_DIR, 'core.json'), path.join(registry, 'core.json'));
+  const primitive = {
+    family: 'extension', append_only: false, portability: 'structural',
+    required_fields: ['type', 'name'],
+  };
+  const writeExtension = (name, value) =>
+    fs.writeFileSync(path.join(extensions, `${name}.json`), JSON.stringify(value, null, 2));
+  try {
+    writeExtension('valid', {
+      registry: 'valid-ext', extends: 'core', document_primitives: { custom_thing: primitive },
+    });
+    let validLoaded = false;
+    try { validLoaded = loadRegistries(registry).types.has('custom_thing'); } catch {}
+    check('valid extension registry composes with core', validLoaded);
+
+    writeExtension('collision', {
+      registry: 'collision', extends: 'core', document_primitives: { rule: primitive },
+    });
+    let coreCollision = false;
+    try { loadRegistries(registry); } catch (error) { coreCollision = error.message.includes("primitive 'rule' collides"); }
+    check('extension cannot redefine a core primitive', coreCollision);
+    fs.rmSync(path.join(extensions, 'collision.json'));
+
+    writeExtension('duplicate', {
+      registry: 'duplicate', extends: 'core', document_primitives: { custom_thing: primitive },
+    });
+    let siblingCollision = false;
+    try { loadRegistries(registry); } catch (error) { siblingCollision = error.message.includes("primitive 'custom_thing' collides"); }
+    check('sibling extensions cannot redefine each other', siblingCollision);
+    fs.rmSync(path.join(extensions, 'duplicate.json'));
+
+    writeExtension('pattern', {
+      registry: 'bad-pattern', extends: 'core',
+      document_primitives: { patterned: { ...primitive, patterns: { name: '[' } } },
+    });
+    let badPattern = false;
+    try { loadRegistries(registry); } catch (error) { badPattern = error.message.includes('invalid pattern'); }
+    check('invalid extension regex fails during registry load', badPattern);
+    fs.rmSync(path.join(extensions, 'pattern.json'));
+
+    writeExtension('shape', {
+      registry: 'bad-shape', extends: 'core',
+      document_primitives: { shaped: { ...primitive, required_when: [] } },
+    });
+    let badShape = false;
+    try { loadRegistries(registry); } catch (error) { badShape = error.message.includes('required_when must be an object'); }
+    check('malformed extension constraint shapes fail during registry load', badShape);
+    fs.rmSync(path.join(extensions, 'shape.json'));
+
+    writeExtension('unknown-reference', {
+      registry: 'unknown-reference', extends: 'core',
+      document_primitives: {
+        linked_thing: {
+          ...primitive,
+          references: { target_path: { allowed_types: ['missing_type'] } },
+        },
+      },
+    });
+    let unknownReference = false;
+    try { loadRegistries(registry); } catch (error) { unknownReference = error.message.includes("unknown type 'missing_type'"); }
+    check('extension references cannot name unknown primitive types', unknownReference);
+    fs.rmSync(path.join(extensions, 'unknown-reference.json'));
+
+    const symlinkTarget = path.join(registry, 'external.json');
+    fs.writeFileSync(symlinkTarget, JSON.stringify({ registry: 'linked', extends: 'core', document_primitives: {} }));
+    fs.symlinkSync(symlinkTarget, path.join(extensions, 'linked.json'));
+    let symlinkRejected = false;
+    try { loadRegistries(registry); } catch (error) { symlinkRejected = error.message.includes('symlinked registries'); }
+    check('symlinked extension registry is rejected', symlinkRejected);
+  } finally {
+    fs.rmSync(registry, { recursive: true, force: true });
+  }
+
+  let pass = 0;
+  for (const c of checks) {
+    if (c.cond) { pass++; console.log(`  ✅ ${c.name}`); }
+    else console.log(`  ❌ ${c.name}${c.detail ? ` — ${c.detail}` : ''}`);
+  }
+  console.log(`\n  ${pass}/${checks.length} extension-registry checks passed`);
+  return pass === checks.length;
+}
+
 function runCliSmokeConformance() {
   const checks = [];
   const check = (name, cond, detail = '') => { checks.push({ name, cond, detail }); };
@@ -381,6 +720,32 @@ function runCliSmokeConformance() {
       if (!res.success) failures.push({ rel, errors: res.validation?.errors || [] });
     }
     check('ssss new starter vault files validate against the registry', files.length > 0 && failures.length === 0, JSON.stringify(failures));
+
+    const semanticOutput = JSON.parse(execFileSync('node', [
+      path.join(__dirname, 'ssss.mjs'),
+      'semantic',
+      vault,
+      '--query',
+      'welcome rule',
+    ], { encoding: 'utf8' }));
+    check('ssss semantic returns ranked structural results',
+      semanticOutput.results?.some((result) => result.document.path === 'rules/welcome.md'),
+      JSON.stringify(semanticOutput.results || []));
+
+    const localizedVault = path.join(tmp, 'localized-es');
+    const localizationOutput = JSON.parse(execFileSync('node', [
+      path.join(__dirname, 'ssss.mjs'),
+      'localize',
+      vault,
+      '--locale',
+      'es',
+      '--out',
+      localizedVault,
+    ], { encoding: 'utf8' }));
+    check('ssss localize materializes a safe structural projection',
+      localizationOutput.locale === 'es' &&
+      fs.existsSync(path.join(localizedVault, 'rules', 'welcome.md')) &&
+      !fs.existsSync(path.join(localizedVault, 'tasks', 'first-task.md')));
 
     const dryRunVault = path.join(tmp, 'dry-run-vault');
     const dryRunOut = execFileSync('node', [
@@ -593,11 +958,18 @@ async function main() {
     const runtimeOk = runRuntimeConformance();
     console.log('\nRunning operation regression conformance (src/engine.mjs, §6/§7) ...');
     const operationRegressionOk = runOperationContractRegressionConformance();
+    console.log('\nRunning extension-registry conformance (src/registry.mjs) ...');
+    const extensionRegistryOk = runRegistryExtensionConformance();
+    console.log('\nRunning semantic/localization conformance (src/semantic.mjs, §11.9) ...');
+    const semanticOk = runSemanticLocalizationConformance();
     console.log('\nRunning bundle/provisioning conformance (src/bundle.mjs, §16/§17) ...');
     const bundleOk = runBundleConformance();
     console.log('\nRunning CLI smoke conformance (scripts/ssss.mjs) ...');
     const cliSmokeOk = runCliSmokeConformance();
-    process.exit(engineOk && runtimeOk && operationRegressionOk && bundleOk && cliSmokeOk ? 0 : 1);
+    process.exit(
+      engineOk && runtimeOk && operationRegressionOk && extensionRegistryOk &&
+      semanticOk && bundleOk && cliSmokeOk ? 0 : 1
+    );
   } else {
     console.log('\nℹ  No --endpoint/--engine given; ran structural + registry validation only.');
     console.log('   Reference engine:  ssss conformance --engine');
