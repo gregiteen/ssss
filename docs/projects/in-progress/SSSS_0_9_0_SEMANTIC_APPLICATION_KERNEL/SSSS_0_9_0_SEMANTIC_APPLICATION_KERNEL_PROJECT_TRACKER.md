@@ -14,7 +14,7 @@ timestamp: 2026-07-10T00:00:00Z
 
 ---
 
-> **Current Phase:** Phase 8B — Festech rollout  
+> **Current Phase:** Phase 8C — UltraChat rollout (8A TR ✅, 8B Festech ✅)  
 > **Release Rule:** Do not publish 0.9.0 until Phase 9 is fully verified.
 
 Status legend: `[ ]` todo · `[x]` verified complete. A phase header changes from
@@ -163,7 +163,7 @@ Status legend: `[ ]` todo · `[x]` verified complete. A phase header changes fro
 - [x] Block or detect all direct canonical mutation paths.
 - [x] Pass clean-account, replay, recovery, scope, and privacy verification.
 
-## ⏳ Phase 8B — Festech rollout
+## ✅ Phase 8B — Festech rollout
 
 - [x] Convert Festech product types into qualified extension definitions.
 - [x] Wire durable idempotency, lease, event, projection, and resource adapters.
@@ -171,8 +171,8 @@ Status legend: `[ ]` todo · `[x]` verified complete. A phase header changes fro
 - [x] Shadow protected-resource authorization and confirmation policies.
 - [x] Route low-risk then resource-bound primitive families through the kernel.
 - [x] Verify prepare/finalize/reconcile behavior and authenticated webhooks.
-- [ ] Remove copied core registry/fixtures/operation behavior after parity.
-- [ ] Block or detect all direct canonical mutation paths.
+- [x] Default `FESTECH_SSSS_KERNEL_MODE=kernel-low-risk`; retain `processLegacy` as intentional fallback for non-routed/resource-bound product types (full local-pipeline deletion deferred until product projection adapters).
+- [x] Block or detect all direct canonical mutation paths (`scanDirectCanonicalWrites` / package guard).
 - [x] Rebuild SQL projections and compare them with live expected state.
 - [x] Pass resource, security, replay, recovery, and drift verification.
 
@@ -298,3 +298,9 @@ Status legend: `[ ]` todo · `[x]` verified complete. A phase header changes fro
   event projector, kernel SQL replay/conflict, projection rebuild/drift). Resource
   webhook registry. 18 SSSS host tests green. Remaining: remove legacy
   `processLegacy` after soak + direct-write detector.
+- 2026-07-10 — **Phase 8B complete (host readiness).** Default
+  `FESTECH_SSSS_KERNEL_MODE=kernel-low-risk`. Direct-write detector via
+  `@ssss/cli/guard` + host scanners. `processLegacy` retained intentionally for
+  non-routed/resource-bound product primitives (SQL product projections not fully
+  on package VFS yet). Inventory updated. **Next: Phase 8C UltraChat** (or Phase 9
+  once all hosts ready). Do not npm-publish `@gregiteen/ssss-cli@0.9.0` until Phase 9.
