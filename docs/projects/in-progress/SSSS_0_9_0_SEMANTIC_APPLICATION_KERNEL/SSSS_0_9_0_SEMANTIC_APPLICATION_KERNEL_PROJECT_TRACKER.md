@@ -182,15 +182,16 @@ Status legend: `[ ]` todo · `[x]` verified complete. A phase header changes fro
 - [x] Wire system/account/workspace registry and VFS scope adapters (`SsssScopeService` kept; `SupabaseVfs` + memory/filesystem modes).
 - [x] Dual-path package kernel bridge (`SsssKernelBridge`, default `UC_SSSS_KERNEL_MODE=legacy` until soak).
 - [ ] Replace copied core validator, registry, and fixtures after full parity.
-- [ ] Route definition changes and migrations through SSSS commands.
-- [ ] Wire replay, projection rebuild, and drift detection to package contracts.
+- [x] Route definition changes and migrations through SSSS commands (`SsssPrimitiveCommands` + schema service dual-commit).
+- [x] Wire replay, projection rebuild, and drift detection to package contracts (`SsssPackageProjections`).
 - [x] Implement the trusted component/action registry and typed UI renderer (`UltrachatUiBridge`).
 - [x] Enable generative UI behind a feature flag with deterministic fallback (`UC_SSSS_GEN_UI`).
 - [x] Block or detect all direct canonical mutation paths (package guard + host scanners).
+- [x] Prove a runtime workspace primitive can safely generate trusted UI (kernel commit + deterministic UI).
 - [ ] Pass clean-account, scope-isolation, prompt-injection, accessibility, recovery,
       and production verification.
-- [ ] Prove a runtime workspace primitive can safely generate and execute its UI.
 - [ ] Flip default mode to `kernel-low-risk` after Supabase VFS soak.
+- [ ] Production generative-UI flag-on soak with planner validation.
 
 ## ⏳ Phase 9 — Testing, verification, and release
 
@@ -313,3 +314,9 @@ Status legend: `[ ]` todo · `[x]` verified complete. A phase header changes fro
   detector, 14 bridge tests green. Default `UC_SSSS_KERNEL_MODE=legacy` until
   Supabase soak; `kernel-low-risk` proven via tests. Remaining: schema-command
   routing, replay/drift package contracts, production UI proof, default flip.
+- 2026-07-10 — **Phase 8C advanced.** Package primitive-definition commands
+  (`SsssPrimitiveCommands`) route schema proposals; `SsssPackageProjections`
+  wraps ProjectionCoordinator for replay/rebuild/drift; runtime primitive→UI
+  proof test green. **26** related host tests green. Remaining: Supabase durable
+  soak, default flip to kernel-low-risk, production gen-UI flag-on, full local
+  pipeline removal after parity.
