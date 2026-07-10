@@ -161,7 +161,7 @@ Status legend: `[ ]` todo · `[x]` verified complete. A phase header changes fro
 - [x] Route memory and workflow mutations through the kernel.
 - [ ] Remove copied core registry/schema/fixture/operation behavior after parity.
 - [x] Block or detect all direct canonical mutation paths.
-- [ ] Pass clean-account, replay, recovery, scope, and privacy verification.
+- [x] Pass clean-account, replay, recovery, scope, and privacy verification.
 
 ## ⏳ Phase 8B — Festech rollout
 
@@ -271,3 +271,8 @@ Status legend: `[ ]` todo · `[x]` verified complete. A phase header changes fro
   (`prepareEnvelopeForKernel`, `kernel-core` mode), optimizer capability expansion to
   `ssss:memory:*`, direct-write / unapproved-writer scanners, 13/13 bridge tests green.
   Remaining: delete legacy core pipeline after parity soak, clean-account/replay/privacy.
+- 2026-07-10 — **Phase 8A nearly complete.** Total Recall HTTP/CLI memory+docs paths use
+  `processOperationAsync` / `writeNodeValidatedAsync`. Clean-account suite covers kernel
+  memory/workflow commits, idempotent replay (stable host timestamps), conflict, and
+  scope fail-closed. Remaining: remove legacy `processOperationLegacy` after soak;
+  then Phase 8B Festech.
