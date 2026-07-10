@@ -7,7 +7,7 @@
  */
 import fs from 'node:fs';
 import path from 'node:path';
-import { exportBundle } from '../src/bundle.mjs';
+import { DEFAULT_EXPORTER, exportBundle } from '../src/bundle.mjs';
 import { parseArgs, usage, die, wantsHelp } from './lib/cli.mjs';
 
 const HELP = usage({
@@ -19,7 +19,7 @@ const HELP = usage({
     ['--name <s>', 'Bundle display name.'],
     ['--description <s>', 'Bundle description.'],
     ['--bundle-version <s>', 'Bundle version string (default: 0.1.0).'],
-    ['--exporter <s>', 'Exporter id recorded in provenance (default: @ssss/cli).'],
+    ['--exporter <s>', `Exporter id recorded in provenance (default: ${DEFAULT_EXPORTER}).`],
     ['--ext <name>', 'Declare a required extension registry (repeatable).'],
     ['--exported-at <iso>', 'Override the export timestamp (default: epoch, for determinism).'],
     ['--registry <dir>', 'Registry directory (default: the package core registry).'],
@@ -50,7 +50,7 @@ export async function run(argv) {
       name: flags.name || path.basename(path.resolve(vault)),
       description: flags.description || '',
       version: flags['bundle-version'] || '0.1.0',
-      exporter: flags.exporter || '@ssss/cli',
+      exporter: flags.exporter || DEFAULT_EXPORTER,
       requiredExtensions: flags.ext || [],
       ...(flags['exported-at'] ? { exportedAt: flags['exported-at'] } : {}),
     });

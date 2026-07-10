@@ -12,6 +12,8 @@ ssss import --plan plan.json   --vault <dir>     # replay a plan from `ssss prov
 - `--vault <dir>` is required and is created if missing.
 - Without `--plan`, import provisions inline first (resolving `--param` flags); a
   failed provision (unresolved params / dangling links) aborts before any write.
+- The engine preflights every envelope in the plan before the first commit. A
+  late schema, reference, or authorization failure cannot leave a partial import.
 - `--dry-run` validates every envelope without committing and reports
   `would commit` instead of `committed`.
 - The normal summary reports `committed`, `unchanged (idempotent)`, and `failed`

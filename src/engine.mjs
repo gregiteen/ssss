@@ -15,7 +15,11 @@ import fs from 'node:fs';
 import path from 'node:path';
 import crypto from 'node:crypto';
 import { parseDocument, serializeDocument } from './frontmatter.mjs';
-import { loadRegistries, isAppendType } from './registry.mjs';
+import {
+  loadRegistries,
+  isAppendType,
+  validateReferenceConstraints,
+} from './registry.mjs';
 
 const ENVELOPE_TYPES = ['operation', 'patch', 'event', 'delete'];
 const ENVELOPE_REQUIRED = {
@@ -150,7 +154,7 @@ export function createEngine({ registryDir, leaseStore } = {}) {
     return { field, value };
   }
 
-  function validateContent(resolvedType, data, filePath) {
+  function validateContent(resolvedType, data, filePath, vaultRoot, referenceResolver) {
     const def = types.get(resolvedType);
     const errors = [];
     const repair = [];
@@ -191,6 +195,43 @@ export function createEngine({ registryDir, leaseStore } = {}) {
           errors.push(`Invalid value '${v}' for field '${field}' on type '${resolvedType}'; must be one of: ${allowedValues.join(', ')}.`);
           repair.push({ field, issue: `Must be one of: ${allowedValues.join(', ')}.` });
         }
+      }
+    }
+    // patterns: portable string constraints declared by the registry. These
+    // are anchored by each pattern author and compiled during registry load.
+    for (const [field, pattern] of Object.entries(def.patterns || {})) {
+      if (isEmpty(data[field])) continue;
+      const values = Array.isArray(data[field]) ? data[field] : [data[field]];
+      const expression = new RegExp(pattern, 'u');
+      for (const value of values) {
+        if (typeof value !== 'string' || !expression.test(value)) {
+          errors.push(`Invalid format for field '${field}' on type '${resolvedType}'.`);
+          repair.push({ field, issue: `Must match registry pattern '${pattern}'.` });
+        }
+      }
+    }
+    if (vaultRoot && def.references) {
+      const referenceIssues = validateReferenceConstraints(
+        def,
+        data,
+        (referencePath) => {
+          if (referenceResolver) {
+            const planned = referenceResolver(referencePath);
+            if (planned !== undefined && planned !== null) return planned;
+          }
+          const target = resolveContainedPath(vaultRoot, referencePath);
+          if (!fs.existsSync(target)) return null;
+          const stat = fs.lstatSync(target);
+          if (stat.isSymbolicLink()) throw new Error('symlinked references are not allowed');
+          if (!stat.isFile()) throw new Error('reference target is not a file');
+          const content = fs.readFileSync(target, 'utf8');
+          return { path: referencePath, content, data: parseDocument(content).data };
+        },
+        types
+      );
+      for (const issue of referenceIssues) {
+        errors.push(`${issue.field}: ${issue.issue}`);
+        repair.push(issue);
       }
     }
     return { errors, repair };
@@ -297,13 +338,26 @@ export function createEngine({ registryDir, leaseStore } = {}) {
         const { data } = parseDocument(envelope.content);
         resolvedType = data.type || null;
         if (!resolvedType) { errors.push(`Missing required frontmatter field 'type' in ${envelope.path}.`); repair.push({ field: 'type', issue: 'Frontmatter must declare a type.' }); }
-        else ({ errors, repair } = validateContent(resolvedType, data, envelope.path));
+        else ({ errors, repair } = validateContent(
+          resolvedType,
+          data,
+          envelope.path,
+          vaultRoot,
+          options.referenceResolver
+        ));
       }
       if (!errors.length && fs.existsSync(abs) && !envelope.path.endsWith('/index.md')) {
         const { data: existingData } = parseDocument(fs.readFileSync(abs, 'utf8'));
         if (existingData.type && existingData.type !== resolvedType) {
           errors.push(`Type rewrite refused for ${envelope.path}: existing type '${existingData.type}' cannot be replaced by '${resolvedType}'.`);
           repair.push({ field: 'type', issue: 'Use a migration controlled by a privileged host; operation writes may not change an existing file type.' });
+        }
+        const { data: nextData } = parseDocument(envelope.content);
+        for (const field of types.get(resolvedType)?.immutable_fields || []) {
+          if (stableStringify(existingData[field]) !== stableStringify(nextData[field])) {
+            errors.push(`Operation may not change immutable field '${field}' for ${envelope.path}.`);
+            repair.push({ field, issue: 'Use an explicit migration rather than replacing an immutable identity field.' });
+          }
         }
       }
       // append-type rewrite guard
@@ -326,13 +380,33 @@ export function createEngine({ registryDir, leaseStore } = {}) {
         const merged = { ...data };
         for (const [k, v] of Object.entries(envelope.patches)) if (k !== '__body__') merged[k] = v;
         resolvedType = merged.type || null;
+        for (const field of types.get(resolvedType)?.immutable_fields || []) {
+          if (Object.prototype.hasOwnProperty.call(envelope.patches, field) &&
+              stableStringify(data[field]) !== stableStringify(merged[field])) {
+            errors.push(`Patch may not change immutable field '${field}' for ${envelope.path}.`);
+            repair.push({ field, issue: 'Use an explicit migration rather than patching an immutable identity field.' });
+          }
+        }
         const append = isAppendType(types.get(resolvedType));
         let newBody = body;
         if (envelope.patches.__body__ !== undefined) {
           if (append) newBody = body.replace(/\s+$/, '') + '\n' + envelope.patches.__body__;
           else newBody = envelope.patches.__body__;
         }
-        ({ errors, repair } = resolvedType ? validateContent(resolvedType, merged, envelope.path) : { errors: ["Missing required field 'type'."], repair: [{ field: 'type', issue: 'No type after merge.' }] });
+        if (resolvedType) {
+          const contentValidation = validateContent(
+            resolvedType,
+            merged,
+            envelope.path,
+            vaultRoot,
+            options.referenceResolver
+          );
+          errors.push(...contentValidation.errors);
+          repair.push(...contentValidation.repair);
+        } else {
+          errors.push("Missing required field 'type'.");
+          repair.push({ field: 'type', issue: 'No type after merge.' });
+        }
         mergedForCommit = { data: merged, body: newBody };
       }
     } else if (envelope.type === 'event') {

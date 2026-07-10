@@ -1,8 +1,8 @@
 {
   "$schema": "https://ssss.dev/registry/v1",
   "registry": "core",
-  "spec_version": "0.6",
-  "description": "The canonical SSSS core primitive registry. These 14 document primitives and 5 contract primitives are defined by the SSSS specification (docs/ssss-spec.md §5) and are owned by this standard. Every document primitive declares a portability class (§5.5); the registry also defines the workflow runtime contract (§11.8), the `.ucw` bundle format (§16), and the provisioning contract (§17). A conformant host MUST implement any core primitive it uses according to this registry. Applications extend the core with their own primitives via an extension registry (see registry/README.md); extensions MUST NOT redefine a core type.",
+  "spec_version": "0.7",
+  "description": "The canonical SSSS core primitive registry. These 15 document primitives and 5 contract primitives are defined by the SSSS specification (docs/ssss-spec.md §5) and are owned by this standard. Every document primitive declares a portability class (§5.5); the registry also defines the workflow runtime contract (§11.8), semantic/localization contract (§11.9), `.ucw` bundle format (§16), and provisioning contract (§17). A conformant host MUST implement any core primitive it uses according to this registry. Applications extend the core with their own primitives via an extension registry; extensions MUST NOT redefine a core or sibling-extension type.",
   "conformance": "A host is core-conformant for a primitive if a file of that type validates exactly when all required_fields are present and non-empty, and (for append_only types) writes only append.",
 
   "document_primitives": {
@@ -136,6 +136,34 @@
       "portability": "structural",
       "required_fields": ["type", "release_id", "version", "schema_version", "summary", "released_at"],
       "spec_ref": "§5.4 release"
+    },
+    "translation": {
+      "family": "localization",
+      "canonical_path": "translations/<locale>/<source-path>.md",
+      "append_only": false,
+      "portability": "structural",
+      "required_fields": ["type", "translation_id", "source_path", "source_hash", "locale", "status", "translated_fields"],
+      "optional_fields": ["translated_title", "translated_description", "translator", "reviewed_at"],
+      "immutable_fields": ["translation_id", "source_path", "locale"],
+      "enums": {
+        "status": ["draft", "reviewed", "approved"],
+        "translated_fields": ["title", "description", "body"]
+      },
+      "patterns": {
+        "translation_id": "^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$",
+        "locale": "^[A-Za-z]{2,3}(?:-[A-Za-z0-9]{2,8})*$",
+        "source_hash": "^sha256:[a-f0-9]{64}$"
+      },
+      "references": {
+        "source_path": {
+          "must_exist": true,
+          "disallowed_types": ["translation"],
+          "allowed_portability": ["structural"],
+          "hash_field": "source_hash"
+        }
+      },
+      "notes": "A non-destructive presentation overlay. Only title, description, and body may be translated; symbolic control fields remain byte-for-byte sourced from the referenced structural document.",
+      "spec_ref": "§5.4 translation"
     }
   },
 
@@ -150,6 +178,7 @@
   "universal_frontmatter": {
     "required": ["type", "title", "description", "timestamp"],
     "recommended_okf": ["resource", "tags", "aliases"],
+    "recommended_semantic": ["semantic_id", "resource", "tags", "aliases", "relations", "locale"],
     "spec_ref": "§4.2"
   },
 
@@ -219,7 +248,18 @@
     "spec_ref": "§11.8"
   },
 
-  "reserved_keys": ["type", "slug", "schema_version", "status", "feedback", "confidence"],
+  "semantic": {
+    "version": 1,
+    "identity_fields": ["semantic_id", "resource", "type", "path"],
+    "surface_fields": ["title", "description", "name", "slug", "aliases", "tags"],
+    "relation_fields": ["relations", "wiki_links", "markdown_links"],
+    "translatable_fields": ["title", "description", "body"],
+    "locale_pattern": "^[A-Za-z]{2,3}(?:-[A-Za-z0-9]{2,8})*$",
+    "safe_default": "Semantic indexes exclude tenant_private and resource_bound documents unless include_private is explicitly enabled. Translation overlays may reference structural sources only.",
+    "spec_ref": "§11.9"
+  },
+
+  "reserved_keys": ["type", "slug", "schema_version", "status", "feedback", "confidence", "semantic_id", "locale", "translation_of", "translation_source_hash"],
   "host_field_prefix": "x_",
   "spec_ref_reserved": "Appendix A"
 }

@@ -37,6 +37,8 @@ Vault → bundle → tenant lifecycle:
 
 Authoring & conformance:
   autolink [dir]        Generate OKF wiki links across a vault.
+  semantic <vault>      Build/query a deterministic semantic projection (§11.9).
+  localize <vault>      Materialize approved locale overlays outside the vault.
   conformance           Run the canonical conformance suite (spec §12).
                         --engine | --endpoint <url> [--token <pat>]
 
@@ -60,6 +62,8 @@ const MODULES = {
   inspect: './cmd-inspect.mjs',
   provision: './cmd-provision.mjs',
   import: './cmd-import.mjs',
+  semantic: './cmd-semantic.mjs',
+  localize: './cmd-localize.mjs',
   help: './cmd-help.mjs',
 };
 

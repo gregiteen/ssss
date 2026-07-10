@@ -5,16 +5,18 @@ and mutation contract for AI-agent state. A vault is a directory of Markdown fil
 with YAML frontmatter; every file declares a `type` defined in the registry.
 
 `@gregiteen/ssss-cli` is the reference implementation: a dependency-free Operation Contract
-engine, a registry-driven validator, and the `.ucw` bundle/provisioning tooling.
+engine, a registry-driven validator, semantic/localization projections, and the
+`.ucw` bundle/provisioning tooling.
 
 ## The pieces
 
 | Piece | Where | What it is |
 |-------|-------|------------|
 | Spec | `docs/ssss-spec.md` | The normative standard. |
-| Core registry | `registry/core.json` | The 14 document primitives + 5 contract primitives, plus the bundle (§16) and provisioning (§17) schemas. |
+| Core registry | `registry/core.json` | The 15 document primitives + 5 contract primitives, plus semantic (§11.9), bundle (§16), and provisioning (§17) contracts. |
 | Engine | `src/engine.mjs` | The §6 Operation Contract pipeline (operation/patch/event/delete). |
 | Runtime | `src/runtime.mjs` | The §11.8 workflow trigger → event/task/run envelope planner. |
+| Semantic | `src/semantic.mjs` | Deterministic semantic graph/search projection and translation overlays (§11.9). |
 | Bundle | `src/bundle.mjs` | export / validate / provision / import (§16–§17). |
 | Conformance | `conformance/` | Fixtures every host must pass. |
 
@@ -28,6 +30,8 @@ vault ──export──▶ .ucw bundle ──provision──▶ envelope plan �
 ## Commands
 
 Run `ssss help <topic>` for any of:
-`runtime`, `portability`, `bundle`, `provisioning`, `export`, `provision`, `import`, `conformance`, `autolink`.
+`runtime`, `semantic`, `localization`, `portability`, `bundle`, `provisioning`,
+`export`, `provision`, `import`, `conformance`, `autolink`.
 
-Run `ssss <command> --help` for: `export`, `validate`, `inspect`, `provision`, `import`, `autolink`, `conformance`.
+Run `ssss <command> --help` for: `export`, `validate`, `inspect`, `provision`,
+`import`, `semantic`, `localize`, `autolink`, `conformance`.
