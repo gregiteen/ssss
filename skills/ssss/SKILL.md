@@ -74,6 +74,11 @@ symlinked registry files, and core or sibling type collisions during load.
 
 ## Mutation Contract
 
+**Package `@gregiteen/ssss-cli@0.9` is the shared mutation authority.** Hosts inject
+VFS/lease/idempotency/event adapters and call `createKernel` → `kernel.execute`
+(or host bridges that wrap it). Do not re-implement the Operation Contract pipeline
+in a host, and do not use raw file/DB writes for agent-generated vault mutations.
+
 Agent-generated mutations flow through the Operation Contract:
 
 ```text
@@ -99,6 +104,18 @@ The mutation envelopes are:
 Use `dry_run: true` for model-generated preflight. Idempotency is scoped by the
 effective request, not the key alone: the same request replays, while the same
 workspace/key with a different request hash is a conflict.
+
+### Host cutover status (0.9.0)
+
+| Host | Default | Notes |
+|------|---------|--------|
+| Total Recall | `kernel-core` | Local legacy pipeline removed |
+| Festech | `kernel` | `processLegacy` removed |
+| UltraChat | `kernel` | `processOperationLegacy` removed |
+
+Host-copied validators may remain as **read-side** helpers only. Mutation validation
+uses package `createValidator` + host extension registries.
+
 
 ## Append, Lease, and Path Safety
 

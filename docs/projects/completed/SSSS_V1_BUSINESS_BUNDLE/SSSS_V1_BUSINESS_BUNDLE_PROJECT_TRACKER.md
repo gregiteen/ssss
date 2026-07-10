@@ -8,7 +8,7 @@ timestamp: 2026-06-24T16:00:00Z
 # SSSS_V1_BUSINESS_BUNDLE — Tracker
 
 > **Project Prefix**: `SSSS_V1_BUSINESS_BUNDLE`
-> **Kanban State**: 🏗️ In Progress
+> **Kanban State**: ✅ Completed (superseded / absorbed by SSSS 0.9.0)
 > **Author**: Google Antigravity
 > **Date**: 2026-06-24
 
@@ -26,7 +26,7 @@ timestamp: 2026-06-24T16:00:00Z
 - `[x]` Add `portability` to every primitive in `registry/core.json` (all 13 classified)
 - `[x]` Classify `domain` / `phone_number` / `integration_connection` as `resource_bound` in `registry/extensions/festech.json` (new file; full festech extension registry lifted + classified)
 - `[x]` Document `backup | template | sale` profiles + filter rule in spec §5.5
-- `[ ]` Generalize ultrachat export filter (`WorkspaceVfsPackageService` ~L111–124) to read `portability` *(roll-out, Track F)*
+- `[~]` Generalize ultrachat export filter to read `portability` — residual host work (DEFERRED_BACKLOG); not blocking ssss package
 - `[x]` Registry conformance check: `portability` required on all primitives (`scripts/conformance.mjs` `validateRegistry`)
 
 ### Track B — Operation Contract Reconciliation ✅
@@ -53,10 +53,11 @@ timestamp: 2026-06-24T16:00:00Z
 - `[x]` Reference `.ucw` wired into `scripts/conformance.mjs` (`--engine` path; in `npm test`)
 - `[~]` Cross-host proof (ultrachat ↔ festech engines) → reference engine is the in-repo oracle; live cross-host diff happens during Track F roll-out (`--endpoint` mode ready)
 
-### Track F — Roll-out (re-derive apps from canon) ⬜ (cross-repo — only remaining track)
-- `[ ]` total-recall: publish core as `@gregiteen/ssss-cli`; consume package
-- `[ ]` festech: swap `SsssValidator.ts` + `primitive-registry.json` for `@gregiteen/ssss-cli` + registries
-- `[ ]` ultrachat: swap `VfsPackage*` types for canonical §16 bundle types
+### Track F — Roll-out (re-derive apps from canon) ✅ (closed via 0.9 host phases)
+- `[x]` total-recall: consumes `@gregiteen/ssss-cli@0.9`; package kernel default (`kernel-core`); Phase 8A
+- `[x]` festech: package kernel default (`kernel`); host extension + SQL adapters; Phase 8B; processLegacy removed
+- `[x]` ultrachat: package kernel default (`kernel`); Supabase VFS/durable adapters; Phase 8C; processOperationLegacy removed
+- `[~]` Ultrachat export filter `portability` generalization — residual **host work** in DEFERRED_BACKLOG
 
 ### Track G — Reference Bundle ("Festival in a Box") ✅
 - `[x]` Build first `.ucw` (sale profile) — `conformance/reference-bundle.ucw.json` via `scripts/build-reference-bundle.mjs` (deterministic, hash-stable)
@@ -101,3 +102,12 @@ timestamp: 2026-06-24T16:00:00Z
   disk). §11.7 documents `language_convention`. Version bumped 0.3 → 0.4 (spec header/§14, VERSION,
   CHANGELOG, registry `spec_version`, package.json + `./bundle` export). `conformance/README.md`
   drift items 1/3/4 marked resolved. **Only Track F (cross-repo roll-out) remains.**
+
+## Project closure (2026-07-10)
+
+- **Outcome:** Completed / absorbed. Canon foundations (portability, Operation Contract, `.ucw`,
+  provisioning, conformance) shipped in this project; cross-repo roll-out finished under
+  `SSSS_0_9_0_SEMANTIC_APPLICATION_KERNEL` Phases 8–9 with `@gregiteen/ssss-cli@0.9.0` published.
+- **Salvage:** Any remaining host-only export polish is in `docs/projects/DEFERRED_BACKLOG.md`.
+- **Location:** `docs/projects/completed/SSSS_V1_BUSINESS_BUNDLE/`.
+

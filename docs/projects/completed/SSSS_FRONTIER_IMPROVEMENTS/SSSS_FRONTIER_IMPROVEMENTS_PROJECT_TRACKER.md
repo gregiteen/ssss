@@ -8,7 +8,7 @@ timestamp: 2026-07-10T00:00:00Z
 # SSSS_FRONTIER_IMPROVEMENTS — Tracker
 
 > **Project Prefix**: `SSSS_FRONTIER_IMPROVEMENTS`
-> **Kanban State**: 🏗️ In Progress
+> **Kanban State**: ✅ Completed (superseded / absorbed by SSSS 0.9.0)
 > **Author**: Claude Code
 > **Date**: 2026-06-30
 
@@ -63,16 +63,11 @@ timestamp: 2026-07-10T00:00:00Z
   repair signal, don't silently lose data); add regression fixture — transferred to
   `docs/projects/completed/IMPROVEMENTS/` and implemented there.
 
-### Phase 3 — Tooling, migration proof, and interoperability positioning ⬜ (mostly deferred)
-- `[ ]` Publish JSON Schema for `registry/core.json` and the `.ucw` bundle manifest; fix the dead
-  `$schema` URL
-- `[ ]` Design and ship `ssss-lock.json` + `ssss lock` / `ssss verify-lock`, adapted from the
-  `skills.sh` ecosystem's lock-file pattern, to detect registry drift with consumers
-- `[ ]` Add migration conformance fixture proving structural-only patch leaves `tenant_private`
-  files untouched (spec §17.4)
-- `[ ]` Hand the Track F sequencing note (start with `total-recall`, then `ultrachat`, then
-  `festech` last) to `SSSS_V1_BUSINESS_BUNDLE`'s Tracker — **do not re-track Track F execution
-  here; it remains owned by that project**
+### Phase 3 — Tooling, migration proof, and interoperability positioning ✅ (closed via 0.9)
+- `[~]` JSON Schema for registry/bundle — **deferred optional** (see DEFERRED_BACKLOG)
+- `[~]` Registry integrity lock — **shipped in 0.9** as `ssss registry lock|verify` / `createRegistryLock` (not separate `ssss-lock.json` filename, same intent)
+- `[~]` Migration fixture structural-only patch — **partial**: `ssss migrate 0.8-to-0.9` dry-run + 0.9 migrate CLI; optional residual in DEFERRED_BACKLOG
+- `[x]` Track F sequencing — executed by `SSSS_0_9_0_SEMANTIC_APPLICATION_KERNEL` host phases 8A–8C (TR → Festech → UltraChat)
 
 ### Phase 4 — Ship skills as a first-class, dogfooded SSSS primitive ✅
 Prompted by: "we can deploy skills in both [total-recall and here] and we need to fix the
@@ -118,12 +113,7 @@ it just had zero fixture coverage and was actively contradicted by this repo's o
   routes agents to live package/registry/spec/conformance evidence, distinguishes the reference
   kernel from host adapters, ships a dependency-free validator, and replaces the installed
   global stub whose validator failed at startup on a missing `gray-matter` dependency.
-- `[ ]` **Not done this phase — explicit follow-up, different repo**: build an actual "skill
-  deployer" in `~/Github/total-recall` (a push/publish command, complementing its existing
-  pull-only `sync-repo.mjs`) so Total-Recall-personal skills (`total-recall`, `research`,
-  `cli-agents` — deliberately NOT migrated into this repo's `skills/`, since they're about a
-  different system, not SSSS) can be shared across projects the same way. Out of this repo's
-  scope; requires its own session against that repo.
+- `[~]` Skill deployer in Total Recall repo — **out of ssss scope**; noted in DEFERRED_BACKLOG (host/TR work).
 
 ### Phase 5 — Semantic, translatable, secure extension kernel ✅
 
@@ -210,3 +200,11 @@ All 6 shipped skills pass `node scripts/validate-skills.mjs` (wired into `npm te
   immutable/reference constraints, and two-phase bundle import. Expanded conformance passes
   26/26 fixtures, 8/8 runtime, 7/7 operation regressions, 7/7 extension registries, 16/16
   semantic/localization, 14/14 bundle/provisioning, and 4/4 CLI checks.
+
+## Project closure (2026-07-10)
+
+- **Outcome:** Completed / absorbed. Executable work landed in the reference suite and was
+  continued by `SSSS_0_9_0_SEMANTIC_APPLICATION_KERNEL` (shared kernel, host cutover, publish).
+- **Salvage:** Open tooling items that are not already in 0.9 moved to `docs/projects/DEFERRED_BACKLOG.md`.
+- **Location:** `docs/projects/completed/SSSS_FRONTIER_IMPROVEMENTS/`.
+
