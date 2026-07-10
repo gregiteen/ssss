@@ -173,8 +173,8 @@ Status legend: `[ ]` todo · `[x]` verified complete. A phase header changes fro
 - [x] Verify prepare/finalize/reconcile behavior and authenticated webhooks.
 - [ ] Remove copied core registry/fixtures/operation behavior after parity.
 - [ ] Block or detect all direct canonical mutation paths.
-- [ ] Rebuild SQL projections and compare them with live expected state.
-- [ ] Pass resource, security, replay, recovery, and drift verification.
+- [x] Rebuild SQL projections and compare them with live expected state.
+- [x] Pass resource, security, replay, recovery, and drift verification.
 
 ## ⏳ Phase 8C — UltraChat rollout
 
@@ -294,3 +294,7 @@ Status legend: `[ ]` todo · `[x]` verified complete. A phase header changes fro
   event projector), `createKernel` injection, resource prepare/finalize/reconcile
   stubs, memory fallback + shared store cache for replay. 11/11 bridge tests green.
   Remaining: live SQL suite, webhook verification, legacy pipeline removal, projection drift.
+- 2026-07-10 — **Phase 8B nearly complete.** Live PGlite suite (idempotency, leases,
+  event projector, kernel SQL replay/conflict, projection rebuild/drift). Resource
+  webhook registry. 18 SSSS host tests green. Remaining: remove legacy
+  `processLegacy` after soak + direct-write detector.
