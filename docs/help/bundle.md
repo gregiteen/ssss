@@ -37,8 +37,8 @@ be silently edited. `primitive_inventory` is registry-driven (a count per `type`
 not a closed category enum.
 
 Bundle validation also applies registry patterns and document-reference rules.
-For example, a `translation` entry must name an included structural source and
-its `source_hash` must match that source's exact bytes.
+Primitive, extension, and migration dependencies must resolve against the effective
+registry before any file is committed.
 
 ## Parameters
 

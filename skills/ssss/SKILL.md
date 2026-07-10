@@ -2,7 +2,7 @@
 type: skill
 title: SSSS System Manager
 name: ssss
-description: "Inspect, validate, implement, or change SSSS primitives, extension registries, operation envelopes, workflow runtimes, semantic search, translation/localization overlays, bundles, projections, and host adapters. Use for SSSS schema changes, registry collisions, conformance failures, portability/privacy questions, or translatable semantic vault work. MANDATORY: Read this file before editing SSSS files or code."
+description: "Inspect, validate, implement, or change SSSS primitives, registries, kernel commands, VFS/security adapters, events, projections, multilingual semantic runtime, generative UI, bundles, and host adapters. MANDATORY: Read this file before editing SSSS files or code."
 timestamp: 2026-07-10T00:00:00Z
 ---
 
@@ -138,24 +138,20 @@ integrity before import. Preflight the complete plan before the first commit so 
 late invalid envelope cannot leave a partial install. Provisioning produces
 deterministic Operation Contract envelopes; re-import must be a no-op.
 
-## Semantic Search and Localization
+## Multilingual Semantic Runtime
 
-Treat semantic indexes and localized trees as disposable projections. Use
-`@gregiteen/ssss-cli/semantic`, `ssss semantic`, and `ssss localize` for the
-dependency-free reference behavior.
+Treat semantic indexes and rendered text/UI as disposable projections. Canonical
+documents are authored once in any language; do not create translation documents or
+localized canonical trees.
 
 - Index only `structural` documents by default. Include `tenant_private` and
   `resource_bound` sources only after an explicit authorized opt-in.
 - Derive stable identity from `semantic_id`, then `resource`, then source path.
 - Build edges from explicit `relations`, wiki links, and Markdown links.
-- Keep projection output outside the source vault; reject symlinks and unsafe paths,
-  and stage the complete tree before publishing it.
-- Model localization as a `translation` document pointing to an existing
-  structural source and its exact SHA-256 content hash.
-- Translate only `title`, `description`, and body. Preserve types, ids, enums,
-  permissions, status, portability, relations, and paths from the source.
-- Apply approved overlays by default. Reject stale hashes, duplicate locale/source
-  overlays, recursive translations, private sources, and immutable identity edits.
+- Record embedding model identity and vector dimensions and report lexical and
+  semantic evidence separately.
+- Render language at runtime through an injected adapter. Preserve primitive IDs,
+  field IDs, enum codes, actions, permissions, paths, versions, hashes, and relations.
 
 ## Scope and Host Adapters
 
@@ -172,7 +168,7 @@ architecture.
 ## Procedure for Changes
 
 1. Classify the change: core primitive, contract behavior, runtime behavior,
-   semantic/localization behavior, bundle/provisioning behavior, projection, or
+   semantic/runtime-rendering behavior, bundle/provisioning behavior, projection, or
    host extension.
 2. Inspect the registry, spec section, implementation, fixtures, and host bridge
    for that surface.
@@ -197,7 +193,7 @@ npm test
 
 It covers registry/engine parity, shipped-skill conformance, Operation Contract
 fixtures, workflow runtime behavior, lease/frontmatter regressions,
-extension-registry hardening, semantic/localization behavior,
+extension-registry hardening, multilingual semantic behavior,
 bundle/provisioning round trips, and CLI smoke tests.
 
 For host adapters, run the host's named SSSS conformance command as well. Do not

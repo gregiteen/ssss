@@ -31,9 +31,9 @@ SSSS additionally defines the **Operation Contract**: a single, validated, idemp
 envelope through which all agent-generated mutations must flow. This makes
 AI-generated state changes deterministic, replayable, conflict-safe, and auditable.
 
-Its semantic projection contract turns the same canonical files into a deterministic
-searchable graph, while translation overlays localize natural-language surfaces
-without mutating symbolic control fields or private operational data.
+Its semantic runtime turns the same canonical files into a deterministic searchable
+graph, while multilingual embedding and render adapters localize presentation without
+mutating symbolic control fields or private operational data.
 
 Any tool, IDE, agent framework, daemon, or CLI that can read Markdown can
 interoperate with an SSSS vault. The only thing that distinguishes a memory engine,
@@ -195,7 +195,7 @@ primitive — it implements the subset its product requires — but any primitiv
 | `page` | capability | structural | A VFS-native sandboxed custom workspace page. |
 | `migration` | meta | structural | An SSSS schema migration state record. |
 | `release` | meta | structural | An SSSS system schema version release record. |
-| `translation` | localization | structural | A hash-bound, non-destructive localization overlay for a structural source document. |
+| `primitive` | meta | structural | A governed, versioned definition for a namespaced SSSS primitive. |
 
 The **Portability** column is the primitive's default portability class (§5.5); a host
 resolves it from `registry/core.json`. Extension registries assign their own primitives a
@@ -217,7 +217,7 @@ Document primitives are either:
 
 - **Replace-type** — the whole file represents current state; a write replaces it
   entirely (`memory`, `skill`, `assistant`, `workflow`, `model`, `task`,
-  `conflict`, `translation`).
+  `conflict`, `primitive`).
 - **Append-type** — the file is an ordered, append-only log; writes add records to
   the body and MUST NOT rewrite prior records (`conversation`, `run`).
 
@@ -561,48 +561,13 @@ released_at: 2026-05-16T12:00:00Z
 ---
 ```
 
-#### `translation`
+#### `primitive`
 
-A non-destructive localization overlay for one structural source document. A
-translation is itself `structural`, but it does not replace or fork the source. The
-source remains authoritative for identity, behavior, permissions, enums, links, and
-all other symbolic control fields.
-
-REQUIRED: `type`, `translation_id`, `source_path`, `source_hash`, `locale`, `status`
-(`draft|reviewed|approved`), and `translated_fields` (a subset of
-`title|description|body`). OPTIONAL: `translated_title`, `translated_description`,
-`translator`, `reviewed_at`. The Markdown body is the translated body when
-`translated_fields` includes `body`.
-
-`translation_id`, `source_path`, and `locale` are immutable after creation.
-`source_path` MUST be a safe, vault-relative path to an existing `structural`
-document whose type is not `translation`. `source_hash` MUST equal the source's
-current SHA-256 content hash, written as `sha256:<64 lowercase hex characters>`.
-A stale, missing, private, resource-bound, recursive, traversing, or symlinked source
-MUST be rejected.
-
-```markdown
----
-type: translation
-title: "Política de reembolsos — español"
-description: "Traducción al español de la política de reembolsos."
-timestamp: 2026-07-10T00:00:00Z
-translation_id: refund-policy-es
-source_path: rules/refund-policy.md
-source_hash: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
-locale: es
-status: approved
-translated_fields: [title, description, body]
-translated_title: "Política de reembolsos"
-translated_description: "Reglas de reembolso para compradores."
----
-
-Los reembolsos están disponibles dentro de los treinta días.
-```
-
-Draft and reviewed translations MAY be stored and previewed, but only approved,
-hash-current overlays are applied by default to canonical localized projections
-(§11.9).
+A governed definition for a namespaced primitive that can be authored in any human
+language without changing the core registry. REQUIRED: `type`, `primitive_id`,
+`namespace`, `version`, `name`, `mutation`, `portability`, `scopes`, and `fields`.
+Stable primitive, field, enum, capability, and action identifiers are symbolic and
+language-independent. Labels and descriptions are multilingual presentation data.
 
 ### 5.5 Portability Classification
 
@@ -1106,10 +1071,10 @@ for planning a workflow trigger into a `workflow_triggered` event envelope and a
 task `operation` envelope. Hosts MAY implement their own daemon, but SHOULD pass the
 runtime conformance checks to prove the same source-of-truth and idempotency rules.
 
-### 11.9 Semantic Projection & Localization Contract
+### 11.9 Multilingual Semantic Runtime Contract
 
 The semantic layer is a **derived projection** over validated vault documents. It
-MUST be deterministic for the same vault bytes, registry set, locale, and projection
+MUST be deterministic for the same vault bytes, registry set, adapter identity, and projection
 options. It MUST NOT become a second source of truth.
 
 Each projected record SHOULD expose a stable identity, source path and content hash,
@@ -1121,29 +1086,20 @@ available as a dependency-free interoperability baseline.
 
 The safe default projection contains only `structural` documents. It MUST exclude
 `tenant_private` and `resource_bound` documents unless the caller explicitly enables
-private indexing in an authorized context. A localized export MUST use the same safe
-default, so requesting a locale can never implicitly disclose conversations, runs,
-tasks, credentials, customer data, or bound resource values.
+private indexing in an authorized context. Language selection MUST NOT widen scope or
+implicitly disclose conversations, runs, tasks, credentials, customer data, or bound
+resource values.
 
-When a locale is requested, the host MAY apply one eligible `translation` (§5.4) per
-source. Eligibility requires all of the following:
+A host MAY inject a multilingual embedding adapter. Every enriched record MUST carry
+the embedding model identity and vector dimension. Search SHOULD report lexical and
+semantic evidence separately before computing a hybrid score.
 
-1. The overlay locale normalizes to the requested locale.
-2. Its status is `approved`, unless a caller explicitly opts into draft preview.
-3. The source is an existing, non-symlinked `structural` document.
-4. `source_hash` exactly matches the current source bytes.
-5. There is no second eligible overlay for the same source and locale.
-
-An overlay may replace only `title`, `description`, and body. It MUST preserve `type`,
-paths, ids, enums, status, permissions, portability, relations, and every other
-symbolic field from the source. Stale hashes, duplicate overlays, traversal, symlink
-targets, recursive translations, and translations of non-structural sources MUST
-fail closed.
-
-A materialized locale is a disposable projection, not a translated vault. It MUST be
-written outside the source vault to a new or empty non-symlinked directory, preserve
-source-relative paths, and include enough projection metadata to identify its locale
-and source hashes. It may be deleted and rebuilt at any time.
+A host MAY inject an LLM render adapter at presentation time. The render request MUST
+carry an invariant-control block. Rendering MAY change natural-language title,
+description, body, formatting, dates, and units, but MUST NOT change primitive IDs,
+field IDs, enum codes, actions, permissions, paths, versions, hashes, or relations.
+Canonical documents are authored once in any language; SSSS 0.9 neither requires nor
+materializes translation documents or localized vault trees.
 
 ---
 
@@ -1161,8 +1117,8 @@ Fixtures are distributed as a JSON document carrying:
 - `runtime_contract` — trigger vocabulary and daemon idempotency rules (§11.8).
 - registry-extension checks — schema shape, regex validity, symlink rejection, and
   core/sibling collision rejection.
-- semantic/localization checks — deterministic indexing, privacy defaults, graph
-  edges, exact source hashes, immutable overlay identity, and safe materialization
+- multilingual semantic checks — deterministic indexing, privacy defaults, graph
+  edges, embedding provenance, cross-language retrieval, and invariant rendering
   (§11.9).
 - `fixtures[]` — each with a `request`, an `expected_response`, and an
   OPTIONAL `expected_http_status`.
@@ -1172,7 +1128,7 @@ The conformance fixture set is the shared test contract between all SSSS
 implementations. A host MUST NOT claim SSSS conformance without passing the current
 fixture set. Hosts implementing workflow daemons SHOULD also run the reference
   runtime checks exposed by `@gregiteen/ssss-cli/runtime`. Hosts exposing semantic
-  search or localized projections MUST also pass the §11.9 checks.
+  search or runtime rendering MUST also pass the §11.9 checks.
 
 ---
 
@@ -1200,7 +1156,7 @@ opaque ID as the slug and keep the human-readable label in `title` / `name`.
 This document is versioned independently of any host and of the conformance
 fixture set.
 
-- The spec version is stated in the document header (currently **v0.7 — Draft**).
+- The spec version is stated in the document header (currently **v0.9 — Draft**).
 - Breaking changes to the file format, the type registry, or the Operation
   Contract increment the spec version.
 - Until **v1.0**, any version MAY introduce breaking changes.
@@ -1417,8 +1373,7 @@ cannot resolve a link MUST fail the provision rather than emit a dangling refere
 
 The following frontmatter keys are reserved by this spec across all primitives and
 MUST NOT be repurposed by hosts: `type`, `slug`, `schema_version`, `status`,
-`feedback`, `confidence`, `semantic_id`, `relations`, `locale`, `translation_id`,
-`source_path`, `source_hash`, and `translated_fields`.
+`feedback`, `confidence`, `semantic_id`, `relations`, and `language`.
 
 Hosts adding their own frontmatter fields SHOULD prefix them `x_` to remain
 forward-compatible with future spec revisions.

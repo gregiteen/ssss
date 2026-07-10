@@ -10,19 +10,18 @@ const HELP = usage({
   usage: 'ssss semantic <vault-dir> [options]',
   options: [
     ['--query <text>', 'Return ranked matches instead of the entire index.'],
-    ['--locale <tag>', 'Apply approved translation overlays for this locale.'],
+    ['--language <tag>', 'Presentation/query language hint for an injected embedding or render adapter.'],
     ['--type <name>', 'Restrict query results to a primitive type (repeatable).'],
     ['--limit <n>', 'Maximum query results (default: 10).'],
     ['--include-private', 'Explicitly include tenant_private/resource_bound documents.'],
-    ['--include-drafts', 'Allow non-approved translation overlays.'],
     ['--registry <dir>', 'Registry directory (default: package registry).'],
     ['--out <file>', 'Write JSON outside the vault instead of stdout.'],
   ],
   examples: [
     'ssss semantic ./vault --query "refund policy"',
-    'ssss semantic ./vault --locale es --out ./derived/semantic-es.json',
+    'ssss semantic ./vault --query "refund policy" --out ./derived/semantic.json',
   ],
-  seeAlso: ['ssss localize', 'ssss help semantic', 'ssss help localization'],
+  seeAlso: ['ssss help semantic'],
 });
 
 function physicalTarget(value) {
@@ -55,7 +54,7 @@ function writeOutsideVault(vault, output, content) {
 export async function run(argv) {
   if (wantsHelp(argv)) { console.log(HELP); return; }
   const { positionals, flags } = parseArgs(argv, {
-    booleans: ['include-private', 'include-drafts'],
+    booleans: ['include-private'],
     multi: ['type'],
   });
   const vault = positionals[0];
@@ -65,14 +64,13 @@ export async function run(argv) {
 
   try {
     const index = buildSemanticIndex(path.resolve(vault), {
-      locale: flags.locale,
+      language: flags.language,
       includePrivate: !!flags['include-private'],
-      includeDrafts: !!flags['include-drafts'],
       registryDir: flags.registry,
     });
     const result = flags.query ? {
       query: flags.query,
-      locale: index.locale,
+      language: index.language,
       include_private: index.include_private,
       index_hash: index.index_hash,
       results: searchSemanticIndex(index, flags.query, { types: flags.type, limit }),

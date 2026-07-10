@@ -4,7 +4,7 @@
 > Turn a running business into a single tradeable file — *a festival in a box.*
 
 [![conformance](https://img.shields.io/badge/conformance-fixtures%20%2B%20runtime%20%2B%20bundle-brightgreen)](conformance/)
-[![spec](https://img.shields.io/badge/spec-v0.7%20draft-blue)](docs/ssss-spec.md)
+[![spec](https://img.shields.io/badge/spec-v0.9%20draft-blue)](docs/ssss-spec.md)
 [![OKF](https://img.shields.io/badge/OKF-v0.1%20compatible-blue)](docs/ssss-spec.md)
 
 SSSS is the vendor-neutral standard and reference implementation shared by
@@ -16,8 +16,8 @@ SSSS is the vendor-neutral standard and reference implementation shared by
   `event` / `delete`) for mutating a vault, with idempotency replay and audit.
 - **The Workflow Runtime Contract** (§11.8) — workflows own triggers; daemons,
   crons, and webhooks derive idempotent event/task/run envelopes from the vault.
-- **Semantic projection and localization** (§11.9) — deterministic graph/search
-  records and hash-bound translation overlays, with private data excluded by default.
+- **Multilingual semantic runtime** (§11.9) — deterministic lexical evidence,
+  injected multilingual embeddings, and runtime rendering with symbolic controls fixed.
 - **Portability classification** (§5.5) — the keystone: every primitive is
   `structural`, `tenant_private`, or `resource_bound`, so a vault can be *sold*
   without leaking the operator's private data.
@@ -80,7 +80,6 @@ ssss import festival.ucw.json --vault ./new-tenant \
 | `ssss provision <bundle>` | Plan an install: params + link integrity → envelopes (§17). |
 | `ssss import <bundle>` | Replay a bundle/plan into a vault via the engine (idempotent). |
 | `ssss semantic <vault>` | Build or query a deterministic, privacy-safe semantic index (§11.9). |
-| `ssss localize <vault>` | Materialize approved translations as a derived projection outside the vault. |
 | `ssss autolink [dir]` | Generate OKF wiki-links across a vault. |
 | `ssss conformance` | Run the canonical conformance suite (§12). |
 | `ssss help [topic]` | Local docs: `runtime`, `portability`, `bundle`, `provisioning`, `leases`, … |
@@ -93,7 +92,7 @@ Run `ssss <command> --help` for flags, or `ssss help <topic>` for concepts.
 import { createEngine } from '@gregiteen/ssss-cli/engine';
 import { exportBundle, validateBundle, provisionBundle, importBundle } from '@gregiteen/ssss-cli/bundle';
 import { planWorkflowTrigger } from '@gregiteen/ssss-cli/runtime';
-import { buildSemanticIndex, searchSemanticIndex, materializeLocale } from '@gregiteen/ssss-cli/semantic';
+import { buildSemanticIndex, searchSemanticIndex, renderSemanticRecord } from '@gregiteen/ssss-cli/semantic';
 
 const bundle = exportBundle('./my-vault', { profile: 'sale', name: 'Festival in a Box' });
 const { valid, errors } = validateBundle(bundle);
@@ -119,9 +118,9 @@ const runtimePlan = planWorkflowTrigger({
   scheduledFor: '2026-07-02T14:00:00.000Z',
 });
 
-const index = buildSemanticIndex('./my-vault', { locale: 'es' });
+const index = buildSemanticIndex('./my-vault');
 const matches = searchSemanticIndex(index, 'política de reembolsos');
-materializeLocale('./my-vault', 'es', './derived/es');
+const rendered = await renderSemanticRecord(matches[0].document, { language: 'es', render: renderer });
 ```
 
 Exports: `@gregiteen/ssss-cli` / `@gregiteen/ssss-cli/engine` (Operation Contract engine),
@@ -129,9 +128,9 @@ Exports: `@gregiteen/ssss-cli` / `@gregiteen/ssss-cli/engine` (Operation Contrac
 `@gregiteen/ssss-cli/runtime`, `@gregiteen/ssss-cli/semantic`,
 `@gregiteen/ssss-cli/frontmatter`.
 
-Translations are structural overlay documents that target an exact source hash. Only
-`title`, `description`, and body are translated; types, ids, permissions, enums,
-relations, and other control fields remain sourced from the canonical document.
+Canonical content is authored once in any language. Multilingual embedding and render
+adapters handle cross-language retrieval and presentation at runtime; primitive IDs,
+field IDs, enum codes, permissions, paths, hashes, and relations never change.
 
 ## Portability — why a vault is safe to sell
 
@@ -158,13 +157,13 @@ npm test                    # == ssss conformance --engine
 ## Repository layout
 
 ```
-docs/ssss-spec.md          The normative specification (v0.7 draft).
+docs/ssss-spec.md          The normative specification (v0.9 draft).
 docs/help/                 Topic docs surfaced by `ssss help`.
 registry/core.json         15 document + 5 contract primitives; semantic, bundle & provisioning schemas.
 registry/extensions/       Application extension registries (e.g. festech).
 src/engine.mjs             Operation Contract engine (§6).
 src/runtime.mjs            Workflow trigger → event/task/run envelope planning (§11.8).
-src/semantic.mjs           Deterministic semantic index + localization projection (§11.9).
+src/semantic.mjs           Multilingual semantic retrieval + runtime rendering (§11.9).
 src/bundle.mjs             export / validate / provision / import (§16–§17).
 src/registry.mjs           Registry-driven type + portability resolution.
 src/frontmatter.mjs        Zero-dependency YAML frontmatter.
