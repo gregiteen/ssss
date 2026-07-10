@@ -13,7 +13,7 @@ integrity. The container file is conventionally named `*.ucw.json`.
     "description": "...",
     "version": "0.1.0",
     "exported_at": "1970-01-01T00:00:00.000Z",   // frozen → deterministic export
-    "ssss_core_version": "0.6",
+    "ssss_core_version": "0.7",
     "required_extensions": ["festech"],
     "export_profile": "sale",                      // backup | template | sale
     "primitive_inventory": { "workflow": 1, "page": 1, "rule": 1, "assistant": 1, "domain": 1 },
@@ -22,7 +22,7 @@ integrity. The container file is conventionally named `*.ucw.json`.
     "file_count": 5,
     "provenance": {
       "content_hash": "sha256:…",                  // over the canonical file serialization
-      "exporter": "@ssss/cli"
+      "exporter": "@gregiteen/ssss-cli"
     }
   },
   "files": [ { "path": "rules/refund-policy.md", "content": "---\n…" } ]
@@ -35,6 +35,10 @@ integrity. The container file is conventionally named `*.ucw.json`.
 of `files`. `ssss validate` recomputes it and rejects any mismatch — a bundle cannot
 be silently edited. `primitive_inventory` is registry-driven (a count per `type`),
 not a closed category enum.
+
+Bundle validation also applies registry patterns and document-reference rules.
+Primitive, extension, and migration dependencies must resolve against the effective
+registry before any file is committed.
 
 ## Parameters
 

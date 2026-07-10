@@ -4,7 +4,7 @@
     "description": "A complete music-festival operation as a tradeable SSSS bundle.",
     "version": "1.0.0",
     "exported_at": "1970-01-01T00:00:00.000Z",
-    "ssss_core_version": "0.6",
+    "ssss_core_version": "0.9",
     "required_extensions": [
       "festech"
     ],
@@ -16,6 +16,24 @@
       "security_role": 1,
       "rule": 1,
       "workflow": 1
+    },
+    "dependencies": {
+      "primitives": [
+        "assistant",
+        "domain",
+        "page",
+        "rule",
+        "security_role",
+        "workflow"
+      ],
+      "extensions": [
+        "festech"
+      ],
+      "migrations": [],
+      "integrity": {
+        "content_hash": "sha256:7febd673938a3dc04c068e0bf08097a9783c09e612606d2df9a4db8dcb8907f5",
+        "ssss_core_version": "0.9"
+      }
     },
     "provisioning": [
       {
@@ -88,7 +106,7 @@
     "file_count": 14,
     "provenance": {
       "content_hash": "sha256:7febd673938a3dc04c068e0bf08097a9783c09e612606d2df9a4db8dcb8907f5",
-      "exporter": "@ssss/cli@0.7.0"
+      "exporter": "@gregiteen/ssss-cli@0.9.0"
     }
   },
   "files": [

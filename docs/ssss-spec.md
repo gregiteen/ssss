@@ -1,6 +1,6 @@
 # SSSS — Structured Semantic Syntax System
 
-**Specification v0.6 — Draft**
+**Specification v0.7 — Draft**
 
 > This is the canonical, vendor-neutral specification for SSSS. It is the ground
 > truth on which all SSSS implementations are built. It is intended to be vendored
@@ -30,6 +30,10 @@ projection* rebuildable from the Markdown.
 SSSS additionally defines the **Operation Contract**: a single, validated, idempotent
 envelope through which all agent-generated mutations must flow. This makes
 AI-generated state changes deterministic, replayable, conflict-safe, and auditable.
+
+Its semantic runtime turns the same canonical files into a deterministic searchable
+graph, while multilingual embedding and render adapters localize presentation without
+mutating symbolic control fields or private operational data.
 
 Any tool, IDE, agent framework, daemon, or CLI that can read Markdown can
 interoperate with an SSSS vault. The only thing that distinguishes a memory engine,
@@ -124,6 +128,17 @@ For OKF-compatible discovery, SSSS document primitives SHOULD also include:
 | `tags` | array | Array of string tags for categorization and routing. |
 | `aliases` | array | Array of alternative names for this concept, used for wiki autolinking. |
 
+For stable semantic identity and graph projection, documents SHOULD also include:
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `semantic_id` | string | Stable concept identity that survives file moves and localized presentation. |
+| `relations` | array | Explicit semantic edges to other vault-relative document paths or semantic ids. |
+| `locale` | string | BCP-47-style locale of the authored natural-language surface, when known. |
+
+`resource`, `tags`, and `aliases` serve both OKF discovery and the semantic layer.
+These fields are recommendations, not new universal requirements.
+
 Every primitive type defines its own additional REQUIRED and OPTIONAL fields
 (§5.4). To maintain forward compatibility and allow agents scratchpad space, hosts MUST NOT reject documents containing unknown frontmatter keys. Unknown fields MUST be preserved.
 
@@ -180,6 +195,7 @@ primitive — it implements the subset its product requires — but any primitiv
 | `page` | capability | structural | A VFS-native sandboxed custom workspace page. |
 | `migration` | meta | structural | An SSSS schema migration state record. |
 | `release` | meta | structural | An SSSS system schema version release record. |
+| `primitive` | meta | structural | A governed, versioned definition for a namespaced SSSS primitive. |
 
 The **Portability** column is the primitive's default portability class (§5.5); a host
 resolves it from `registry/core.json`. Extension registries assign their own primitives a
@@ -201,7 +217,7 @@ Document primitives are either:
 
 - **Replace-type** — the whole file represents current state; a write replaces it
   entirely (`memory`, `skill`, `assistant`, `workflow`, `model`, `task`,
-  `conflict`).
+  `conflict`, `primitive`).
 - **Append-type** — the file is an ordered, append-only log; writes add records to
   the body and MUST NOT rewrite prior records (`conversation`, `run`).
 
@@ -544,6 +560,14 @@ summary: "Added proposal and migration file types"
 released_at: 2026-05-16T12:00:00Z
 ---
 ```
+
+#### `primitive`
+
+A governed definition for a namespaced primitive that can be authored in any human
+language without changing the core registry. REQUIRED: `type`, `primitive_id`,
+`namespace`, `version`, `name`, `mutation`, `portability`, `scopes`, and `fields`.
+Stable primitive, field, enum, capability, and action identifiers are symbolic and
+language-independent. Labels and descriptions are multilingual presentation data.
 
 ### 5.5 Portability Classification
 
@@ -1042,10 +1066,40 @@ run, plus an event explaining the terminal failure.
 
 #### Runtime Helpers
 
-The reference package exposes `@ssss/cli/runtime`, including deterministic helpers
+The reference package exposes `@gregiteen/ssss-cli/runtime`, including deterministic helpers
 for planning a workflow trigger into a `workflow_triggered` event envelope and a
 task `operation` envelope. Hosts MAY implement their own daemon, but SHOULD pass the
 runtime conformance checks to prove the same source-of-truth and idempotency rules.
+
+### 11.9 Multilingual Semantic Runtime Contract
+
+The semantic layer is a **derived projection** over validated vault documents. It
+MUST be deterministic for the same vault bytes, registry set, adapter identity, and projection
+options. It MUST NOT become a second source of truth.
+
+Each projected record SHOULD expose a stable identity, source path and content hash,
+primitive type, portability class, surface text, normalized search tokens, and graph
+edges. Identity is resolved from `semantic_id`, then `resource`, then the source path.
+Edges are derived from explicit `relations`, wiki links, and Markdown links. Hosts MAY
+add embeddings or richer ranking, but the exact lexical/graph projection MUST remain
+available as a dependency-free interoperability baseline.
+
+The safe default projection contains only `structural` documents. It MUST exclude
+`tenant_private` and `resource_bound` documents unless the caller explicitly enables
+private indexing in an authorized context. Language selection MUST NOT widen scope or
+implicitly disclose conversations, runs, tasks, credentials, customer data, or bound
+resource values.
+
+A host MAY inject a multilingual embedding adapter. Every enriched record MUST carry
+the embedding model identity and vector dimension. Search SHOULD report lexical and
+semantic evidence separately before computing a hybrid score.
+
+A host MAY inject an LLM render adapter at presentation time. The render request MUST
+carry an invariant-control block. Rendering MAY change natural-language title,
+description, body, formatting, dates, and units, but MUST NOT change primitive IDs,
+field IDs, enum codes, actions, permissions, paths, versions, hashes, or relations.
+Canonical documents are authored once in any language; SSSS 0.9 neither requires nor
+materializes translation documents or localized vault trees.
 
 ---
 
@@ -1061,6 +1115,11 @@ Fixtures are distributed as a JSON document carrying:
 - `idempotency` — TTL and replay behavior.
 - `validation_rules` — envelope and content rules.
 - `runtime_contract` — trigger vocabulary and daemon idempotency rules (§11.8).
+- registry-extension checks — schema shape, regex validity, symlink rejection, and
+  core/sibling collision rejection.
+- multilingual semantic checks — deterministic indexing, privacy defaults, graph
+  edges, embedding provenance, cross-language retrieval, and invariant rendering
+  (§11.9).
 - `fixtures[]` — each with a `request`, an `expected_response`, and an
   OPTIONAL `expected_http_status`.
 - `error_codes` — the canonical code table.
@@ -1068,7 +1127,8 @@ Fixtures are distributed as a JSON document carrying:
 The conformance fixture set is the shared test contract between all SSSS
 implementations. A host MUST NOT claim SSSS conformance without passing the current
 fixture set. Hosts implementing workflow daemons SHOULD also run the reference
-runtime checks exposed by `@ssss/cli/runtime`.
+  runtime checks exposed by `@gregiteen/ssss-cli/runtime`. Hosts exposing semantic
+  search or runtime rendering MUST also pass the §11.9 checks.
 
 ---
 
@@ -1096,7 +1156,7 @@ opaque ID as the slug and keep the human-readable label in `title` / `name`.
 This document is versioned independently of any host and of the conformance
 fixture set.
 
-- The spec version is stated in the document header (currently **v0.6 — Draft**).
+- The spec version is stated in the document header (currently **v0.9 — Draft**).
 - Breaking changes to the file format, the type registry, or the Operation
   Contract increment the spec version.
 - Until **v1.0**, any version MAY introduce breaking changes.
@@ -1208,7 +1268,7 @@ them without a spec change.
   serialization of `files` (path-sorted, §16.1). An importer MUST recompute it and reject
   a bundle whose files do not match. This is what makes a bundle tamper-evident and what a
   marketplace lists against.
-- `exporter` — an identifier for the tool/host that produced the bundle (`"@ssss/cli@0.3.0"`).
+- `exporter` — an identifier for the tool/host that produced the bundle (`"@gregiteen/ssss-cli@0.8.0"`).
 - `signature` — OPTIONAL detached signature over `content_hash` for a sold bundle, so a
   buyer can verify authorship. Unsigned bundles are valid; signing is a marketplace concern.
 
@@ -1313,7 +1373,7 @@ cannot resolve a link MUST fail the provision rather than emit a dangling refere
 
 The following frontmatter keys are reserved by this spec across all primitives and
 MUST NOT be repurposed by hosts: `type`, `slug`, `schema_version`, `status`,
-`feedback`, `confidence`.
+`feedback`, `confidence`, `semantic_id`, `relations`, and `language`.
 
 Hosts adding their own frontmatter fields SHOULD prefix them `x_` to remain
 forward-compatible with future spec revisions.

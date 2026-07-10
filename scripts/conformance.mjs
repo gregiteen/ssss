@@ -18,16 +18,33 @@ import crypto from 'node:crypto';
 import { execFileSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import { createEngine } from '../src/engine.mjs';
-import { validateBundle, provisionBundle, importBundle } from '../src/bundle.mjs';
+import {
+  DEFAULT_EXPORTER,
+  contentHash,
+  exportBundle,
+  validateBundle,
+  provisionBundle,
+  importBundle,
+} from '../src/bundle.mjs';
 import { parseDocument } from '../src/frontmatter.mjs';
+import { loadRegistries } from '../src/registry.mjs';
 import { createRunEnvelope, planWorkflowTrigger } from '../src/runtime.mjs';
+import {
+  buildSemanticIndex,
+  enrichSemanticIndex,
+  renderSemanticRecord,
+  searchSemanticIndex,
+  searchSemanticIndexWithAdapter,
+} from '../src/semantic.mjs';
 import { auditRegistryFieldUsage } from './audit-registry-field-usage.mjs';
 import { validateSkills } from './validate-skills.mjs';
+import { runKernel09Conformance } from './conformance-09.mjs';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const FIXTURES = path.resolve(__dirname, '..', 'conformance', 'fixtures.json');
 const REFERENCE_BUNDLE = path.resolve(__dirname, '..', 'conformance', 'reference-bundle.ucw.json');
 const REGISTRY_DIR = path.resolve(__dirname, '..', 'registry');
+const PACKAGE = JSON.parse(fs.readFileSync(path.resolve(__dirname, '..', 'package.json'), 'utf8'));
 const PORTABILITY_CLASSES = ['structural', 'tenant_private', 'resource_bound'];
 
 function parseArgs(argv) {
@@ -146,14 +163,14 @@ function validateRegistry() {
  * (spec §12) without needing a live host. Fixtures run in array order so that
  * create → patch → delete dependencies resolve.
  */
-function runAgainstEngine(doc) {
+async function runAgainstEngine(doc) {
   const vault = fs.mkdtempSync(path.join(os.tmpdir(), 'ssss-vault-'));
   const engine = createEngine();
   let pass = 0, fail = 0;
   try {
     for (const f of doc.fixtures) {
       const want = f.expected_response || {};
-      const res = engine.processOperation(f.request, vault);
+      const res = await engine.processOperation(f.request, vault);
       const okSuccess = want.success == null || res.success === want.success;
       const wantType = want.validation && want.validation.type;
       const okType = wantType == null || (res.validation && res.validation.type === wantType);
@@ -183,7 +200,7 @@ function runAgainstEngine(doc) {
  *   - no `tenant_private` primitive ever lands (the §5.5 keystone).
  * Returns true on full pass.
  */
-function runBundleConformance() {
+async function runBundleConformance() {
   if (!fs.existsSync(REFERENCE_BUNDLE)) {
     console.log('  ⚠  No reference bundle; run `node scripts/build-reference-bundle.mjs` first.');
     return false;
@@ -194,6 +211,32 @@ function runBundleConformance() {
 
   const { valid, errors } = validateBundle(bundle, { registryDir: REGISTRY_DIR });
   check('reference bundle is schema- and hash-valid', valid, errors.join('; '));
+  check('reference bundle provenance matches the published package identity',
+    bundle.manifest.provenance.exporter === `${PACKAGE.name}@${PACKAGE.version}`,
+    `got=${bundle.manifest.provenance.exporter}`);
+
+  const defaultExportRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'ssss-exporter-'));
+  try {
+    fs.mkdirSync(path.join(defaultExportRoot, 'rules'), { recursive: true });
+    fs.writeFileSync(path.join(defaultExportRoot, 'rules', 'identity.md'), [
+      '---',
+      'type: rule',
+      'title: Exporter Identity',
+      'description: Proves the default exporter uses the published package name.',
+      'timestamp: 2026-07-10T00:00:00Z',
+      'name: Exporter Identity',
+      '---',
+      '',
+      'Identity fixture.',
+      '',
+    ].join('\n'));
+    const defaultExport = exportBundle(defaultExportRoot, { registryDir: REGISTRY_DIR });
+    check('default bundle exporter matches the published package name',
+      defaultExport.manifest.provenance.exporter === DEFAULT_EXPORTER,
+      `got=${defaultExport.manifest.provenance.exporter}`);
+  } finally {
+    fs.rmSync(defaultExportRoot, { recursive: true, force: true });
+  }
   check('sale profile carries no tenant_private file',
     bundle.files.every((f) => parseDocument(f.content).data.type !== 'task' && parseDocument(f.content).data.type !== 'conversation'));
   check('sale profile reduces resource_bound fields to requirement declarations',
@@ -210,12 +253,38 @@ function runBundleConformance() {
     !missingFilesValidation.valid && missingFilesValidation.errors.some((e) => e.includes('bundle.files must be an array')),
     missingFilesValidation.errors.join('; '));
 
+  const malformedFileBundle = JSON.parse(JSON.stringify(bundle));
+  malformedFileBundle.files[0] = null;
+  const malformedFileValidation = validateBundle(malformedFileBundle, { registryDir: REGISTRY_DIR });
+  check('bundle validation returns structured errors for malformed file entries',
+    !malformedFileValidation.valid &&
+    malformedFileValidation.errors.some((error) => error.includes('file entries must be objects')),
+    malformedFileValidation.errors.join('; '));
+
   const unknownExtensionBundle = JSON.parse(JSON.stringify(bundle));
   unknownExtensionBundle.manifest.required_extensions = ['missing-extension'];
   const unknownExtensionValidation = validateBundle(unknownExtensionBundle, { registryDir: REGISTRY_DIR });
   check('bundle validation rejects unknown required_extensions entries',
     !unknownExtensionValidation.valid && unknownExtensionValidation.errors.some((e) => e.includes("required extension 'missing-extension'")),
     unknownExtensionValidation.errors.join('; '));
+
+  const invalidPatternBundle = JSON.parse(JSON.stringify(bundle));
+  const invalidPattern = invalidPatternBundle.files.find((file) => parseDocument(file.content).data.type === 'rule');
+  invalidPattern.path = 'primitives/invalid.md';
+  invalidPattern.content = [
+    '---', 'type: primitive', 'title: Invalid Primitive', 'description: Invalid namespace pattern.',
+    'timestamp: 2026-07-10T00:00:00Z', 'primitive_id: invalid!:thing', 'namespace: invalid!',
+    'version: 1', 'name: Invalid', 'mutation: replace', 'portability: structural',
+    'scopes: [workspace]', 'fields: [placeholder]', '---', '', 'Invalid.', '',
+  ].join('\n');
+  invalidPatternBundle.manifest.primitive_inventory.rule--;
+  invalidPatternBundle.manifest.primitive_inventory.primitive = 1;
+  invalidPatternBundle.manifest.provenance.content_hash = contentHash(invalidPatternBundle.files);
+  const invalidPatternValidation = validateBundle(invalidPatternBundle, { registryDir: REGISTRY_DIR });
+  check('bundle validation enforces registry patterns before import',
+    !invalidPatternValidation.valid &&
+    invalidPatternValidation.errors.some((error) => error.includes('registry pattern')),
+    invalidPatternValidation.errors.join('; '));
 
   const prov = provisionBundle(bundle, { workspaceId: 'ws-conf', parameters: { business_name: 'Demo', domain: 'demo.example' } });
   check('provision resolves params + link integrity (no dangling [[links]])', prov.ok,
@@ -224,11 +293,11 @@ function runBundleConformance() {
   const vault = fs.mkdtempSync(path.join(os.tmpdir(), 'ssss-bundle-'));
   try {
     const engine = createEngine({ registryDir: REGISTRY_DIR });
-    const first = importBundle(prov.plan, vault, engine);
+    const first = await importBundle(prov.plan, vault, engine);
     check('import commits every file', first.ok && first.committed === bundle.files.length,
       `ok=${first.ok} committed=${first.committed}/${bundle.files.length}`);
 
-    const second = importBundle(prov.plan, vault, engine);
+    const second = await importBundle(prov.plan, vault, engine);
     check('re-import is idempotent (0 new commits)', second.ok && second.committed === 0,
       `committed=${second.committed}`);
 
@@ -236,6 +305,39 @@ function runBundleConformance() {
     check('no tenant_private task file on disk after import', landed.length === 0, `found=${JSON.stringify(landed)}`);
   } finally {
     fs.rmSync(vault, { recursive: true, force: true });
+  }
+
+  const atomicVault = fs.mkdtempSync(path.join(os.tmpdir(), 'ssss-bundle-atomic-'));
+  try {
+    const engine = createEngine({ registryDir: REGISTRY_DIR });
+    const sourceContent = [
+      '---', 'type: rule', 'title: Atomic Source', 'description: Preflight source.',
+      'timestamp: 2026-07-10T00:00:00Z', 'name: Atomic Source', '---', '', 'Body.', '',
+    ].join('\n');
+    const badPlan = [
+      {
+        type: 'operation', idempotency_key: 'atomic-source', workspace_id: 'ws-atomic',
+        path: 'rules/atomic.md', content: sourceContent, actor: { role: 'system' },
+      },
+      {
+        type: 'operation', idempotency_key: 'atomic-invalid', workspace_id: 'ws-atomic',
+        path: 'primitives/invalid.md', actor: { role: 'system' },
+        content: [
+          '---', 'type: primitive', 'title: Invalid Primitive',
+          'description: Must fail before the source commits.', 'timestamp: 2026-07-10T00:00:00Z',
+          'primitive_id: invalid!:thing', 'namespace: invalid!', 'version: 1', 'name: Invalid',
+          'mutation: replace', 'portability: structural', 'scopes: [workspace]',
+          'fields: [placeholder]', '---', '', 'Invalid.', '',
+        ].join('\n'),
+      },
+    ];
+    const atomicResult = await importBundle(badPlan, atomicVault, engine);
+    check('two-phase import prevents partial commits on a late invalid envelope',
+      atomicResult.ok === false && atomicResult.committed === 0 &&
+      !fs.existsSync(path.join(atomicVault, 'rules', 'atomic.md')),
+      JSON.stringify(atomicResult.results.map((result) => result.validation?.errors || [])));
+  } finally {
+    fs.rmSync(atomicVault, { recursive: true, force: true });
   }
 
   let pass = 0;
@@ -247,7 +349,7 @@ function runBundleConformance() {
   return pass === checks.length;
 }
 
-function runOperationContractRegressionConformance() {
+async function runOperationContractRegressionConformance() {
   const checks = [];
   const check = (name, cond, detail = '') => { checks.push({ name, cond, detail }); };
 
@@ -256,7 +358,7 @@ function runOperationContractRegressionConformance() {
   try {
     const engine = createEngine({ registryDir: REGISTRY_DIR, leaseStore });
     const workflowPath = 'workflows/nested.md';
-    const createRes = engine.processOperation({
+    const createRes = await engine.processOperation({
       type: 'operation',
       idempotency_key: 'nested-create',
       workspace_id: 'ws-reg',
@@ -282,7 +384,7 @@ function runOperationContractRegressionConformance() {
     }, vault);
     check('nested frontmatter fixture commits before patch', createRes.success === true, JSON.stringify(createRes.validation?.errors || []));
 
-    const patchRes = engine.processOperation({
+    const patchRes = await engine.processOperation({
       type: 'patch',
       idempotency_key: 'nested-patch',
       workspace_id: 'ws-reg',
@@ -312,13 +414,13 @@ function runOperationContractRegressionConformance() {
       actor: { role: 'system' },
       content: '---\ntype: rule\ntitle: Leased\ndescription: Lease test.\ntimestamp: 2026-07-02T00:00:00Z\nname: Leased\n---\nBody.\n',
     };
-    const missingLease = engine.processOperation(leasedEnvelope, vault);
+    const missingLease = await engine.processOperation(leasedEnvelope, vault);
     check('lease conflict rejects missing lease_id', missingLease.success === false && missingLease.validation.errors.some((e) => e.includes('leased')));
 
-    const mismatchLease = engine.processOperation({ ...leasedEnvelope, idempotency_key: 'lease-mismatch', lease_id: 'wrong' }, vault);
+    const mismatchLease = await engine.processOperation({ ...leasedEnvelope, idempotency_key: 'lease-mismatch', lease_id: 'wrong' }, vault);
     check('lease conflict rejects mismatched lease_id', mismatchLease.success === false && mismatchLease.validation.errors.some((e) => e.includes('Lease mismatch')));
 
-    const matchedLease = engine.processOperation({ ...leasedEnvelope, idempotency_key: 'lease-match', lease_id: 'lease-ok' }, vault);
+    const matchedLease = await engine.processOperation({ ...leasedEnvelope, idempotency_key: 'lease-match', lease_id: 'lease-ok' }, vault);
     check('lease allows matching lease_id', matchedLease.success === true, JSON.stringify(matchedLease.validation?.errors || []));
 
     const expiredTarget = 'rules/expired.md';
@@ -327,13 +429,13 @@ function runOperationContractRegressionConformance() {
       lease_id: 'expired',
       expires_at: '2000-01-01T00:00:00.000Z',
     }));
-    const expiredLease = engine.processOperation({ ...leasedEnvelope, idempotency_key: 'lease-expired', path: expiredTarget }, vault);
+    const expiredLease = await engine.processOperation({ ...leasedEnvelope, idempotency_key: 'lease-expired', path: expiredTarget }, vault);
     check('expired lease does not block writes', expiredLease.success === true, JSON.stringify(expiredLease.validation?.errors || []));
 
     const unreadableTarget = 'rules/unreadable.md';
     const unreadablePathKey = crypto.createHash('sha256').update(unreadableTarget).digest('hex');
     fs.writeFileSync(path.join(leaseDir, `${unreadablePathKey}.lease.json`), '{not json');
-    const unreadableLease = engine.processOperation({ ...leasedEnvelope, idempotency_key: 'lease-unreadable', path: unreadableTarget }, vault);
+    const unreadableLease = await engine.processOperation({ ...leasedEnvelope, idempotency_key: 'lease-unreadable', path: unreadableTarget }, vault);
     check('unreadable lease state fails closed', unreadableLease.success === false && unreadableLease.validation.errors.some((e) => e.includes('unreadable')));
   } finally {
     fs.rmSync(vault, { recursive: true, force: true });
@@ -349,7 +451,177 @@ function runOperationContractRegressionConformance() {
   return pass === checks.length;
 }
 
-function runCliSmokeConformance() {
+async function runSemanticLocalizationConformance() {
+  const checks = [];
+  const check = (name, cond, detail = '') => { checks.push({ name, cond, detail }); };
+  const vault = fs.mkdtempSync(path.join(os.tmpdir(), 'ssss-semantic-'));
+  try {
+    const engine = createEngine({ registryDir: REGISTRY_DIR });
+    const sourcePath = 'rules/refund-policy.md';
+    const sourceContent = [
+      '---', 'type: rule', 'title: Política de reembolsos',
+      'description: Explica cuándo están disponibles los reembolsos de boletos.',
+      'timestamp: 2026-07-10T00:00:00Z', 'name: Refund Policy', 'language: es',
+      'aliases: [términos de reembolso, política de cancelación]', 'tags: [boletos, finanzas]',
+      'relations:', '  - relation: applies_to', '    target: workflows/box-office.md',
+      '---', '', 'Los reembolsos están disponibles hasta catorce días antes del evento.', '',
+    ].join('\n');
+    const sourceWrite = await engine.processOperation({
+      type: 'operation', idempotency_key: 'sem-source', workspace_id: 'ws-sem',
+      path: sourcePath, content: sourceContent, actor: { role: 'system' },
+    }, vault);
+    check('non-English structural source commits', sourceWrite.success === true, JSON.stringify(sourceWrite.validation?.errors || []));
+
+    const privateContent = [
+      '---', 'type: task', 'title: Solicitud privada', 'description: Datos privados del cliente.',
+      'timestamp: 2026-07-10T00:00:00Z', 'priority: high', 'category: support', 'status: pending',
+      '---', '', 'Cuenta y detalles de pago.', '',
+    ].join('\n');
+    const privateWrite = await engine.processOperation({
+      type: 'operation', idempotency_key: 'sem-private', workspace_id: 'ws-sem',
+      path: 'tasks/private-refund.md', content: privateContent, actor: { role: 'system' },
+    }, vault);
+    check('tenant-private semantic source commits', privateWrite.success === true, JSON.stringify(privateWrite.validation?.errors || []));
+
+    const first = buildSemanticIndex(vault, { registryDir: REGISTRY_DIR });
+    const second = buildSemanticIndex(vault, { registryDir: REGISTRY_DIR });
+    check('semantic index is deterministic', first.index_hash === second.index_hash);
+    check('safe semantic default excludes tenant-private documents',
+      first.documents.every((document) => document.portability === 'structural') &&
+      !first.documents.some((document) => document.path.startsWith('tasks/')));
+    check('semantic graph captures explicit relations', first.edges.some((edge) => edge.source === sourcePath && edge.relation === 'applies_to'));
+    const lexical = searchSemanticIndex(first, 'reembolsos boletos', { limit: 3 });
+    check('lexical evidence ranks same-language content', lexical[0]?.document.path === sourcePath && lexical[0].evidence.lexical > 0);
+
+    const embed = async (texts) => texts.map((text) => /refund|reembols/i.test(text) ? [1, 0] : [0, 1]);
+    const enriched = await enrichSemanticIndex(first, { embed, model: 'conformance-multilingual-v1' });
+    check('embedding provenance records model and dimension', enriched.embedding.model === 'conformance-multilingual-v1' && enriched.embedding.dimension === 2);
+    const crossLanguage = await searchSemanticIndexWithAdapter(enriched, 'refund policy', { embed, limit: 3 });
+    check('cross-language semantic evidence ranks the authored source',
+      crossLanguage[0]?.document.path === sourcePath && crossLanguage[0].evidence.semantic > 0,
+      JSON.stringify(crossLanguage.map((match) => ({ path: match.document.path, evidence: match.evidence }))));
+
+    const rendered = await renderSemanticRecord(first.documents[0], {
+      language: 'ja', render: async () => ({ title: '返金ポリシー', description: 'チケット返金の条件。', body: 'イベントの14日前まで返金できます。' }),
+    });
+    check('runtime rendering changes presentation without changing controls',
+      rendered.presentation.language === 'ja' && rendered.presentation.title === '返金ポリシー' &&
+      rendered.invariant.type === first.documents[0].type && rendered.invariant.path === sourcePath);
+    let forbiddenRejected = false;
+    try { await renderSemanticRecord(first.documents[0], { language: 'fr', render: async () => ({ type: 'assistant', title: 'Politique' }) }); }
+    catch (error) { forbiddenRejected = error.message.includes('forbidden field'); }
+    check('renderer cannot change symbolic controls', forbiddenRejected);
+
+    const privateIndex = buildSemanticIndex(vault, { includePrivate: true, registryDir: REGISTRY_DIR });
+    check('private semantic indexing requires explicit opt-in', privateIndex.documents.some((document) => document.path === 'tasks/private-refund.md'));
+
+    fs.writeFileSync(path.join(vault, 'rules', 'invalid-raw.md'), '---\ntype: rule\nname: Invalid\n---\nBody.\n');
+    let invalidRawRejected = false;
+    try { buildSemanticIndex(vault, { registryDir: REGISTRY_DIR }); }
+    catch (error) { invalidRawRejected = error.message.includes("Missing required field 'title'"); }
+    check('semantic projection rejects raw documents that violate the registry', invalidRawRejected);
+  } finally {
+    fs.rmSync(vault, { recursive: true, force: true });
+  }
+
+  let pass = 0;
+  for (const c of checks) {
+    if (c.cond) { pass++; console.log(`  ✅ ${c.name}`); }
+    else console.log(`  ❌ ${c.name}${c.detail ? ` — ${c.detail}` : ''}`);
+  }
+  console.log(`\n  ${pass}/${checks.length} semantic/multilingual rendering checks passed (§11.9)`);
+  return pass === checks.length;
+}
+
+function runRegistryExtensionConformance() {
+  const checks = [];
+  const check = (name, cond, detail = '') => { checks.push({ name, cond, detail }); };
+  const registry = fs.mkdtempSync(path.join(os.tmpdir(), 'ssss-registry-'));
+  const extensions = path.join(registry, 'extensions');
+  fs.mkdirSync(extensions, { recursive: true });
+  fs.copyFileSync(path.join(REGISTRY_DIR, 'core.json'), path.join(registry, 'core.json'));
+  const primitive = {
+    family: 'extension', append_only: false, portability: 'structural',
+    required_fields: ['type', 'name'],
+  };
+  const writeExtension = (name, value) =>
+    fs.writeFileSync(path.join(extensions, `${name}.json`), JSON.stringify(value, null, 2));
+  try {
+    writeExtension('valid', {
+      registry: 'valid-ext', extends: 'core', document_primitives: { custom_thing: primitive },
+    });
+    let validLoaded = false;
+    try { validLoaded = loadRegistries(registry).types.has('custom_thing'); } catch {}
+    check('valid extension registry composes with core', validLoaded);
+
+    writeExtension('collision', {
+      registry: 'collision', extends: 'core', document_primitives: { rule: primitive },
+    });
+    let coreCollision = false;
+    try { loadRegistries(registry); } catch (error) { coreCollision = error.message.includes("primitive 'rule' collides"); }
+    check('extension cannot redefine a core primitive', coreCollision);
+    fs.rmSync(path.join(extensions, 'collision.json'));
+
+    writeExtension('duplicate', {
+      registry: 'duplicate', extends: 'core', document_primitives: { custom_thing: primitive },
+    });
+    let siblingCollision = false;
+    try { loadRegistries(registry); } catch (error) { siblingCollision = error.message.includes("primitive 'custom_thing' collides"); }
+    check('sibling extensions cannot redefine each other', siblingCollision);
+    fs.rmSync(path.join(extensions, 'duplicate.json'));
+
+    writeExtension('pattern', {
+      registry: 'bad-pattern', extends: 'core',
+      document_primitives: { patterned: { ...primitive, patterns: { name: '[' } } },
+    });
+    let badPattern = false;
+    try { loadRegistries(registry); } catch (error) { badPattern = error.message.includes('invalid pattern'); }
+    check('invalid extension regex fails during registry load', badPattern);
+    fs.rmSync(path.join(extensions, 'pattern.json'));
+
+    writeExtension('shape', {
+      registry: 'bad-shape', extends: 'core',
+      document_primitives: { shaped: { ...primitive, required_when: [] } },
+    });
+    let badShape = false;
+    try { loadRegistries(registry); } catch (error) { badShape = error.message.includes('required_when must be an object'); }
+    check('malformed extension constraint shapes fail during registry load', badShape);
+    fs.rmSync(path.join(extensions, 'shape.json'));
+
+    writeExtension('unknown-reference', {
+      registry: 'unknown-reference', extends: 'core',
+      document_primitives: {
+        linked_thing: {
+          ...primitive,
+          references: { target_path: { allowed_types: ['missing_type'] } },
+        },
+      },
+    });
+    let unknownReference = false;
+    try { loadRegistries(registry); } catch (error) { unknownReference = error.message.includes("unknown type 'missing_type'"); }
+    check('extension references cannot name unknown primitive types', unknownReference);
+    fs.rmSync(path.join(extensions, 'unknown-reference.json'));
+
+    const symlinkTarget = path.join(registry, 'external.json');
+    fs.writeFileSync(symlinkTarget, JSON.stringify({ registry: 'linked', extends: 'core', document_primitives: {} }));
+    fs.symlinkSync(symlinkTarget, path.join(extensions, 'linked.json'));
+    let symlinkRejected = false;
+    try { loadRegistries(registry); } catch (error) { symlinkRejected = error.message.includes('symlinked registries'); }
+    check('symlinked extension registry is rejected', symlinkRejected);
+  } finally {
+    fs.rmSync(registry, { recursive: true, force: true });
+  }
+
+  let pass = 0;
+  for (const c of checks) {
+    if (c.cond) { pass++; console.log(`  ✅ ${c.name}`); }
+    else console.log(`  ❌ ${c.name}${c.detail ? ` — ${c.detail}` : ''}`);
+  }
+  console.log(`\n  ${pass}/${checks.length} extension-registry checks passed`);
+  return pass === checks.length;
+}
+
+async function runCliSmokeConformance() {
   const checks = [];
   const check = (name, cond, detail = '') => { checks.push({ name, cond, detail }); };
   const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'ssss-cli-smoke-'));
@@ -369,7 +641,7 @@ function runCliSmokeConformance() {
     const failures = [];
     for (const abs of files) {
       const rel = path.relative(vault, abs);
-      const res = engine.processOperation({
+      const res = await engine.processOperation({
         type: 'operation',
         idempotency_key: `scaffold-${rel.replace(/[^A-Za-z0-9._-]/g, '_')}`,
         workspace_id: 'ws-scaffold',
@@ -381,6 +653,17 @@ function runCliSmokeConformance() {
       if (!res.success) failures.push({ rel, errors: res.validation?.errors || [] });
     }
     check('ssss new starter vault files validate against the registry', files.length > 0 && failures.length === 0, JSON.stringify(failures));
+
+    const semanticOutput = JSON.parse(execFileSync('node', [
+      path.join(__dirname, 'ssss.mjs'),
+      'semantic',
+      vault,
+      '--query',
+      'welcome rule',
+    ], { encoding: 'utf8' }));
+    check('ssss semantic returns ranked structural results',
+      semanticOutput.results?.some((result) => result.document.path === 'rules/welcome.md'),
+      JSON.stringify(semanticOutput.results || []));
 
     const dryRunVault = path.join(tmp, 'dry-run-vault');
     const dryRunOut = execFileSync('node', [
@@ -408,6 +691,53 @@ function runCliSmokeConformance() {
     check('ssss import --dry-run reports would-commit counts and leaves target empty',
       dryRunOut.includes('would commit') && dryRunFiles.length === 0,
       dryRunOut.trim());
+
+    const primitiveOut = JSON.parse(execFileSync('node', [
+      path.join(__dirname, 'ssss.mjs'),
+      'primitive', 'create',
+      '--namespace', 'acme',
+      '--name', '顧客予約',
+      '--language', 'ja',
+      '--fields', JSON.stringify([{ id: 'status', name: '状態', kind: 'enum', values: ['pending', 'confirmed'], required: true }]),
+    ], { encoding: 'utf8' }));
+    check('ssss primitive create emits a stable qualified identity',
+      /^acme:p_[a-f0-9]{20}$/.test(primitiveOut.primitive_id),
+      JSON.stringify(primitiveOut));
+
+    const defPath = path.join(tmp, 'definition.json');
+    fs.writeFileSync(defPath, `${JSON.stringify(primitiveOut)}\n`);
+    const inspectOut = JSON.parse(execFileSync('node', [
+      path.join(__dirname, 'ssss.mjs'),
+      'primitive', 'inspect',
+      defPath,
+    ], { encoding: 'utf8' }));
+    const extensionPath = path.join(tmp, 'extension.json');
+    fs.writeFileSync(extensionPath, `${JSON.stringify(inspectOut.registry)}\n`);
+    const lockOut = JSON.parse(execFileSync('node', [
+      path.join(__dirname, 'ssss.mjs'),
+      'registry', 'lock',
+      '--extension', extensionPath,
+    ], { encoding: 'utf8' }));
+    check('ssss registry lock emits integrity metadata',
+      typeof lockOut.integrity === 'string' && lockOut.integrity.startsWith('sha256:'),
+      JSON.stringify(lockOut));
+
+    const adapterOut = JSON.parse(execFileSync('node', [
+      path.join(__dirname, 'ssss.mjs'),
+      'adapter', 'conformance',
+    ], { encoding: 'utf8' }));
+    check('ssss adapter conformance report is machine-readable and green',
+      adapterOut.passed === true && adapterOut.suites?.vfs_memory?.passed === true,
+      JSON.stringify(adapterOut));
+
+    const migrateOut = JSON.parse(execFileSync('node', [
+      path.join(__dirname, 'ssss.mjs'),
+      'migrate', '0.8-to-0.9',
+      vault,
+    ], { encoding: 'utf8' }));
+    check('ssss migrate 0.8-to-0.9 dry-run emits backup manifest without writes',
+      migrateOut.dry_run === true && migrateOut.writes_performed === 0 && Array.isArray(migrateOut.backup_manifest),
+      JSON.stringify(migrateOut));
   } finally {
     fs.rmSync(tmp, { recursive: true, force: true });
   }
@@ -426,7 +756,7 @@ function runCliSmokeConformance() {
  * workflow frontmatter as the canonical schedule source, then derive trigger,
  * task, and run envelopes without introducing a scheduler database of record.
  */
-function runRuntimeConformance() {
+async function runRuntimeConformance() {
   const checks = [];
   const check = (name, cond, detail = '') => { checks.push({ name, cond, detail }); };
 
@@ -489,15 +819,15 @@ function runRuntimeConformance() {
   const vault = fs.mkdtempSync(path.join(os.tmpdir(), 'ssss-runtime-'));
   try {
     const engine = createEngine({ registryDir: REGISTRY_DIR });
-    const eventRes = engine.processOperation(firstPlan.envelopes[0], vault);
-    const taskRes = engine.processOperation(firstPlan.envelopes[1], vault);
+    const eventRes = await engine.processOperation(firstPlan.envelopes[0], vault);
+    const taskRes = await engine.processOperation(firstPlan.envelopes[1], vault);
     check('trigger event commits through Operation Contract', eventRes.success === true,
       JSON.stringify(eventRes.validation?.errors || []));
     check('instantiated task commits through Operation Contract', taskRes.success === true,
       JSON.stringify(taskRes.validation?.errors || []));
 
-    const replayEvent = engine.processOperation(secondPlan.envelopes[0], vault);
-    const replayTask = engine.processOperation(secondPlan.envelopes[1], vault);
+    const replayEvent = await engine.processOperation(secondPlan.envelopes[0], vault);
+    const replayTask = await engine.processOperation(secondPlan.envelopes[1], vault);
     check('duplicate daemon tick replays trigger event idempotently', replayEvent.replay != null);
     check('duplicate daemon tick replays task write idempotently', replayTask.replay != null);
 
@@ -508,7 +838,7 @@ function runRuntimeConformance() {
       status: 'queued',
       startedAt: scheduledFor,
     });
-    const runRes = engine.processOperation(runEnvelope, vault);
+    const runRes = await engine.processOperation(runEnvelope, vault);
     check('worker-created run commits through Operation Contract', runRes.success === true,
       JSON.stringify(runRes.validation?.errors || []));
   } finally {
@@ -588,16 +918,25 @@ async function main() {
     process.exit(ok ? 0 : 1);
   } else if (opts.engine) {
     console.log('\nRunning fixtures through the reference engine (src/engine.mjs) ...');
-    const engineOk = runAgainstEngine(doc);
+    const engineOk = await runAgainstEngine(doc);
     console.log('\nRunning workflow runtime conformance (src/runtime.mjs, §11.8) ...');
-    const runtimeOk = runRuntimeConformance();
+    const runtimeOk = await runRuntimeConformance();
     console.log('\nRunning operation regression conformance (src/engine.mjs, §6/§7) ...');
-    const operationRegressionOk = runOperationContractRegressionConformance();
+    const operationRegressionOk = await runOperationContractRegressionConformance();
+    console.log('\nRunning extension-registry conformance (src/registry.mjs) ...');
+    const extensionRegistryOk = runRegistryExtensionConformance();
+    console.log('\nRunning semantic/multilingual rendering conformance (src/semantic.mjs, §11.9) ...');
+    const semanticOk = await runSemanticLocalizationConformance();
+    console.log('\nRunning SSSS 0.9 kernel/adapter/UI conformance ...');
+    const kernel09Ok = await runKernel09Conformance();
     console.log('\nRunning bundle/provisioning conformance (src/bundle.mjs, §16/§17) ...');
-    const bundleOk = runBundleConformance();
+    const bundleOk = await runBundleConformance();
     console.log('\nRunning CLI smoke conformance (scripts/ssss.mjs) ...');
-    const cliSmokeOk = runCliSmokeConformance();
-    process.exit(engineOk && runtimeOk && operationRegressionOk && bundleOk && cliSmokeOk ? 0 : 1);
+    const cliSmokeOk = await runCliSmokeConformance();
+    process.exit(
+      engineOk && runtimeOk && operationRegressionOk && extensionRegistryOk &&
+      semanticOk && kernel09Ok && bundleOk && cliSmokeOk ? 0 : 1
+    );
   } else {
     console.log('\nℹ  No --endpoint/--engine given; ran structural + registry validation only.');
     console.log('   Reference engine:  ssss conformance --engine');
