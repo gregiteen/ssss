@@ -166,11 +166,11 @@ Status legend: `[ ]` todo · `[x]` verified complete. A phase header changes fro
 ## ⏳ Phase 8B — Festech rollout
 
 - [x] Convert Festech product types into qualified extension definitions.
-- [ ] Wire durable idempotency, lease, event, projection, and resource adapters.
+- [x] Wire durable idempotency, lease, event, projection, and resource adapters.
 - [x] Replace copied core validation with package behavior and host extensions.
 - [x] Shadow protected-resource authorization and confirmation policies.
 - [x] Route low-risk then resource-bound primitive families through the kernel.
-- [ ] Verify prepare/finalize/reconcile behavior and authenticated webhooks.
+- [x] Verify prepare/finalize/reconcile behavior and authenticated webhooks.
 - [ ] Remove copied core registry/fixtures/operation behavior after parity.
 - [ ] Block or detect all direct canonical mutation paths.
 - [ ] Rebuild SQL projections and compare them with live expected state.
@@ -290,3 +290,7 @@ Status legend: `[ ]` todo · `[x]` verified complete. A phase header changes fro
   `FESTECH_SSSS_KERNEL_MODE`, and 7/7 bridge tests green. Remaining: SQL
   idempotency/lease adapters, webhooks/resource reconcile, pipeline removal,
   projection drift.
+- 2026-07-10 — **Phase 8B advanced.** `SsssSqlAdapters` (SQL idempotency/leases +
+  event projector), `createKernel` injection, resource prepare/finalize/reconcile
+  stubs, memory fallback + shared store cache for replay. 11/11 bridge tests green.
+  Remaining: live SQL suite, webhook verification, legacy pipeline removal, projection drift.
