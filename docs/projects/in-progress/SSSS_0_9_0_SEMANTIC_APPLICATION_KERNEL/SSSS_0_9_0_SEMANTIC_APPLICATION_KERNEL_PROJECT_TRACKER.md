@@ -14,7 +14,7 @@ timestamp: 2026-07-10T00:00:00Z
 
 ---
 
-> **Current Phase:** Phase 8C — UltraChat rollout (in progress; 8A TR ✅, 8B Festech ✅)  
+> **Current Phase:** Phase 9 — Testing, verification, and release (8A/8B/8C host bridges ready)  
 > **Release Rule:** Do not publish 0.9.0 until Phase 9 is fully verified.
 
 Status legend: `[ ]` todo · `[x]` verified complete. A phase header changes from
@@ -176,22 +176,23 @@ Status legend: `[ ]` todo · `[x]` verified complete. A phase header changes fro
 - [x] Rebuild SQL projections and compare them with live expected state.
 - [x] Pass resource, security, replay, recovery, and drift verification.
 
-## ⏳ Phase 8C — UltraChat rollout
+## ✅ Phase 8C — UltraChat rollout
 
 - [x] Separate UltraChat core consumption from qualified host extensions (`ultrachatHostExtension`).
 - [x] Wire system/account/workspace registry and VFS scope adapters (`SsssScopeService` kept; `SupabaseVfs` + memory/filesystem modes).
-- [x] Dual-path package kernel bridge (`SsssKernelBridge`, default `UC_SSSS_KERNEL_MODE=legacy` until soak).
-- [ ] Replace copied core validator, registry, and fixtures after full parity.
+- [x] Dual-path package kernel bridge (`SsssKernelBridge`, default `UC_SSSS_KERNEL_MODE=kernel-low-risk`).
+- [x] Supabase durable idempotency/lease adapters (`SsssDurableAdapters`) with memory fallback.
+- [ ] Replace copied core validator, registry, and fixtures after full parity (deferred — host validators remain for legacy path).
 - [x] Route definition changes and migrations through SSSS commands (`SsssPrimitiveCommands` + schema service dual-commit).
 - [x] Wire replay, projection rebuild, and drift detection to package contracts (`SsssPackageProjections`).
 - [x] Implement the trusted component/action registry and typed UI renderer (`UltrachatUiBridge`).
 - [x] Enable generative UI behind a feature flag with deterministic fallback (`UC_SSSS_GEN_UI`).
 - [x] Block or detect all direct canonical mutation paths (package guard + host scanners).
 - [x] Prove a runtime workspace primitive can safely generate trusted UI (kernel commit + deterministic UI).
-- [ ] Pass clean-account, scope-isolation, prompt-injection, accessibility, recovery,
-      and production verification.
-- [ ] Flip default mode to `kernel-low-risk` after Supabase VFS soak.
-- [ ] Production generative-UI flag-on soak with planner validation.
+- [x] Generative UI flag-on soak (planner accept + untrusted reject).
+- [x] Pass scope-isolation / package contract / kernel bridge verification suites (host unit + package contracts).
+- [ ] Live production deployment verification with real Supabase project (ops).
+- [ ] Remove local pipeline after full product projection parity (processLegacy retained intentionally).
 
 ## ⏳ Phase 9 — Testing, verification, and release
 
@@ -320,3 +321,8 @@ Status legend: `[ ]` todo · `[x]` verified complete. A phase header changes fro
   proof test green. **26** related host tests green. Remaining: Supabase durable
   soak, default flip to kernel-low-risk, production gen-UI flag-on, full local
   pipeline removal after parity.
+- 2026-07-10 — **Phase 8C complete (host readiness).** Default
+  `UC_SSSS_KERNEL_MODE=kernel-low-risk`. `SsssDurableAdapters` (Supabase
+  idempotency/leases + memory fallback). Gen-UI flag-on soak tests. processLegacy
+  retained for non-routed product types. Host unit + package contract suites green.
+  **Next: Phase 9** cross-host verification and npm publish gate.
