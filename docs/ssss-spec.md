@@ -1,14 +1,15 @@
 # SSSS — Structured Semantic Syntax System
 
-**Specification v0.7 — Draft**
+**Specification v0.9**
 
 > This is the canonical, vendor-neutral specification for SSSS. It is the ground
 > truth on which all SSSS implementations are built. It is intended to be vendored
-> byte-for-byte into any repository that implements SSSS (e.g. the UltraChat
+> byte-for-byte into any repository that implements SSSS (e.g. a compatible host
 > Sovereign AI OS, the Total Recall reference kernel).
 >
-> Status: **Draft**. The format, type registry, and conformance contract are under
-> active development. Expect breaking changes until v1.0.
+> Status: **Stable for 0.9**. The format, type registry, and conformance contract
+> are settled for this version; until v1.0 a later version MAY still introduce
+> breaking changes.
 >
 > Implementation-specific detail (routes, services, storage backends, deployment)
 > does **not** belong in this document — it belongs in each implementation's own
@@ -1156,7 +1157,7 @@ opaque ID as the slug and keep the human-readable label in `title` / `name`.
 This document is versioned independently of any host and of the conformance
 fixture set.
 
-- The spec version is stated in the document header (currently **v0.9 — Draft**).
+- The spec version is stated in the document header (currently **v0.9**).
 - Breaking changes to the file format, the type registry, or the Operation
   Contract increment the spec version.
 - Until **v1.0**, any version MAY introduce breaking changes.
@@ -1248,14 +1249,14 @@ inside, the resources it must bind at provision time, and provenance.
 | `ssss_core_version` | yes | The `registry/core.json` `spec_version` the bundle targets (e.g. `"0.3"`). A host MUST refuse a bundle whose core version it does not support. |
 | `required_extensions` | yes | Array of extension registry ids the files rely on (e.g. `["festech"]`). Empty array if the bundle uses only core primitives. A host MUST refuse a bundle naming an extension it has not loaded. |
 | `export_profile` | yes | `backup` \| `template` \| `sale` — the §5.5 profile this bundle was built under. Determines the allowed portability classes. |
-| `primitive_inventory` | yes | Map of primitive `type` → count, over every file in the bundle (replaces ultrachat's hard-coded `categories`; it is registry-driven, so extension types appear automatically). |
+| `primitive_inventory` | yes | Map of primitive `type` → count, over every file in the bundle (replaces the legacy hard-coded `categories`; it is registry-driven, so extension types appear automatically). |
 | `provisioning` | yes | Array of provisioning steps (§17.2) — the ordered, declarative plan for binding this bundle into a live workspace. Empty for a pure `backup` that is restored in place. |
 | `parameters` | no | Array of parameter definitions (§16.5) the importer must resolve (e.g. business name, domain). |
 | `source_workspace_id` | no | Origin workspace; OMITTED or nulled in `template`/`sale` profiles (it is operator-identifying). |
 | `file_count` | yes | Length of `files`; a cheap integrity check. |
 | `provenance` | yes | `{ content_hash, exporter, signature? }` (§16.3). |
 
-`primitive_inventory` supersedes ultrachat's fixed `categories` object and `provisioning`
+`primitive_inventory` supersedes the legacy fixed `categories` object and `provisioning`
 supersedes its `capabilities` booleans: both are now open and registry-driven rather than a
 closed enum, so a bundle full of `festech` extension primitives inventories and provisions
 them without a spec change.
@@ -1284,7 +1285,7 @@ honoring `x_portability`) MUST be permitted by `export_profile`.
 
 `parameters` are the values an importer must supply to turn a template into a running
 instance — the difference between "a festival in a box" and "*this* festival." The schema is
-adopted verbatim from ultrachat's `WorkspaceTemplateVariableDefinition`:
+adopted verbatim from the legacy `WorkspaceTemplateVariableDefinition`:
 
 | Field | Meaning |
 |-------|---------|
@@ -1325,7 +1326,7 @@ restoring an SSSS business are reliable operations rather than bespoke migration
 ### 17.2 Provisioning Steps & Binding Vocabulary
 
 A manifest's `provisioning` array is an ordered list of steps. The step schema and its
-controlled vocabularies are adopted from ultrachat's `WorkspaceProvisioningStep` and
+controlled vocabularies are adopted from the legacy `WorkspaceProvisioningStep` and
 `WorkspaceGraphEdge`:
 
 A **step** is `{ id, label, system, mode, required, notes? }`:
@@ -1358,7 +1359,7 @@ cannot resolve a link MUST fail the provision rather than emit a dangling refere
 ### 17.4 Composition & Upgrade
 
 - **Composition** — a bundle MAY depend on other bundles. A dependency carries an
-  `installMode` of `optional | recommended | required` (adopted from ultrachat's
+  `installMode` of `optional | recommended | required` (adopted from the legacy
   `WorkspaceMarketplaceRecommendation`). `provision` installs `required` dependencies before
   the bundle itself; `optional`/`recommended` are surfaced to the operator.
 - **Upgrade** — moving an installed bundle from `v2` to a `v1`-conformant shape (or any

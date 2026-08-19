@@ -22,43 +22,15 @@ timestamp: 2026-07-02T00:00:00Z
 The SSSS repository is the vendor-neutral standard and canonical validator implementation 
 used across `festech.live`, `total-recall`, and `ultrachat`.
 
-## Standard SWE Sequence
+## Relationship to the global project-management skill
 
-Every **new project or feature** in this repo gets its **own dedicated set of 4 documents**. Do NOT append to existing project documents from other projects.
-
-### Per-Project Document Set
-
-Each project creates **4 fresh documents** using a unique `PROJECT_PREFIX`.
-
-**Folder Structure Mandate:**
-All project documents MUST be organized into their own dedicated sub-folder inside one of the three lifecycle directories under `docs/projects/`:
-- `docs/projects/planned/<PROJECT_PREFIX>/`
-- `docs/projects/in-progress/<PROJECT_PREFIX>/`
-- `docs/projects/completed/<PROJECT_PREFIX>/`
-
-Agents MUST move the entire project folder (not just the loose files) between these lifecycle directories as the project's status changes in the Kanban system.
-
-| #   | Document         | Path (Example for in-progress)                                  | Naming Pattern                         |
-| --- | ---------------- | --------------------------------------------------------------- | -------------------------------------- |
-| 1   | **PRD**          | `docs/projects/in-progress/<PROJECT_PREFIX>/<PROJECT_PREFIX>_PRD.md`             | `<PROJECT_PREFIX>_PRD`                 |
-| 2   | **Architecture** | `docs/projects/in-progress/<PROJECT_PREFIX>/<PROJECT_PREFIX>_ARCHITECTURE.md`    | `<PROJECT_PREFIX>_ARCHITECTURE`        |
-| 3   | **Dev Plan**     | `docs/projects/in-progress/<PROJECT_PREFIX>/<PROJECT_PREFIX>_DEVELOPMENT_PLAN.md`| `<PROJECT_PREFIX>_DEVELOPMENT_PLAN`    |
-| 4   | **Tracker**      | `docs/projects/in-progress/<PROJECT_PREFIX>/<PROJECT_PREFIX>_PROJECT_TRACKER.md` | `<PROJECT_PREFIX>_PROJECT_TRACKER`     |
-
-### Naming the Project Prefix
-
-The `PROJECT_PREFIX` must be:
-- **ALL CAPS WITH UNDERSCORES** (screaming snake case)
-- **Descriptive of the specific project/feature** — NOT a generic label
-- **Unique** — never reuse another project's prefix
-
-> **IMPORTANT**: Filenames MUST ALWAYS be ALL CAPS WITH UNDERSCORES (screaming snake case).
-
-> [!CAUTION]
-> **ABSOLUTE INVARIANT: NO EPHEMERAL PLANNING ARTIFACTS**
-> When exercising judgement on whether a user's request warrants a plan, ALWAYS conclude that it DOES NOT warrant an ephemeral plan.
-> **NEVER** create an `implementation_plan.md`, `task.md`, or `walkthrough.md` artifact.
-> ALL planning MUST be redirected to the canonical project documents.
+This is a **repo-specific overlay**, not a standalone system. The universal 4-file Kanban
+mechanics — `docs/projects/<kanban-state>/<PROJECT_PREFIX>/` folder layout, the
+`PROJECT_PREFIX` naming rule (ALL CAPS WITH UNDERSCORES, unique, descriptive), the
+"no ephemeral planning artifacts" invariant, and standard tracker checkbox syntax — are
+defined once in the global `project-management` skill; read that first. This file's only
+delta is the **OKF-interoperable document header** below, which this repo deliberately
+layers on top of the universal header as part of dogfooding its own spec.
 
 ### Document Header Convention
 
@@ -103,4 +75,5 @@ When starting work on a new feature or project:
 
 ## References
 
+- Global project-management skill (universal Kanban mechanics): `project-management`
 - SSSS Spec (current draft, v0.6): `docs/ssss-spec.md`

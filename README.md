@@ -1,31 +1,22 @@
 # SSSS — Structured Semantic Syntax System
 
 > A database-free, Markdown-first schema and mutation contract for AI-agent state.
-> Turn a running business into a single tradeable file — *a festival in a box.*
+> Turn an autonomous agent ecosystem into a single portable, tradeable bundle.
 
 [![conformance](https://img.shields.io/badge/conformance-fixtures%20%2B%20runtime%20%2B%20bundle-brightgreen)](conformance/)
-[![spec](https://img.shields.io/badge/spec-v0.9%20draft-blue)](docs/ssss-spec.md)
+[![spec](https://img.shields.io/badge/spec-v0.9-blue)](docs/ssss-spec.md)
 [![OKF](https://img.shields.io/badge/OKF-v0.1%20compatible-blue)](docs/ssss-spec.md)
 
-SSSS is the vendor-neutral standard and reference implementation shared by
-[festech.live](https://festech.live), **ultrachat**, and **total-recall**. It defines:
+SSSS is a vendor-neutral standard and reference implementation for portable AI memory and state. It defines:
 
-- **Document primitives** — typed Markdown files with YAML frontmatter (`workflow`,
-  `rule`, `page`, `assistant`, …), validated against a registry, not hand-written code.
-- **The Operation Contract** (§6) — four envelope types (`operation` / `patch` /
-  `event` / `delete`) for mutating a vault, with idempotency replay and audit.
-- **The Workflow Runtime Contract** (§11.8) — workflows own triggers; daemons,
-  crons, and webhooks derive idempotent event/task/run envelopes from the vault.
-- **Multilingual semantic runtime** (§11.9) — deterministic lexical evidence,
-  injected multilingual embeddings, and runtime rendering with symbolic controls fixed.
-- **Portability classification** (§5.5) — the keystone: every primitive is
-  `structural`, `tenant_private`, or `resource_bound`, so a vault can be *sold*
-  without leaking the operator's private data.
-- **The `.ucw` bundle format** (§16) and **provisioning contract** (§17) — package a
-  vault, then `export → provision → import` it into a fresh tenant, deterministically.
+- **Document primitives** — typed Markdown files with YAML frontmatter (`workflow`, `rule`, `page`, `assistant`, …), validated against a registry, not hand-written code.
+- **The Operation Contract** (§6) — four envelope types (`operation` / `patch` / `event` / `delete`) for mutating a vault, with idempotency replay and audit.
+- **The Workflow Runtime Contract** (§11.8) — workflows own triggers; daemons, crons, and webhooks derive idempotent event/task/run envelopes from the vault.
+- **Multilingual semantic runtime** (§11.9) — deterministic lexical evidence, injected multilingual embeddings, and runtime rendering with symbolic controls fixed.
+- **Portability classification** (§5.5) — the keystone: every primitive is `structural`, `tenant_private`, or `resource_bound`, so a vault can be *sold* or *shared* without leaking private data.
+- **The `.ucw` bundle format** (§16) and **provisioning contract** (§17) — package a vault, then `export → provision → import` it into a fresh environment, deterministically.
 
-This package, `@gregiteen/ssss-cli`, is **dependency-free**: a host needs neither Zod nor a YAML
-library to be conformant. The reference engine *is* the validator.
+This package, `@gregiteen/ssss-cli`, is **dependency-free**: a host needs neither Zod nor a YAML library to be conformant. The reference engine *is* the validator.
 
 ## Install
 
@@ -41,10 +32,9 @@ Requires Node 18+. No runtime dependencies.
 
 ```bash
 ssss new my-app --install                # scaffold + install + run the conformance test
-ssss new my-app --with-total-recall      # also wire the Total Recall memory OS
 ```
 
-Scaffolds a starter `vault/`, a dependency-free conformance test, and a `CLAUDE.md`.
+Scaffolds a starter `vault/`, a dependency-free conformance test, and instructions.
 See `ssss help scaffold`.
 
 ## Quick start — the lifecycle
@@ -56,39 +46,37 @@ vault ──export──▶ .ucw bundle ──provision──▶ envelope plan �
 
 ```bash
 # 1. Package a vault as a sellable bundle (drops tenant-private data)
-ssss export ./my-vault --profile sale --out festival.ucw.json
+ssss export ./my-vault --profile sale --out bundle.ucw.json
 
 # 2. Inspect / verify it
-ssss inspect  festival.ucw.json --files
-ssss validate festival.ucw.json
+ssss inspect  bundle.ucw.json --files
+ssss validate bundle.ucw.json
 
 # 3. Stand up a fresh tenant from it
-ssss import festival.ucw.json --vault ./new-tenant \
-  --param business_name="Acme Fest" --param domain=acme.live
+ssss import bundle.ucw.json --vault ./new-tenant \
+  --param company_name="Acme Corp" --param domain=acme.com
 
 # Re-running import commits nothing — it is idempotent.
 ```
 
 ## 0.9 application kernel
 
-SSSS 0.9 adds a shared mutation kernel and host adapter contracts so Total Recall,
-Festech, and UltraChat can share one authority path:
+SSSS 0.9 provides a shared mutation kernel and host adapter contracts for any system using SSSS:
 
 ```bash
-ssss primitive create --namespace acme --name "顧客予約" --language ja
+ssss primitive create --namespace acme --name "New Item" --language en
 ssss registry compose --extension ./acme-extension.json
 ssss adapter conformance
 ssss migrate 0.8-to-0.9 ./vault
 ```
 
-Library subpaths: `@gregiteen/ssss-cli/kernel`, `/vfs`, `/identity`, `/leases`,
-`/events`, `/projections`, `/semantic`, `/ui`.
+Library subpaths: `@gregiteen/ssss-cli/kernel`, `/vfs`, `/identity`, `/leases`, `/events`, `/projections`, `/semantic`, `/ui`.
 
 ## Commands
 
 | Command | Purpose |
 |---------|---------|
-| `ssss new <dir>` | Scaffold a new SSSS project (`--with-total-recall`, `--install`). |
+| `ssss new <dir>` | Scaffold a new SSSS project (`--install`). |
 | `ssss primitive <verb>` | Create, validate, inspect, or migrate primitive definitions. |
 | `ssss registry <verb>` | Compose, lock, or verify an effective registry. |
 | `ssss adapter conformance` | Run machine-readable VFS/lease/idempotency contract suites. |
@@ -105,52 +93,6 @@ Library subpaths: `@gregiteen/ssss-cli/kernel`, `/vfs`, `/identity`, `/leases`,
 
 Run `ssss <command> --help` for flags, or `ssss help <topic>` for concepts.
 
-## Use as a library
-
-```js
-import { createEngine } from '@gregiteen/ssss-cli/engine';
-import { exportBundle, validateBundle, provisionBundle, importBundle } from '@gregiteen/ssss-cli/bundle';
-import { planWorkflowTrigger } from '@gregiteen/ssss-cli/runtime';
-import { buildSemanticIndex, searchSemanticIndex, renderSemanticRecord } from '@gregiteen/ssss-cli/semantic';
-
-const bundle = exportBundle('./my-vault', { profile: 'sale', name: 'Festival in a Box' });
-const { valid, errors } = validateBundle(bundle);
-
-const engine = createEngine();
-const plan = provisionBundle(bundle, { parameters: { domain: 'acme.live' }, workspaceId: 'ws-1' });
-importBundle(plan.plan, './new-tenant', engine);
-
-const workflowContent = `---
-type: workflow
-name: "Daily Digest"
----
-
-1. Gather messages.
-2. Summarize.
-3. Send digest.
-`;
-const runtimePlan = planWorkflowTrigger({
-  workflowPath: 'workflows/daily-digest/WORKFLOW.md',
-  workflowContent,
-  workspaceId: 'ws-1',
-  trigger: { type: 'cron', id: 'daily-0800', cron: '0 8 * * *' },
-  scheduledFor: '2026-07-02T14:00:00.000Z',
-});
-
-const index = buildSemanticIndex('./my-vault');
-const matches = searchSemanticIndex(index, 'política de reembolsos');
-const rendered = await renderSemanticRecord(matches[0].document, { language: 'es', render: renderer });
-```
-
-Exports: `@gregiteen/ssss-cli` / `@gregiteen/ssss-cli/engine` (Operation Contract engine),
-`@gregiteen/ssss-cli/bundle` (export/provision/import), `@gregiteen/ssss-cli/registry`,
-`@gregiteen/ssss-cli/runtime`, `@gregiteen/ssss-cli/semantic`,
-`@gregiteen/ssss-cli/frontmatter`.
-
-Canonical content is authored once in any language. Multilingual embedding and render
-adapters handle cross-language retrieval and presentation at runtime; primitive IDs,
-field IDs, enum codes, permissions, paths, hashes, and relations never change.
-
 ## Portability — why a vault is safe to sell
 
 | Class | Meaning | In a `sale` export? |
@@ -159,13 +101,11 @@ field IDs, enum codes, permissions, paths, hashes, and relations never change.
 | `resource_bound` | Needs a real resource bound at provision (`domain`, `phone_number`). | ✅ shipped (as a parameter/step) |
 | `tenant_private` | The operator's private data (`task`, customer records). | ❌ **dropped** |
 
-`template` and `sale` exports MUST drop every `tenant_private` file. The reference
-bundle proves it — see `ssss help portability`.
+`template` and `sale` exports MUST drop every `tenant_private` file. The reference bundle proves it — see `ssss help portability`.
 
 ## Conformance
 
-A host MUST NOT claim SSSS conformance without passing the suite in
-[`conformance/`](conformance/):
+A host MUST NOT claim SSSS conformance without passing the suite in `conformance/`:
 
 ```bash
 ssss conformance            # structural + registry validation
@@ -176,10 +116,10 @@ npm test                    # == ssss conformance --engine
 ## Repository layout
 
 ```
-docs/ssss-spec.md          The normative specification (v0.9 draft).
+docs/ssss-spec.md          The normative specification (v0.9).
 docs/help/                 Topic docs surfaced by `ssss help`.
 registry/core.json         15 document + 5 contract primitives; semantic, bundle & provisioning schemas.
-registry/extensions/       Application extension registries (e.g. festech).
+registry/extensions/       Application extension registries.
 src/engine.mjs             Operation Contract engine (§6).
 src/runtime.mjs            Workflow trigger → event/task/run envelope planning (§11.8).
 src/semantic.mjs           Multilingual semantic retrieval + runtime rendering (§11.9).
@@ -193,4 +133,4 @@ skills/ssss/               Packaged SSSS system skill and dependency-free valida
 
 ## License
 
-ISC © Greg Iteen. See [LICENSE](LICENSE).
+ISC © Greg Iteen. See [LICENSE](./LICENSE).

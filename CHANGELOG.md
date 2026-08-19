@@ -156,14 +156,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **The `.ucw` bundle format (spec §16, registry `bundle`)** — the canonical transportable
   package of a vault: a manifest plus path-sorted files, content-hashed for integrity. The
   manifest declares `ssss_core_version`, `required_extensions`, `export_profile`,
-  `primitive_inventory` (registry-driven, replacing ultrachat's closed `categories` enum),
+  `primitive_inventory` (registry-driven, replacing the legacy closed `categories` enum),
   `provisioning[]`, `parameters[]`, and `provenance{content_hash, exporter, signature?}`.
-  Harvested from ultrachat's `WorkspaceVfsPackageService` and generalized to be portability-
+  Harvested from the legacy `WorkspaceVfsPackageService` and generalized to be portability-
   and registry-driven.
 - **The provisioning contract (spec §17, registry `provisioning`)** — three deterministic,
   idempotent verbs: `export` (pure, profile-filtered), `provision` (params + link-integrity
   + id-remap → replayable envelope plan), `import` (engine replay, idempotent via
-  idempotency_key). Adopts ultrachat's `WorkspaceProvisioningStep.mode`/`system` and
+  idempotency_key). Adopts the legacy `WorkspaceProvisioningStep.mode`/`system` and
   `WorkspaceGraphEdge.relation` as the canonical binding/dependency vocabularies, plus
   `installMode` composition and structural-only `migration`+`patch` upgrades.
 - **Reference engine for bundles (`src/bundle.mjs`)** — dependency-free `exportBundle`,
@@ -194,7 +194,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   real resource bound at provision). Export profiles `backup | template | sale` are filters
   over these classes; `template`/`sale` exports MUST drop all `tenant_private` primitives.
   Files MAY override their type default with `x_portability`. Lifted and generalized from
-  ultrachat's ad-hoc export filter in `WorkspaceVfsPackageService`.
+  the legacy ad-hoc export filter in `WorkspaceVfsPackageService`.
 - **`delete` envelope (spec §6.2)** — promoted from festech's `SsssOperationService` into
   the canonical Operation Contract as the fourth envelope type. Removes a replace-type file,
   rejects append-type targets, and emits a deletion event for audit. Idempotent.
