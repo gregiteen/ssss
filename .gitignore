@@ -22,3 +22,8 @@ CLAUDE.md
 
 # Local npm pack artifacts (release candidates are built, not committed)
 *.tgz
+
+# Total Recall secrets projections
+.env
+.env.local
+.env.*.local

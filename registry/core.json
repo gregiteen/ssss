@@ -205,7 +205,7 @@
       "required": ["key", "label", "type", "scope", "source"],
       "optional": ["required", "description", "defaultValue", "options", "dependsOn"],
       "source_enum": ["user", "llm", "graph", "system"],
-      "note": "Adopted verbatim from ultrachat WorkspaceTemplateVariableDefinition; resource_bound requirements ship as parameters of source user/system."
+      "note": "resource_bound requirements ship as parameters of source user/system."
     },
     "conformance": "A host MUST refuse a bundle whose `ssss_core_version` it does not support or that names a `required_extensions` entry it has not loaded. An exporter MUST NOT emit a file whose resolved portability class is excluded by `export_profile`. `primitive_inventory` MUST count every file by its registry `type`.",
     "spec_ref": "§16"
