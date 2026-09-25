@@ -7,6 +7,29 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.9.1] - 2026-09-24
+### Fixed
+- `JsonlEventStore.append` no longer re-reads and re-parses the whole
+  `<workspace>.jsonl` log on every append to reject a duplicate `event_id`.
+  Each store instance reads a log once on its first append, keeps a set of the
+  event ids it has seen, and re-reads only when the log's stat (size, mtime,
+  ctime, inode) shows another instance or process has changed it. A batch of N
+  appends is now one log read instead of N. Replaying 3,250 appends in fresh
+  instances of 400 against a 7,915-event, 9.6 MB log dropped from ~280 s to
+  ~1.7 s. Duplicate rejection, symlink refusal (now also enforced with
+  `O_NOFOLLOW` where the platform has it), 0600 log mode, and replay order are
+  unchanged.
+- `MemoryEventStore.append` checks for duplicates against a set of ids instead
+  of scanning every stored event.
+- The SBOM generator derives the package tarball URL from `package.json`
+  instead of a hardcoded 0.9.0 URL.
+
+### Added
+- 0.9 conformance checks for the JSONL event store: duplicates rejected from
+  the same instance, another instance, and another process; one log read for
+  200 appends; rebuild after a foreign append; replay order and cursor resume;
+  0600 mode; symlink refusal.
+
 ## [0.9.0] - 2026-07-10
 ### Added
 - Shared application kernel (`kernel.execute`) with verified-principal injection,

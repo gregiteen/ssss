@@ -31,7 +31,7 @@ const packages = [
   {
     name: pkg.name,
     version: pkg.version,
-    downloadLocation: 'https://registry.npmjs.org/@gregiteen/ssss-cli/-/ssss-cli-0.9.0.tgz',
+    downloadLocation: `https://registry.npmjs.org/${pkg.name}/-/${pkg.name.split('/').pop()}-${pkg.version}.tgz`,
     filesAnalyzed: true,
     licenseConcluded: pkg.license || 'NOASSERTION',
   },

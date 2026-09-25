@@ -1,4 +1,5 @@
 import fs from 'node:fs';
+import { execFileSync } from 'node:child_process';
 import os from 'node:os';
 import path from 'node:path';
 import { definePrimitive, definitionsToExtensionRegistry } from '../src/primitive.mjs';
@@ -28,6 +29,83 @@ import { MemoryLeaseStore, FileLeaseStore, runLeaseContract } from '../src/lease
 import { MemoryIdempotencyStore, FileIdempotencyStore, runIdempotencyContract } from '../src/idempotency.mjs';
 import { createCapabilityAuthorizer } from '../src/authorization.mjs';
 import { validateVerifiedPrincipal } from '../src/authorization.mjs';
+
+async function rejects(promise, pattern) {
+  try { await promise; return false; } catch (error) { return pattern.test(error.message); }
+}
+
+async function replayed(store, options) {
+  const items = [];
+  for await (const item of store.replay(options)) items.push(item);
+  return items;
+}
+
+// Counts bytes JsonlEventStore reads from disk, to prove appends do not re-read the log.
+async function bytesReadDuring(fn) {
+  const { readSync, readFileSync } = fs;
+  let bytes = 0;
+  fs.readSync = (...args) => { const read = readSync(...args); bytes += read; return read; };
+  fs.readFileSync = (...args) => { const out = readFileSync(...args); bytes += Buffer.byteLength(out); return out; };
+  try { await fn(); } finally { fs.readSync = readSync; fs.readFileSync = readFileSync; }
+  return bytes;
+}
+
+async function checkJsonlEventStoreIndex(root, principal, check) {
+  let seq = 0;
+  const make = (workspace = 'acme') => createCanonicalEvent({
+    workspace_id: workspace, action: 'event', subject: 'events/indexed.md',
+    operation_id: `indexed-${++seq}`, idempotency_key: `indexed-${seq}`, principal,
+  });
+  const log = path.join(root, 'acme.jsonl');
+  const first = new JsonlEventStore(root);
+  const second = new JsonlEventStore(root);
+  const appended = [];
+  const add = async (store, event) => { await store.append(event); appended.push(event.event_id); return event; };
+
+  const own = await add(first, make());
+  check('jsonl event store rejects a duplicate from its own index', await rejects(first.append(own), /Duplicate event_id/));
+  const foreign = await add(second, make());
+  check('jsonl event store rejects a duplicate appended by another store instance', await rejects(first.append(foreign), /Duplicate event_id/));
+  const external = make();
+  execFileSync(process.execPath, ['--input-type=module', '-e', [
+    `import { JsonlEventStore } from ${JSON.stringify(new URL('../src/events.mjs', import.meta.url).href)};`,
+    `await new JsonlEventStore(${JSON.stringify(root)}).append(${JSON.stringify(external)});`,
+  ].join('\n')]);
+  appended.push(external.event_id);
+  check('jsonl event store rejects a duplicate appended by another process', await rejects(second.append(external), /Duplicate event_id/));
+  await add(first, make());
+  check('jsonl event store rejects a duplicate after interleaved writers', await rejects(second.append(own), /Duplicate event_id/));
+
+  const seeded = fs.statSync(log).size;
+  const fresh = new JsonlEventStore(root);
+  const batchBytes = await bytesReadDuring(async () => { for (let i = 0; i < 200; i++) await add(fresh, make()); });
+  check('jsonl event store reads the log once for many appends from one instance', batchBytes === seeded, `read ${batchBytes} bytes; log was ${seeded}`);
+  await add(second, make());
+  const revalidateBytes = await bytesReadDuring(() => add(fresh, make()));
+  check('jsonl event store rebuilds its index after another writer appends', revalidateBytes > seeded);
+
+  const other = [];
+  for (let i = 0; i < 3; i++) other.push((await (i % 2 ? second : first).append(make('aaa'))).event_id);
+  const acme = await replayed(fresh, { workspaceId: 'acme' });
+  check('jsonl event store replays one log in append order',
+    JSON.stringify(acme.map((item) => item.event.event_id)) === JSON.stringify(appended)
+    && acme.every((item, index) => item.cursor === index + 1));
+  const all = await replayed(fresh, {});
+  const expected = [...other, ...appended];
+  const resumed = await replayed(fresh, { cursor: 2 });
+  check('jsonl event store replays all logs in file order and resumes from a cursor',
+    JSON.stringify(all.map((item) => item.event.event_id)) === JSON.stringify(expected)
+    && JSON.stringify(resumed.map((item) => item.event.event_id)) === JSON.stringify(expected.slice(2)));
+
+  if (process.platform !== 'win32') {
+    check('jsonl event logs are created with mode 0600', (fs.statSync(path.join(root, 'aaa.jsonl')).mode & 0o777) === 0o600);
+  }
+  const target = path.join(root, 'target.txt');
+  fs.writeFileSync(target, '');
+  fs.symlinkSync(target, path.join(root, 'linked.jsonl'));
+  check('jsonl event store refuses symlinked logs',
+    await rejects(fresh.append(make('linked')), /Symlinked event logs are forbidden/) && fs.readFileSync(target, 'utf8') === '');
+}
 
 export async function runKernel09Conformance() {
   const checks = [];
@@ -198,6 +276,7 @@ export async function runKernel09Conformance() {
       for await (const item of store.replay({ workspaceId: 'acme' })) if (item.event.event_id === sample.event_id) replayed++;
       check(`${name} event store is append-only and replayable`, duplicate && replayed === 1);
     }
+    await checkJsonlEventStoreIndex(path.join(temp, 'events-index'), principal, check);
     const denied = await kernel.execute({ type: 'patch', workspace_id: 'acme', idempotency_key: 'denied', path: 'bookings/one.md', patches: { status: 'pending' } }, {
       principal: { ...principal, id: 'outsider', workspaceIds: [], capabilities: ['*:*'] },
     });
