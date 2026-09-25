@@ -7,6 +7,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.9.6] - 2026-09-25
+### Changed
+- The push skill describes this repo's real release path. `/push` is always a
+  full release (bump, preflight, commit, push, tag, npm publish, verify),
+  including for docs-only changes. The droplet and `production`-branch deploy
+  section, which came from another repo, is gone, and files are staged by name
+  instead of `git add .`.
+
+### Added
+- `skills/push/scripts/verify-publish.mjs` waits out npm's propagation delay,
+  then confirms the published `gitHead` matches the release tag and that
+  `latest` points at the new version.
+
 ## [0.9.5] - 2026-09-25
 ### Changed
 - The packaged CHANGELOG now lists the 0.9.4 behavior changes that hosts should

@@ -1,0 +1,707 @@
+{
+  "spdxVersion": "SPDX-2.3",
+  "dataLicense": "CC0-1.0",
+  "SPDXID": "SPDXRef-DOCUMENT",
+  "name": "@gregiteen/ssss-cli-0.9.6",
+  "documentNamespace": "https://github.com/gregiteen/ssss/sbom/0.9.6",
+  "creationInfo": {
+    "created": "2026-09-25T09:59:50.957Z",
+    "creators": [
+      "Tool: ssss-generate-sbom"
+    ]
+  },
+  "packages": [
+    {
+      "name": "@gregiteen/ssss-cli",
+      "version": "0.9.6",
+      "downloadLocation": "https://registry.npmjs.org/@gregiteen/ssss-cli/-/ssss-cli-0.9.6.tgz",
+      "filesAnalyzed": true,
+      "licenseConcluded": "ISC"
+    }
+  ],
+  "files": [
+    {
+      "fileName": "CHANGELOG.md",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "45cb85b59820e4357b852d1c29dc436e4a8554146ff7f19ee50fca426cc7617d"
+        }
+      ]
+    },
+    {
+      "fileName": "LICENSE",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "aceb514689efbe8afad2914ca7b67c30bcb98625f0f467b909d6b2440c4b6f68"
+        }
+      ]
+    },
+    {
+      "fileName": "README.md",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "186aef45e91b608994690c8031bbf481e019d94d049f963b619379e9dba8684b"
+        }
+      ]
+    },
+    {
+      "fileName": "VERSION",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "fd51233354c9a61adaf49572b45f44f7e9cc76fc2465ea25beca00ef95856ee1"
+        }
+      ]
+    },
+    {
+      "fileName": "conformance/fixtures.json",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "5bbe818cc3d4b1059de03aa1b2b5bec7b5906e161667e2025858b4003f72757b"
+        }
+      ]
+    },
+    {
+      "fileName": "conformance/README.md",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "eecef788bee2bda28eb9a091758b8e7df3e82cdffee910aee6699030f72bc61a"
+        }
+      ]
+    },
+    {
+      "fileName": "conformance/reference-bundle.ucw.json",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "61b0977d09ee74666c348d4b38d6737a22f5bcc7b31e51ec728db72d9dc4944f"
+        }
+      ]
+    },
+    {
+      "fileName": "docs/help/autolink.md",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "e05433c4560cf86b2326bf9cb0272afac20af71a27db8e4b8107702a729c92de"
+        }
+      ]
+    },
+    {
+      "fileName": "docs/help/bundle.md",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "5fcfcab28cef39a3058493f1e4505c5ed9bd032dc24414ff3bd234273b85190f"
+        }
+      ]
+    },
+    {
+      "fileName": "docs/help/concurrency.md",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "25ff24b2d63c65a4f4d693067481e7aaf577622b668aecd85f36479e34fba89c"
+        }
+      ]
+    },
+    {
+      "fileName": "docs/help/conformance.md",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "2a7a2dab2b2da3fbfe224e481b38aeadd6b769186076b65f1c660df40299e8af"
+        }
+      ]
+    },
+    {
+      "fileName": "docs/help/export.md",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "5f8a0626c113859b39cf9116da4878e553d04949ff08577002ef353a549bfc20"
+        }
+      ]
+    },
+    {
+      "fileName": "docs/help/import.md",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "71e46a03846bc6a6464e4bdd78d2f046cdc4a8aedbf14a5769dd4a9bad62cb44"
+        }
+      ]
+    },
+    {
+      "fileName": "docs/help/leases.md",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "2680b682b75e9684f775b3eb93d168963e7a63233fb570a30429e6508aa485e0"
+        }
+      ]
+    },
+    {
+      "fileName": "docs/help/overview.md",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "4441f9425be4242610cfdc7b804ab4d9fbf229fb19c71877e2bb3615c2ea41a6"
+        }
+      ]
+    },
+    {
+      "fileName": "docs/help/portability.md",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "59333025b16ba6b9b80cc513d98bc328b6a1b78b1a4eeab3c1bc76197000ae4e"
+        }
+      ]
+    },
+    {
+      "fileName": "docs/help/provision.md",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "bad80e99a4055a5f980ee469d936afe26beb034b3c1048c7ac11fc6966d163f3"
+        }
+      ]
+    },
+    {
+      "fileName": "docs/help/provisioning.md",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "77901405257307765ac1ca3a5301a8c9ee13951fc10978f003dc1b51921c3782"
+        }
+      ]
+    },
+    {
+      "fileName": "docs/help/roles.md",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "0827cb6ed502f68a1b71d988a2255f9e0cdcbab5f3bfcc32b8ecbca696adc1e5"
+        }
+      ]
+    },
+    {
+      "fileName": "docs/help/runtime.md",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "1d8538e956fa7d3990d6123e0b7295859af98271c9a96bd5d8332f8df7dfe606"
+        }
+      ]
+    },
+    {
+      "fileName": "docs/help/scaffold.md",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "f2f366dd99970ba570e791d6ce71213561efd098459aadfff39fc11fcd137772"
+        }
+      ]
+    },
+    {
+      "fileName": "docs/help/semantic.md",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "de9c68805b2ffffa7221b111e587a8dab31c4228ed012b71cef2685bee4ce8b5"
+        }
+      ]
+    },
+    {
+      "fileName": "docs/ssss-spec.md",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "5bc5ea67020f453a5ca7cd09c8e50081f26dee69dbf9696aa76e943b4397f853"
+        }
+      ]
+    },
+    {
+      "fileName": "package.json",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "312ebb993bc62d5f1b745d8729448a22efa397caadf83e1328312fcd3607d8d7"
+        }
+      ]
+    },
+    {
+      "fileName": "registry/core.json",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "d28d0aa2a7db69a1c3e14c557afafaef688cd20fe3fdae131c5b8d3034963dc5"
+        }
+      ]
+    },
+    {
+      "fileName": "registry/extensions/festech.json",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "4d8772e9151217de2a10bccf962b5a8220c6ba4db7eb3a806ce6511c72141a8a"
+        }
+      ]
+    },
+    {
+      "fileName": "scripts/audit-registry-field-usage.mjs",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "14caf3b374bc80a82c0dfa88a3321bd2e3f9a8f532a773c1a91ec7f3fefa761e"
+        }
+      ]
+    },
+    {
+      "fileName": "scripts/audit-spec-examples.mjs",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "c68942b6bf0066b1be87bb5c26fe9b5a8e35c38db0da91ede326af1fb3e36eab"
+        }
+      ]
+    },
+    {
+      "fileName": "scripts/autolink.mjs",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "aeaad9aca4262b42a5f18d8d44e0be403df1911ab4161b8e670da0de28a71e96"
+        }
+      ]
+    },
+    {
+      "fileName": "scripts/build-reference-bundle.mjs",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "8ab80ee3f8c6070a2ecb5174de3dee010dcf2d9eea0b3cd6a71974c14a018135"
+        }
+      ]
+    },
+    {
+      "fileName": "scripts/cmd-adapter.mjs",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "a228a81e3d501729d0f3d99424a12442248a82676b9a8f7e309daac2aed85fd9"
+        }
+      ]
+    },
+    {
+      "fileName": "scripts/cmd-export.mjs",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "11d569085a4382f46656a1336d75b1b1233e20a67bae1ecee5bba842dcaeb5e8"
+        }
+      ]
+    },
+    {
+      "fileName": "scripts/cmd-help.mjs",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "c44381179d35ac0b1ff68c982503dc9ac5c47f43242b6eb19b06b8b5d8c8c6f3"
+        }
+      ]
+    },
+    {
+      "fileName": "scripts/cmd-import.mjs",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "1a7e93a3b2f0fb661ba61a6e88a26ddd7089876269be34962e33b37bc58ca64d"
+        }
+      ]
+    },
+    {
+      "fileName": "scripts/cmd-inspect.mjs",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "2e8c1c54dc168f64a6516462ef9b9349a4f9e8b389d64fbb2f1f73cf23262f09"
+        }
+      ]
+    },
+    {
+      "fileName": "scripts/cmd-migrate.mjs",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "a48d6807f97cd27de8b84aa3ca05051b27ba982059a08eb8874ad69eef75b433"
+        }
+      ]
+    },
+    {
+      "fileName": "scripts/cmd-new.mjs",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "a513cf3736b37dc2e8e13a0a2e231cc7617404931cd62206a10d8caa7e444382"
+        }
+      ]
+    },
+    {
+      "fileName": "scripts/cmd-primitive.mjs",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "78a0eff05fedd7f066ea9c95f7d2c56e7305a52e066416bcdda0cbd54178b234"
+        }
+      ]
+    },
+    {
+      "fileName": "scripts/cmd-provision.mjs",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "ee716e1ce8e308f87b141beb865c05491ac5192cc5af2825ff5d4ff1d0f0326c"
+        }
+      ]
+    },
+    {
+      "fileName": "scripts/cmd-registry.mjs",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "5cacfdbc03d28d591cb1ece5deb6f19c37aa2597abc5d6f442e92269771885cd"
+        }
+      ]
+    },
+    {
+      "fileName": "scripts/cmd-semantic.mjs",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "8d1a21c5c992e8461aece18b4fee410ec8c0ed7fd02a3efddd569379cb5440b6"
+        }
+      ]
+    },
+    {
+      "fileName": "scripts/cmd-validate.mjs",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "0cce8ec4cf36b72d22f18ea558cbad618e2b226f9e6fba55062870369b108088"
+        }
+      ]
+    },
+    {
+      "fileName": "scripts/conformance-09.mjs",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "4c7f22fd2072ce680e3b732cab82418de2a49495244860e87f108aa5b131615d"
+        }
+      ]
+    },
+    {
+      "fileName": "scripts/conformance.mjs",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "1f7efc28b5dd1f07bf227105f72fe62a0384b4810cad2dd1ddd8e4c2cab05ac1"
+        }
+      ]
+    },
+    {
+      "fileName": "scripts/generate-sbom.mjs",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "8bf149c6a921e387c50de70e62f48626bd4c6e850648272f31c73bf869f33687"
+        }
+      ]
+    },
+    {
+      "fileName": "scripts/lib/cli.mjs",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "ee82363bc5b5659126aeb9a8e9d1c9973bc99b1c8da2c682dbfd15f088a0c04c"
+        }
+      ]
+    },
+    {
+      "fileName": "scripts/phase9-cross-host-corpus.mjs",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "a3adcdfff82e592f7969ebf0836ba4c8504680d75d662e5169c0fa28dfc978dc"
+        }
+      ]
+    },
+    {
+      "fileName": "scripts/release.sh",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "91431902f3f48d04224daf56b0b4b06ef47be904ea477484f9e80d2658e80ed4"
+        }
+      ]
+    },
+    {
+      "fileName": "scripts/ssss.mjs",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "ef9aa7274b6b0d3592a8f42c3b5b7907a7890f1ce704fd019803d0c1d1138ed6"
+        }
+      ]
+    },
+    {
+      "fileName": "scripts/validate-skills.mjs",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "daee8912a3d9efb1da1ced6b52e0e9ff2bb66370fc726217a48870042e1c7948"
+        }
+      ]
+    },
+    {
+      "fileName": "skills/ssss/evals/evals.json",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "8c182937f374783a44b8aafb9779a723624e0ed07e27b18423b071324e9a947f"
+        }
+      ]
+    },
+    {
+      "fileName": "skills/ssss/references/contract-reference.md",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "ec6ad7e284565332df04ce2db3679041e48f6e5981f551e2ac70515c6a2ab0bc"
+        }
+      ]
+    },
+    {
+      "fileName": "skills/ssss/scripts/validate-schema.mjs",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "c6d2caa81cc560e9465d28fde47e3247e6c527561f23c09bc1ed0f8deef21071"
+        }
+      ]
+    },
+    {
+      "fileName": "skills/ssss/SKILL.md",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "818ddbe8ff5c79576439ba6a7c712edccc84649368c5fc3b0d4227e889739c07"
+        }
+      ]
+    },
+    {
+      "fileName": "skills/ssss/subagents/audit-ssss-contract.md",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "cfd78cf8ab18e1bc330aca3f8bc31ec38a72beeed760f98c1d74ee48593c675f"
+        }
+      ]
+    },
+    {
+      "fileName": "src/authorization.mjs",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "e8d54ec49053f9540c4879314b9c3d9459ee3c6e876ee2293cc4d3d570c80700"
+        }
+      ]
+    },
+    {
+      "fileName": "src/bundle.mjs",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "1e772ea2203dd2133113b3a1bc61bc5c6c2cede3053fec566b60f02f0be15b7d"
+        }
+      ]
+    },
+    {
+      "fileName": "src/engine.mjs",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "d2c0451238d98c321320fa637c920db10524e11f16c251b188efa7cba8faba5c"
+        }
+      ]
+    },
+    {
+      "fileName": "src/events.mjs",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "868126dabd81717fdb5958432e59d51fb04d45fe43b0b1307939835d3aaaf7f6"
+        }
+      ]
+    },
+    {
+      "fileName": "src/file-lock.mjs",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "ec86be9b78d7a47d1bb8595675ffe78bf03cf46c841dd366c7c6b6108fe6f7e4"
+        }
+      ]
+    },
+    {
+      "fileName": "src/frontmatter.mjs",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "e90cf6b8bbaa9ce5c65db3065a4f75f9e162e68ffaf8ddf96926f4528410a10d"
+        }
+      ]
+    },
+    {
+      "fileName": "src/guard.mjs",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "cc3594260b7427ba6d65c4f9aa41302bc01176c68fcb8373853fc032f4c4adc8"
+        }
+      ]
+    },
+    {
+      "fileName": "src/http.mjs",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "62d93b60745aeec7dc708d96488719ccc37081b87105738629e8514115f48320"
+        }
+      ]
+    },
+    {
+      "fileName": "src/idempotency.mjs",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "5923cce4f292ec3b533a7aeef724cf3884db5d7ce3faa1fccb8f738164ee1df0"
+        }
+      ]
+    },
+    {
+      "fileName": "src/kernel.mjs",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "642531754909f6dc2d49053f0c8930ce1dce7b376239220d7f43b0d8fe634eec"
+        }
+      ]
+    },
+    {
+      "fileName": "src/leases.mjs",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "52b3c2b4319068af40d1b61286dbbae269f0ae97ecca02a558c44be1fd3055c0"
+        }
+      ]
+    },
+    {
+      "fileName": "src/primitive.mjs",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "378963d7fbebea4e5b6eed7f89d8014ea904418b203cd6e3866b34aa200dc572"
+        }
+      ]
+    },
+    {
+      "fileName": "src/projections.mjs",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "449baa6ef52425cd53f8e2d86d875fa738181efcc95eebd6e214f6c8852a2576"
+        }
+      ]
+    },
+    {
+      "fileName": "src/registry.mjs",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "415d2b53d25b8b13cda7093a0857138e05de56e887701e4ae2f79916b021b8cd"
+        }
+      ]
+    },
+    {
+      "fileName": "src/runtime.mjs",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "e8ea77e88f3528131d469fd336c68ba5994910d3cbca6fc63257c1ed3f20816e"
+        }
+      ]
+    },
+    {
+      "fileName": "src/semantic.mjs",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "b2b6560dfa543245e1a2e67bb5445c29fe12772747cae36b7ecd70f967fd4816"
+        }
+      ]
+    },
+    {
+      "fileName": "src/ui.mjs",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "9088f64d2ea1b52cf2b2652eaf6033dcf8876d2a20df5519c4052c5e1d609b9a"
+        }
+      ]
+    },
+    {
+      "fileName": "src/validator.mjs",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "27602e9c5d9752684e05dbc4b95a2df7be8e3cdf0b87d5551f536db033cac351"
+        }
+      ]
+    },
+    {
+      "fileName": "src/vfs.mjs",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "1053e4487cb8b6962b954b73be6d537d7a1605b3e692f8155fd546a82e487c47"
+        }
+      ]
+    },
+    {
+      "fileName": "types/kernel.d.ts",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "4af6fbce358a78374a6a151cf9afdc46fbd21c4f83ef2f260f2166361d3fee1a"
+        }
+      ]
+    }
+  ],
+  "relationships": [
+    {
+      "spdxElementId": "SPDXRef-DOCUMENT",
+      "relationshipType": "DESCRIBES",
+      "relatedSpdxElement": "SPDXRef-Package"
+    }
+  ],
+  "comment": "SSSS reference package is intentionally dependency-free at runtime. Host apps supply adapters."
+}

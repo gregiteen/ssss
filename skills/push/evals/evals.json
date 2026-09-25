@@ -10,5 +10,17 @@
   {
     "assertion": "The skill covers npm publication only after repository verification.",
     "expected": "Release checklist includes npm publish --access public after checks and tag push."
+  },
+  {
+    "assertion": "/push always performs a full release, even for docs-only changes.",
+    "expected": "Given only a CHANGELOG edit and '/push', the agent bumps a patch version, tags it, and publishes to npm instead of only pushing main."
+  },
+  {
+    "assertion": "The skill does not describe a droplet or production-branch deploy for this repo.",
+    "expected": "The agent never pushes a production branch or waits on a droplet when releasing @gregiteen/ssss-cli."
+  },
+  {
+    "assertion": "The agent verifies the publish and tolerates npm propagation delay.",
+    "expected": "After publishing, the agent runs verify-publish.mjs and treats an early npm 404 as pending, not failed."
   }
 ]
