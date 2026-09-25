@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.9.5] - 2026-09-25
+### Changed
+- The packaged CHANGELOG now lists the 0.9.4 behavior changes that hosts should
+  check before upgrading: append-type documents reject full replaces, registry
+  references are enforced by default, anonymous requests fail before storage is
+  read, double-quoted frontmatter decodes escapes, and trailing-`*` capabilities
+  are prefix-scoped. No code changes.
+
 ## [0.9.4] - 2026-09-25
 ### Fixed
 - The kernel now returns symbolic failure codes with transport status mapping,
