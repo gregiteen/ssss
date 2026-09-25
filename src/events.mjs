@@ -4,6 +4,22 @@ import path from 'node:path';
 import crypto from 'node:crypto';
 import { withFileLock } from './file-lock.mjs';
 
+// UUIDv5 namespace for event ids derived from idempotency keys.
+const IDEMPOTENT_EVENT_NAMESPACE = Buffer.from('6f1c2d9e4b7a4e0c9f35a1d8c3b2e7f4', 'hex');
+
+/**
+ * Deterministic event_id (UUIDv5) for one (workspace_id, idempotency_key).
+ * The kernel uses it for `event` envelopes so a store's duplicate-event_id
+ * check stops two concurrent requests with the same key from both appending.
+ */
+export function idempotentEventId(workspaceId, idempotencyKey) {
+  const hash = crypto.createHash('sha1').update(IDEMPOTENT_EVENT_NAMESPACE).update(JSON.stringify([workspaceId, idempotencyKey])).digest();
+  hash[6] = (hash[6] & 0x0f) | 0x50;
+  hash[8] = (hash[8] & 0x3f) | 0x80;
+  const hex = hash.subarray(0, 16).toString('hex');
+  return `${hex.slice(0, 8)}-${hex.slice(8, 12)}-${hex.slice(12, 16)}-${hex.slice(16, 20)}-${hex.slice(20)}`;
+}
+
 export function createCanonicalEvent(input, options = {}) {
   const required = ['workspace_id', 'action', 'subject', 'operation_id', 'idempotency_key'];
   for (const field of required) if (typeof input?.[field] !== 'string' || !input[field]) throw new Error(`Event ${field} is required.`);

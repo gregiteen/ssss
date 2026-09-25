@@ -13,7 +13,7 @@ import {
 } from '../src/registry.mjs';
 import { createValidator } from '../src/validator.mjs';
 import { FileSystemVfs, MemoryVfs, runVfsContract } from '../src/vfs.mjs';
-import { JsonlEventStore, MemoryEventStore, createCanonicalEvent } from '../src/events.mjs';
+import { JsonlEventStore, MemoryEventStore, createCanonicalEvent, idempotentEventId } from '../src/events.mjs';
 import {
   ProjectionCoordinator,
   createSqlProjectionAdapter,
@@ -119,6 +119,33 @@ async function checkFileAdapterRaces(root, principal, check) {
   const stored = await new FileIdempotencyStore(idempotencyRoot).get('acme', 'race');
   check('filesystem idempotency store accepts one of several processes putting the same key',
     winners(puts).length === 1 && stored?.request_hash === `racer-${winners(puts)[0]?.racer}`, describe(puts));
+
+  const kernelRoot = path.join(root, 'kernel');
+  const kernelPrincipal = { ...principal, capabilities: ['*:*'] };
+  const stores = () => ({
+    vfs: new FileSystemVfs(kernelRoot),
+    eventStore: new JsonlEventStore(path.join(kernelRoot, '.events')),
+    idempotencyStore: new FileIdempotencyStore(path.join(kernelRoot, '.idempotency')),
+  });
+  const envelope = (key, content) => ({ type: 'event', workspace_id: 'acme', idempotency_key: key, path: 'events/race.md', content });
+  const kernelRace = (key, contentExpression) => raceProcesses(racers, {
+    createKernel: '../src/kernel.mjs', FileSystemVfs: '../src/vfs.mjs', JsonlEventStore: '../src/events.mjs', FileIdempotencyStore: '../src/idempotency.mjs',
+  }, [
+    `const kernel = createKernel({ vfs: new FileSystemVfs(${JSON.stringify(kernelRoot)}), eventStore: new JsonlEventStore(${JSON.stringify(path.join(kernelRoot, '.events'))}), idempotencyStore: new FileIdempotencyStore(${JSON.stringify(path.join(kernelRoot, '.idempotency'))}) })`,
+    `const result = await kernel.execute({ type: 'event', workspace_id: 'acme', idempotency_key: ${JSON.stringify(key)}, path: 'events/race.md', content: ${contentExpression} }, { principal: ${JSON.stringify(kernelPrincipal)} })`,
+    "if (!result.success) throw new Error(result.validation.errors.join('; '))",
+  ].join(';\n'));
+  const eventsFor = (key) => fs.readFileSync(path.join(kernelRoot, '.events', 'acme.jsonl'), 'utf8')
+    .split('\n').filter(Boolean).map((line) => JSON.parse(line)).filter((event) => event.idempotency_key === key);
+  const same = await kernelRace('race-same', 'JSON.stringify({ n: 1 })');
+  const retried = await createKernel(stores()).execute(envelope('race-same', JSON.stringify({ n: 1 })), { principal: kernelPrincipal });
+  check('kernel appends one event when several processes send the same event envelope',
+    eventsFor('race-same').length === 1 && winners(same).length >= 1 && retried.replay === true, describe(same));
+  const differing = await kernelRace('race-differ', 'JSON.stringify({ racer })');
+  check('kernel appends one event when several processes reuse a key with different content',
+    eventsFor('race-differ').length === 1 && winners(differing).length === 1, describe(differing));
+  check('kernel derives event envelope ids from the idempotency key',
+    eventsFor('race-same')[0]?.event_id === idempotentEventId('acme', 'race-same'));
 }
 
 async function checkFileLocks(root, principal, check) {
