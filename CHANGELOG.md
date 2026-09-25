@@ -7,6 +7,27 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.9.4] - 2026-09-25
+### Fixed
+- The kernel now returns symbolic failure codes with transport status mapping,
+  reconciles prepared resources on dry runs and pre-commit failures, and keeps
+  logged commits intact when resource finalization or projection dispatch fails.
+- The reference frontmatter parser handles the documented block-scalar subset,
+  and capability and legacy-role checks match the v0.9 authorization contract.
+
+### Changed
+- Aligned the v0.9 specification, conformance fixture statuses, and reference
+  implementation. The in-process runner checks expected HTTP statuses, and
+  `npm test` validates the spec's example documents and contract tables.
+- Exposed every repository skill to Codex through relative links in
+  `.agents/skills`, while keeping the project Total Recall brain private.
+- The release SBOM now hashes only the files included in the npm package.
+
+### Added
+- Completed the `SPEC_CODE_ALIGNMENT` project documentation and audit.
+- Expanded the SSSS project-management skill with workflow references,
+  document checks, and review guidance.
+
 ## [0.9.3] - 2026-09-24
 ### Fixed
 - Two processes sending an `event` envelope with the same idempotency key at the

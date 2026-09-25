@@ -25,6 +25,16 @@ export function requiredCapabilities(definition, action) {
   return [`${primitive}:${action}`];
 }
 
+/**
+ * Does a granted capability cover a required one? Exact match, `*:*`, or a
+ * trailing-`*` prefix: `ssss:*` covers every core capability and
+ * `ssss:assistant:*` covers every action on assistants.
+ */
+export function capabilityCovers(granted, required) {
+  if (granted === required || granted === '*:*') return true;
+  return typeof granted === 'string' && granted.endsWith(':*') && required.startsWith(granted.slice(0, -1));
+}
+
 export function createCapabilityAuthorizer(options = {}) {
   const policyFloors = options.policyFloors || {};
   return async function authorize({ principal, workspaceId, definition, action, context = {} }) {
@@ -42,7 +52,7 @@ export function createCapabilityAuthorizer(options = {}) {
     const granted = new Set(principal.capabilities || []);
     if (principal.kind === 'system' && options.systemBypass !== false) return { allowed: true, required: [...required] };
     const missing = [...required].filter((capability) =>
-      !granted.has(capability) && !granted.has('*:*') && !granted.has(`${capability.split(':')[0]}:*`));
+      ![...granted].some((grant) => capabilityCovers(grant, capability)));
     if (missing.length) return { allowed: false, required: [...required], missing, reason: `Missing capabilities: ${missing.join(', ')}.` };
     if (context.requiresHumanConfirmation && principal.kind !== 'human') {
       return { allowed: false, required: [...required], reason: 'A verified human confirmation is required.' };

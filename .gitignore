@@ -1,10 +1,16 @@
 # Dependencies
 node_modules/
 
-# Local agent state & personal tooling — not part of the published standard
+# Local agent state; skill packages remain versionable
 .claude/
-.agent/
-.agents/
+.agent/*
+!.agent/skills/
+.agent/skills/**/.git/
+.agent/skills/**/.check.lock
+.agent/skills/**/reports/
+.agent/skills/total-recall/
+.agents/*
+!.agents/skills/
 .remember/
 .gemini/
 INSTRUCTIONS.md

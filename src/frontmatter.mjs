@@ -3,8 +3,9 @@
  *
  * SSSS files are Markdown with a leading `---`-fenced YAML frontmatter block
  * (spec §4.1). The canonical engine avoids a YAML dependency: it parses the
- * subset SSSS actually uses — scalars, inline `[a, b]` arrays, block `- item`
- * arrays, nested maps, and arrays of shallow maps — which is sufficient to
+ * subset SSSS actually uses (spec §4.5) — scalars, inline `[a, b]` arrays, block
+ * `- item` arrays, nested maps, arrays of shallow maps, and `|`/`>` block
+ * scalars — which is sufficient to
  * resolve a file's `type`, validate registry fields (§5, §9), and round-trip
  * operation patches without dropping nested frontmatter.
  */
@@ -27,9 +28,11 @@ export function splitFrontmatter(content) {
 function coerce(raw) {
   const v = raw.trim();
   if (v === '') return '';
-  if ((v.startsWith('"') && v.endsWith('"')) || (v.startsWith("'") && v.endsWith("'"))) {
-    return v.slice(1, -1);
+  if (v.length >= 2 && v.startsWith('"') && v.endsWith('"')) {
+    // Double-quoted scalars carry escapes; the serializer writes them with JSON.stringify.
+    try { return JSON.parse(v); } catch { return v.slice(1, -1); }
   }
+  if (v.length >= 2 && v.startsWith("'") && v.endsWith("'")) return v.slice(1, -1).replace(/''/g, "'");
   if (v === 'true') return true;
   if (v === 'false') return false;
   if (v === 'null' || v === '~') return null;
@@ -60,6 +63,43 @@ function nextSignificant(lines, start) {
   return -1;
 }
 
+const BLOCK_SCALAR_RE = /^([|>])([+-]?)$/;
+
+/** Read a `|` (literal) or `>` (folded) block scalar with clip/strip/keep chomping. */
+function parseBlockScalar(lines, start, parentIndent, style, chomp) {
+  const raw = [];
+  let blockIndent = null;
+  let i = start;
+  while (i < lines.length) {
+    const line = lines[i];
+    if (!line.trim()) { raw.push(''); i++; continue; }
+    const indent = countIndent(line);
+    if (indent <= parentIndent || (blockIndent !== null && indent < blockIndent)) break;
+    blockIndent ??= indent;
+    raw.push(line.slice(blockIndent));
+    i++;
+  }
+  let end = raw.length;
+  while (end > 0 && raw[end - 1] === '') end--;
+  const content = raw.slice(0, end);
+  let text = content[0] ?? '';
+  for (let k = 1; k < content.length; k++) {
+    const line = content[k];
+    const previous = content[k - 1];
+    if (style === '|') text += `\n${line}`;
+    // Folding: each blank line is one newline, and the break before it is
+    // consumed; more-indented lines keep their breaks; others join with a space.
+    else if (line === '') text += '\n';
+    else if (previous === '') text += line;
+    else if (/^\s/.test(line) || /^\s/.test(previous)) text += `\n${line}`;
+    else text += ` ${line}`;
+  }
+  if (!content.length) text = '';
+  else if (chomp === '+') text += '\n'.repeat(1 + raw.length - end);
+  else if (chomp !== '-') text += '\n';
+  return { value: text, next: i };
+}
+
 function parseMap(lines, start, indent) {
   const data = {};
   let i = start;
@@ -71,6 +111,13 @@ function parseMap(lines, start, indent) {
     if (currentIndent > indent) { i++; continue; }
     const kv = splitKeyValue(line.slice(indent));
     if (!kv) { i++; continue; }
+    const block = kv.rest.match(BLOCK_SCALAR_RE);
+    if (block) {
+      const parsed = parseBlockScalar(lines, i + 1, indent, block[1], block[2]);
+      data[kv.key] = parsed.value;
+      i = parsed.next;
+      continue;
+    }
     if (kv.rest !== '') {
       data[kv.key] = coerce(kv.rest);
       i++;
@@ -143,7 +190,8 @@ function parseList(lines, start, indent) {
  */
 export function parseFrontmatter(fm) {
   if (!fm) return {};
-  return parseMap(fm.split('\n'), 0, 0).value;
+  // Drop the newline before the closing fence so it is not read as a blank line.
+  return parseMap(fm.replace(/\n$/, '').split('\n'), 0, 0).value;
 }
 
 /** Parse a full document (with fences) into { data, body }. */
@@ -157,7 +205,7 @@ function serializeValue(v) {
   if (typeof v === 'boolean' || typeof v === 'number') return String(v);
   if (Array.isArray(v)) return `[${v.map((x) => serializeValue(x)).join(', ')}]`;
   const s = String(v);
-  if (s === '' || /[:#\[\]{}"']/.test(s) || /^\s|\s$/.test(s)) return JSON.stringify(s);
+  if (s === '' || /[:#\[\]{}"'\\\n\r\t|>]/.test(s) || /^\s|\s$/.test(s)) return JSON.stringify(s);
   return s;
 }
 

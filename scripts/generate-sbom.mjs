@@ -6,26 +6,25 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import crypto from 'node:crypto';
+import { execFileSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const pkg = JSON.parse(fs.readFileSync(path.join(root, 'package.json'), 'utf8'));
 
-function walk(dir, out = []) {
-  for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
-    if (entry.name === 'node_modules' || entry.name === '.git') continue;
-    const abs = path.join(dir, entry.name);
-    if (entry.isDirectory()) walk(abs, out);
-    else if (entry.isFile()) out.push(abs);
+// Use npm's actual packlist so local brains, secrets, and unrelated checkout
+// files cannot enter a published artifact or its SBOM.
+const pack = JSON.parse(execFileSync('npm', ['pack', '--dry-run', '--json', '--ignore-scripts'], {
+  cwd: root,
+  encoding: 'utf8',
+}));
+const files = pack[0].files.map(({ path: packedPath }) => {
+  const abs = path.resolve(root, packedPath);
+  if (!abs.startsWith(root + path.sep) || !fs.statSync(abs).isFile()) {
+    throw new Error(`Invalid packed file path: ${packedPath}`);
   }
-  return out;
-}
-
-const files = walk(root).filter(
-  (f) =>
-    !f.includes(`${path.sep}artifacts${path.sep}`) &&
-    !f.endsWith('package-lock.json'),
-);
+  return abs;
+});
 
 const packages = [
   {

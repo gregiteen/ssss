@@ -4,12 +4,17 @@
 
 > This is the canonical, vendor-neutral specification for SSSS. It is the ground
 > truth on which all SSSS implementations are built. It is intended to be vendored
-> byte-for-byte into any repository that implements SSSS (e.g. a compatible host
-> Sovereign AI OS, the Total Recall reference kernel).
+> byte-for-byte into any repository that implements SSSS.
 >
 > Status: **Stable for 0.9**. The format, type registry, and conformance contract
 > are settled for this version; until v1.0 a later version MAY still introduce
 > breaking changes.
+>
+> Revision: 2026-09-24. Editorial alignment with the 0.9 reference kernel
+> (`@gregiteen/ssss-cli`). This revision documents behavior that already ships:
+> the verified-principal model, the real stage order, the canonical event
+> record, and symbolic error codes. It changes no wire format. Every example
+> document in this file is validated by the conformance suite (§12).
 >
 > Implementation-specific detail (routes, services, storage backends, deployment)
 > does **not** belong in this document — it belongs in each implementation's own
@@ -61,6 +66,15 @@ Defined terms used throughout:
 | **Contract primitive** | A primitive that exists only as a protocol structure (envelope, lease, event). |
 | **Projection** | A derived, disposable representation of vault state (e.g. an SQL table, a search index). Never source-of-truth. |
 | **Agent** | Any human or AI actor issuing operations. |
+| **Envelope** | A JSON command submitted to the Operation Contract: `operation`, `patch`, `event`, or `delete` (§6). |
+| **Kernel** | The component that runs the §6.3 pipeline. It owns stage order and semantics; storage is delegated to adapters. |
+| **Adapter** | A host-supplied implementation of one storage or policy contract: VFS, event store, idempotency store, lease store, authorizer, projections, or resource coordinator (§6.7). |
+| **Verified principal** | The authenticated identity a host attaches to an envelope *outside* the envelope body (§6.6). Never taken from client-supplied fields. |
+| **Capability** | A permission string of the form `<scope>:<action>` held by a principal and required by a primitive (§6.6). |
+| **Qualified type** | A primitive identity prefixed by its registry namespace: `ssss:assistant` for core, `<ext>:<type>` for an extension (§5.6). |
+| **Portability class** | `structural`, `tenant_private`, or `resource_bound`: whether a document may leave the workspace (§5.5). |
+| **Bundle** | A `.ucw` package of vault files plus a manifest (§16). |
+| **Commit point** | The moment a mutation becomes durable: the canonical event is appended to the event log (§6.3). |
 
 A host is **conformant** if it satisfies every MUST in this document and passes the
 conformance fixtures of §12.
@@ -77,7 +91,7 @@ conformance fixtures of §12.
 | **One mutation contract** | All agent-generated mutations MUST flow through the Operation Contract (§6). Direct, unvalidated writes by agents are forbidden. |
 | **Deterministic validation** | Every mutation MUST be validated against the primitive's schema before commit. Validation MUST be deterministic — same input, same verdict. |
 | **Idempotent by key** | Every operation carries an idempotency key. Replays MUST NOT double-apply. |
-| **Append-only history** | The event log is immutable. Events are never updated or deleted. |
+| **Append-only history** | The event log is immutable, and so are the records in append-type documents. Neither is ever updated or deleted. |
 | **Disposable indexes** | Derived indexes and projections are ephemeral caches, fully rebuildable from the vault. They may be deleted at any time. |
 | **Git-versioned** | The vault is version-controlled. History is provenance. |
 | **Portable** | A vault is interpretable by any Markdown-capable tool. No host is privileged. |
@@ -90,7 +104,7 @@ conformance fixtures of §12.
 
 A document primitive is a UTF-8 Markdown file with two regions:
 
-```markdown
+```text
 ---
 type: <primitive-type>
 <frontmatter fields...>
@@ -135,13 +149,21 @@ For stable semantic identity and graph projection, documents SHOULD also include
 |-------|------|-------------|
 | `semantic_id` | string | Stable concept identity that survives file moves and localized presentation. |
 | `relations` | array | Explicit semantic edges to other vault-relative document paths or semantic ids. |
-| `locale` | string | BCP-47-style locale of the authored natural-language surface, when known. |
+| `language` | string | BCP-47 tag of the authored natural-language surface, when known (e.g. `ja`, `es-MX`). |
 
 `resource`, `tags`, and `aliases` serve both OKF discovery and the semantic layer.
-These fields are recommendations, not new universal requirements.
+These fields are recommendations, not new universal requirements. Earlier drafts
+called the last field `locale`; a host SHOULD read `locale` as a fallback when
+`language` is absent, and MUST write `language`.
 
 Every primitive type defines its own additional REQUIRED and OPTIONAL fields
-(§5.4). To maintain forward compatibility and allow agents scratchpad space, hosts MUST NOT reject documents containing unknown frontmatter keys. Unknown fields MUST be preserved.
+(§5.4). The four universal fields above are REQUIRED **in addition to** each
+type's own list. To maintain forward compatibility and allow agents scratchpad
+space, hosts MUST NOT reject documents containing unknown frontmatter keys.
+Unknown fields MUST be preserved.
+
+Directory index files (`index.md`, §4.3) are the one exemption. They carry no
+frontmatter and are not validated as primitives.
 
 ### 4.3 Linking & Progressive Disclosure
 
@@ -164,10 +186,33 @@ canonical filename** that signals the primitive at a glance:
 | `MODEL.md` | `model` |
 | `CONVERSATION.md` | `conversation` |
 | `RUN.md` | `run` |
+| `ROLE.md` | `security_role` (canonically `roles/<role>/ROLE.md`) |
 
 Free-standing primitives (e.g. `memory`, `task`) instead use a `kebab-case` slug
-filename matching their `slug` field. The frontmatter `type` is always
+filename matching their `slug` field. Governed `primitive` definitions live at
+`primitives/<namespace>/<id>.md`. The frontmatter `type` is always
 authoritative; the filename is a convention, not a substitute for validation.
+
+### 4.5 The Frontmatter Subset
+
+Frontmatter is YAML, but a conformant host is only required to accept the subset
+below. A document that stays inside it round-trips identically through every
+conformant parser. The reference parser is dependency-free and implements
+exactly this subset.
+
+- **Scalars**: strings (bare, `"double"`, or `'single'` quoted), integers,
+  decimals, `true`/`false`, and `null`/`~`. ISO 8601 timestamps are read as
+  **strings**, not native dates, so they round-trip byte-for-byte.
+- **Inline arrays**: `[a, b, "c d"]`.
+- **Block arrays**: `- item` lines.
+- **Nested maps**: indented `key: value` blocks.
+- **Arrays of maps**: `- key: value` entries whose further keys are indented
+  under the first. A map entry may itself hold an inline array.
+- **Folded strings**: `>` and `>-` block scalars.
+
+Anchors, aliases, tags, multi-document streams, and flow maps (`{a: 1}`) are
+outside the subset. A host MAY accept them but MUST NOT require them, and
+authors SHOULD NOT use them in documents that leave the host.
 
 ---
 
@@ -217,8 +262,8 @@ class — notably `resource_bound` for things like domains and phone numbers.
 Document primitives are either:
 
 - **Replace-type** — the whole file represents current state; a write replaces it
-  entirely (`memory`, `skill`, `assistant`, `workflow`, `model`, `task`,
-  `conflict`, `primitive`).
+  entirely (`memory`, `skill`, `rule`, `security_role`, `task`, `assistant`,
+  `workflow`, `model`, `conflict`, `page`, `migration`, `release`, `primitive`).
 - **Append-type** — the file is an ordered, append-only log; writes add records to
   the body and MUST NOT rewrite prior records (`conversation`, `run`).
 
@@ -227,8 +272,10 @@ operation that would rewrite or remove existing records of an append-type docume
 
 ### 5.4 Per-Type Schemas
 
-Each schema lists REQUIRED fields. All other fields are OPTIONAL. Examples are
-minimal and illustrative.
+Each schema lists the type's REQUIRED fields. These are in addition to the
+universal fields of §4.2 (`type`, `title`, `description`, `timestamp`), which
+every example carries. All other fields are OPTIONAL. Examples are minimal, and
+each one passes the reference validator (§12).
 
 #### `memory`
 
@@ -252,6 +299,8 @@ type: memory
 slug: prefer-atomic-writes
 category: patterns
 title: "Always write files atomically (write-then-rename)"
+description: "Write to a temporary file, then rename it over the target."
+timestamp: 2026-05-16T14:00:00Z
 status: active
 schema_version: 2
 confidence: 0.92
@@ -284,9 +333,11 @@ REQUIRED: `type`, `name`, `description`.
 ---
 type: skill
 name: deploy
+title: "Deploy"
 description: >-
   Deploy services with zero downtime. Use when the user mentions deploy,
   release, ship, or production push.
+timestamp: 2026-05-16T14:00:00Z
 ---
 
 # Deploy
@@ -310,6 +361,9 @@ and prevent duplicate daemon ticks from creating duplicate work (§11.8).
 ```markdown
 ---
 type: task
+title: "Research the payments API"
+description: "Research the payments API and write a reference skill."
+timestamp: 2026-05-16T08:00:00Z
 priority: 85
 category: skill-engineering
 status: pending
@@ -333,8 +387,10 @@ REQUIRED: `type`, `name`.
 ---
 type: assistant
 name: "Support Bot"
+title: "Support Bot"
 description: "Front-line customer support assistant."
-model: "anthropic/claude-opus-4-5"
+timestamp: 2026-05-16T14:00:00Z
+model: "example/large-model"
 ---
 
 ## Instructions
@@ -370,7 +426,9 @@ include:
 ---
 type: workflow
 name: "Daily Digest"
+title: "Daily Digest"
 description: "Sends a daily summary email."
+timestamp: 2026-05-16T14:00:00Z
 triggers:
   - type: cron
     id: daily-0800
@@ -399,7 +457,9 @@ REQUIRED: `type`, `name`. OPTIONAL: `description`, `scope`.
 ---
 type: rule
 name: "No external links in replies"
+title: "No external links in replies"
 description: "Customer-facing replies must not contain outbound URLs."
+timestamp: 2026-05-16T14:00:00Z
 scope: support
 ---
 
@@ -408,24 +468,32 @@ Outbound links are stripped from any assistant reply on a support thread.
 
 #### `security_role`
 
-A definition of a security role used for role-based access control (RBAC).
-It maps a role name to a set of permissions that dictate what an agent or user
-can do within the workspace.
+A named set of capabilities used for role-based access control (RBAC). It maps
+a role name to the capabilities an agent or user holding that role is granted
+within the workspace.
 
 REQUIRED: `type`, `name`, `permissions` (array). OPTIONAL: `description`.
 
 ```markdown
 ---
 type: security_role
-name: "admin"
-description: "Administrator with full access to all workspace primitives."
+name: "support-agent"
+title: "Support agent"
+description: "Can write assistants and events, nothing else."
+timestamp: 2026-05-16T14:00:00Z
 permissions:
-  - "read:*"
-  - "write:*"
+  - "ssss:assistant:*"
+  - "write:event"
 ---
 
-Full administrative access to the workspace.
+Maintains support assistants and records support events.
 ```
+
+`permissions` holds capability strings (§6.6). A capability names a scope and an
+action; `*` in the action position grants every action on that scope, and `*:*`
+grants everything. A `security_role` is one way for a host to derive a
+principal's capabilities. The kernel only ever sees the resulting capability
+list, never the role name.
 
 #### `model`
 
@@ -436,9 +504,12 @@ REQUIRED: `type`, `model_id`, `provider`.
 ```markdown
 ---
 type: model
-model_id: "anthropic/claude-opus-4-5"
-provider: anthropic
-display_name: "Claude Opus 4.5"
+title: "Example Large Model"
+description: "A general-purpose long-context model."
+timestamp: 2026-05-16T14:00:00Z
+model_id: "example/large-model"
+provider: example
+display_name: "Example Large Model"
 ---
 
 ## Capabilities
@@ -455,9 +526,12 @@ REQUIRED: `type`, `thread_id`. Typical fields: `workspace_id`, `user_id`, `statu
 ```markdown
 ---
 type: conversation
-thread_id: "7f3a2b1c-..."
-workspace_id: "..."
-user_id: "..."
+title: "Greeting"
+description: "A two-turn support conversation."
+timestamp: 2026-05-16T14:00:05Z
+thread_id: "7f3a2b1c-5d6e-4f70-8a91-b2c3d4e5f607"
+workspace_id: "ws-acme"
+user_id: "user-42"
 status: active
 created_at: 2026-05-16T14:00:00Z
 ---
@@ -482,6 +556,9 @@ REQUIRED: `type`, `run_id`, `workflow_id`. Typical fields: `workspace_id`, `stat
 ```markdown
 ---
 type: run
+title: "Daily Digest run 2026-05-16"
+description: "Execution record for the 08:00 daily digest."
+timestamp: 2026-05-16T08:00:01Z
 run_id: "run-001"
 workflow_id: "daily-digest"
 task_path: "tasks/daily-digest/daily-0800-20260516T080000Z.md"
@@ -503,6 +580,9 @@ REQUIRED: `type`, `conflict_id`, `status` (`pending|resolved`), `new_slug`,
 ```markdown
 ---
 type: conflict
+title: "HTML vs plaintext email"
+description: "A new memory contradicts an existing one about email format."
+timestamp: 2026-05-16T18:30:00Z
 conflict_id: conflict-2026-05-16-001
 status: pending
 new_slug: use-html-email
@@ -520,6 +600,9 @@ REQUIRED: `type`, `slug`, `name`, `sandbox_entry`.
 ```markdown
 ---
 type: page
+title: "Leads Dashboard"
+description: "A sandboxed dashboard of inbound leads."
+timestamp: 2026-05-16T14:00:00Z
 slug: "leads-portal"
 name: "Leads Dashboard"
 icon: "users"
@@ -537,6 +620,8 @@ REQUIRED: `type`, `migration_id`, `from_version`, `to_version`, `status`, `descr
 ```markdown
 ---
 type: migration
+title: "Add vector_embedding field"
+timestamp: 2026-05-16T14:00:00Z
 migration_id: "mig-v2-to-v3"
 from_version: 2
 to_version: 3
@@ -554,6 +639,9 @@ REQUIRED: `type`, `release_id`, `version`, `schema_version`, `summary`, `release
 ```markdown
 ---
 type: release
+title: "Release 3.1.0"
+description: "Adds proposal and migration file types."
+timestamp: 2026-05-16T12:00:00Z
 release_id: "rel-3.1.0"
 version: "3.1.0"
 schema_version: 3
@@ -569,6 +657,48 @@ language without changing the core registry. REQUIRED: `type`, `primitive_id`,
 `namespace`, `version`, `name`, `mutation`, `portability`, `scopes`, and `fields`.
 Stable primitive, field, enum, capability, and action identifiers are symbolic and
 language-independent. Labels and descriptions are multilingual presentation data.
+
+The definition is validated against a meta-schema on write:
+
+| Field | Rule |
+|-------|------|
+| `primitive_id` | Qualified (`<namespace>:<id>`), prefix equal to `namespace`. A host MAY derive it from `namespace` + `name` so an author never types one. |
+| `namespace` | Lowercase, `[a-z][a-z0-9_-]{0,63}`. |
+| `version` | Positive integer. `revision`, if present, is a positive integer. |
+| `mutation` | `replace` or `append` (§5.3). |
+| `portability` | A §5.5 class. |
+| `scopes` | Non-empty unique subset of `system`, `account`, `workspace`, `user`. |
+| `fields[]` | Each has a unique symbolic `id`, a non-empty `name` in any language, and a `kind`: `string`, `text`, `number`, `integer`, `boolean`, `datetime`, `date`, `enum` (with unique `values`), `object`, `array`, `reference`, `secret_reference`, or `resource_reference`. |
+| `capabilities` | Optional map of action → list of capability strings. |
+| `aliases` | Optional list of unique safe identifiers that resolve to this primitive. |
+
+```markdown
+---
+type: primitive
+title: "Booking"
+description: "A customer booking, authored in Japanese."
+timestamp: 2026-05-16T14:00:00Z
+primitive_id: "acme:booking"
+namespace: acme
+version: 1
+name: "顧客予約"
+language: ja
+mutation: replace
+portability: tenant_private
+scopes: [workspace]
+fields:
+  - id: reservation_date
+    name: "予約日"
+    kind: datetime
+    required: true
+  - id: status
+    name: "状態"
+    kind: enum
+    values: [pending, confirmed]
+capabilities:
+  create: ["acme.booking:create"]
+---
+```
 
 ### 5.5 Portability Classification
 
@@ -590,20 +720,64 @@ stored documents, and have no portability class.)
 | `resource_bound` | Requires a real external resource bound at provision time. | ⚠️ as a **requirement declaration** only — the seller's resource value is stripped |
 
 A file MAY override its type's default with an `x_portability` frontmatter field. A host
-MUST honor the **most restrictive** of (type default, instance override) — a file may make
-itself more private than its type, never less.
+MUST honor the **most restrictive** of (type default, instance override), ordered
+`structural` < `resource_bound` < `tenant_private`. A file may make itself more private
+than its type, never less. An unrecognized override value is ignored.
 
 An **export profile** is simply a filter over portability classes:
 
 - **`backup`** — all three classes. `tenant_private` MUST be encrypted at rest.
 - **`template`** / **`sale`** — `structural` verbatim; `resource_bound` reduced to a
-  requirement declaration (seller's bound value stripped); `tenant_private` **dropped
-  entirely**.
+  requirement declaration; `tenant_private` **dropped entirely**.
+
+A requirement declaration is produced mechanically. The type's registry entry MUST
+declare `resource.binds`, the list of fields that hold the bound value. Each of
+those fields is replaced with the literal string `REQUIREMENT`, and the file is
+marked `x_portability: resource_bound`. An exporter MUST fail rather than emit a
+`resource_bound` file whose type declares no `resource.binds`, because it cannot
+know which fields to strip.
 
 A host MUST reject a `template`/`sale` export that would emit a `tenant_private` primitive.
 This single rule is what lets an operator sell a proven business model without ever
 shipping a customer's data — the data is `tenant_private` by classification, so it
 physically cannot enter a sale bundle.
+
+### 5.6 Registries, Qualified Identities & Extensions
+
+The type registry is data: `registry/core.json` defines the core primitives, and an
+**extension registry** adds a namespace of its own. Every primitive has a
+**qualified identity**: `ssss:<type>` for core types and `<registry>:<type>` for an
+extension's. A document MAY declare either the bare or the qualified name in
+`type`. Hosts resolve both, and canonical events always record the qualified one
+(§8.2).
+
+A registry entry declares the rules that validation (§9) enforces:
+
+| Key | Effect |
+|-----|--------|
+| `required_fields` | Fields that MUST be present and non-empty. |
+| `required_when` | `{ "<field>==<value>": [fields] }`: fields required only when the condition holds. |
+| `enums` | Allowed values per field. Array values are checked element by element. |
+| `patterns` | A Unicode regular expression each value of the field MUST match. |
+| `immutable_fields` | Fields a `patch` MUST NOT change. |
+| `references` | Fields holding vault paths, with `allowed_types`, `disallowed_types`, `allowed_portability`, `must_exist`, and an optional `hash_field` pinning the target's content hash. |
+| `append_only` | `true` makes the type append-type (§5.3). |
+| `portability` | The default class (§5.5). |
+| `capabilities` | Per-action capability requirements (§6.6). |
+| `lease_required` | `true` makes every write to the type require a lease (§7). |
+| `resource.binds` | Fields stripped to a requirement declaration on sale export (§5.5). |
+
+Composition rules:
+
+- An extension MUST NOT redefine or shadow a core type, a sibling extension's type,
+  or an existing alias. A collision is a load-time error, not a runtime preference.
+- An extension MAY declare `requires: { "<extension>": "<semver range>" }`. A host
+  MUST refuse to load an extension whose dependencies are missing or out of range.
+- A host MAY pin a composed registry set with an **integrity lock**: a SHA-256 over
+  the canonical composition. A lock that no longer matches is drift, and a host
+  SHOULD refuse to start on it.
+- Extension registry files MUST be regular files. A host MUST refuse symlinked
+  registry files.
 
 ---
 
@@ -612,91 +786,129 @@ physically cannot enter a sale bundle.
 All agent-generated mutations to a vault MUST flow through the Operation Contract.
 An agent MUST NOT write vault files directly.
 
-### 6.1 The Operation Envelope
+### 6.1 The Envelope
 
-An operation is a JSON envelope:
+An envelope is a JSON object:
 
 ```jsonc
 {
-  "type": "operation",          // "operation" | "patch" | "event" | "delete"
-  "idempotency_key": "uuid-v4", // see §6.4
-  "path": "assistants/bot/ASSISTANT.md", // relative VFS path, no leading "/"
-  "workspace_id": "uuid",       // the vault/workspace scope
-  "content": "---\ntype: ...",  // full file content (operation, event)
-  "patches": { },               // partial merge (patch only)
-  "lease_id": "uuid",           // OPTIONAL — see §7
-  "intent": "human description", // OPTIONAL — audit annotation
-  "dry_run": false,              // OPTIONAL — validate without committing
-  "actor": {                     // OPTIONAL — the cryptographically verified identity.
-    "type": "human",             // "human" | "ai" | "system"
-    "role": "admin"              // role-based access control hook for the host
-  }
+  "type": "operation",             // "operation" | "patch" | "event" | "delete" (§6.2)
+  "workspace_id": "ws-acme",       // the vault/workspace scope
+  "idempotency_key": "b3c1…",      // §6.4
+  "path": "assistants/bot/ASSISTANT.md", // vault-relative, no leading "/", no "." or ".." segments
+  "content": "---\ntype: …",       // operation: full document; event: JSON payload string
+  "patches": { },                  // patch only
+  "primitive_type": "assistant",   // OPTIONAL — asserts the target's type
+  "operation_id": "uuid",          // OPTIONAL — client-chosen; generated if absent
+  "lease_id": "uuid",              // OPTIONAL — §7
+  "dry_run": false,                // OPTIONAL — validate and authorize without committing
+  "intent": "human description"    // OPTIONAL — audit annotation, not interpreted
 }
 ```
 
+The envelope carries **no identity**. Who is acting is supplied by the host as a
+verified principal, next to the envelope and never inside it (§6.6). A kernel
+MUST ignore any identity-bearing field a client places in the envelope, including
+the pre-0.9 `actor` object.
+
+A `path` MUST be rejected with `invalid_request` if it is empty, absolute, contains
+a backslash or NUL, or has an empty, `.`, or `..` segment. A host MUST also refuse
+to follow a symbolic link out of the vault.
+
 ### 6.2 Envelope Types
 
-| `type` | Semantics | Body field | Required envelope fields |
-|--------|-----------|------------|--------------------------|
-| `operation` | Full atomic write — creates or fully replaces a file. | `content` | `type`, `idempotency_key`, `path`, `workspace_id`, `content` |
-| `patch` | Partial merge into an existing file's frontmatter and/or body. | `patches` | `type`, `idempotency_key`, `path`, `workspace_id`, `patches` |
-| `event` | Append-only immutable log entry. Never overwrites. | `content` | `type`, `idempotency_key`, `path`, `workspace_id`, `content` |
-| `delete` | Removes a replace-type file from the vault. | — | `type`, `idempotency_key`, `path`, `workspace_id` |
+| `type` | Semantics | Required fields beyond `type`, `workspace_id`, `idempotency_key`, `path` |
+|--------|-----------|------------|
+| `operation` | Create a document, or fully replace an existing one. | `content` (string) |
+| `patch` | Merge into an existing document's frontmatter and/or body. | `patches` (object) |
+| `event` | Append an immutable entry to the event log (§8). Never touches a document. | none; `content`, if present, MUST be a JSON string |
+| `delete` | Remove a replace-type document. | none |
 
-For `patch`, the `patches` object merges into frontmatter keys; the reserved key
-`__body__` replaces or (for append-type documents) appends the Markdown body. For
-`event`, `content` MUST be a valid JSON string carrying the event payload.
+**`operation`** — `content` is the complete document. An `operation` MUST NOT
+change the `type` of an existing document; changing type is a migration
+(§5.4 `migration`). Writing a directory `index.md` (§4.3) is permitted and is
+not validated as a primitive.
 
-For `delete`, the host removes the file at `path` and appends a deletion event to the log
-(§8) — the removal is itself an auditable, append-only record, so history is never lost. A
-host MUST reject a `delete` targeting an **append-type** document (`conversation`, `run`)
-or a non-existent path. A `delete` of an already-deleted path is an idempotent no-op that
-returns the original result (§6.4). `delete` is the only contract type that removes vault
-state; export and provision (§16) never delete — only a live workspace edit or a migration
-(§5.4 `migration`) does.
+**`patch`** — keys of `patches` are merged shallowly into the frontmatter: a
+supplied key replaces that key's whole value, and absent keys are untouched. The
+reserved key `__body__` replaces the Markdown body of a replace-type document, or
+is appended to the body of an append-type document (§5.3). A `patch` MUST NOT
+change `type` or any of the type's `immutable_fields`. The merged document is
+validated as a whole before commit.
+
+**`event`** — the parsed `content` becomes the event's `payload` (§8.2). The target
+`path` is recorded as the event's `subject` and need not exist.
+
+**`delete`** — the host removes the document and records the deletion as an event,
+so history is never lost. A `delete` targeting an append-type document MUST be
+rejected with `validation_failed`. A `delete` of a path that does not exist MUST be
+rejected with `not_found`, unless it is an idempotent replay of an earlier delete
+with the same key, in which case the original result is returned (§6.4). `delete`
+is the only envelope that removes vault state. Export and provision (§16, §17)
+never delete.
 
 ### 6.3 The Processing Pipeline
 
-A host MUST process every operation through these ordered stages. Any stage's
-failure aborts the operation with no commit.
+A host MUST process every envelope through these stages, in this order. A failure
+at any stage before the commit point aborts the envelope with nothing committed.
+Kernels MUST NOT reorder or skip stages. Adapters (§6.7) implement mechanics only.
 
-1. **Envelope validation** — `type` is one of the four envelope types
-   (`operation`/`patch`/`event`/`delete`); required envelope fields present and
-   well-formed.
-2. **Idempotency check** — if this `idempotency_key` + `workspace_id` +
-   request hash was already committed within the TTL, return the original result
-   as a replay (§6.4). If the key and workspace match but the request hash
-   differs, reject the request with `idempotency_conflict`. Stop.
-3. **Authorization & Actor Identity** — the agent has write access to `workspace_id`.
-   *Security Mandate*: If a host exposes the Operation Contract directly to untrusted clients (e.g., a `POST /api/ssss` REST endpoint), the host **MUST** irreversibly overwrite the `actor` payload with the user's cryptographically verified session identity. Hosts MUST use this `actor` field to enforce Role-Based Access Control (RBAC) over sensitive or `resource_bound` primitives.
-4. **Lease check** — if the target path is leased, the operation MUST carry a
-   matching, unexpired `lease_id` (§7).
-5. **Content validation** — for `operation`/`patch`, the resulting file is validated
-   against its primitive schema (§9). Append-type rewrite attempts are rejected. For
-   `delete`, the host verifies the target exists and is a replace-type document (append-type
-   deletes are rejected).
-5.5. **Granular Authorization (RBAC)** — evaluated only if stage 5 passed. Resolve
-   `actor.role` from the (by now host-verified, per stage 3) envelope. `role: "system"`
-   is an unconditional bypass (used by trusted internal callers such as the provisioning
-   pipeline, §17). `role: "admin"` is granted `write:*`/`read:*` unconditionally. Any
-   other named role's permissions are read from that role's `security_role` document
-   (canonical location `roles/<role>/ROLE.md`) and checked against the required
-   permission — `write:<type>` for `operation`/`patch`/`delete` (using the type resolved
-   in stage 5), or the fixed `write:event` for `event` envelopes (which have no resolved
-   document type). A permission list satisfies the requirement via an exact match,
-   `*:<type>`, `write:*`, or `*:*`. **A MISSING `actor.role` MUST be denied, not treated
-   as any default role** — this is the fail-closed complement to stage 3's mandate: a
-   host that forgets to overwrite `actor` gets every write rejected, not silently
-   promoted to admin.
-6. **Commit** — the mutation is applied to the vault atomically. For `delete`, the file is
-   removed.
-7. **Audit** — an audit entry is appended to the event log (§8).
+| # | Stage | On failure |
+|---|-------|------------|
+| 1 | **Envelope & identity** — known `type`, required fields present and well-typed (§6.2); a principal with an `id` and `kind` is attached. Nothing is read before this passes, so an anonymous caller learns nothing about the vault. | `invalid_request`, `unauthorized` |
+| 2 | **Idempotency** — look up (`workspace_id`, `idempotency_key`). Same request hash: return the stored response with `replay: true` and stop. Different hash: stop (§6.4). | `idempotency_conflict` |
+| 3 | **Read current state** — load the target, if any, and its version. An unsafe path fails here. | `invalid_request`, or `internal_error` for unreadable stored state |
+| 4 | **Content validation** — resolve the primitive and validate the resulting document (§9). Enforce type immutability, `immutable_fields`, patch/delete target existence, and append-only rules. | `not_found`, `validation_failed` |
+| 5 | **Authorization** — the verified principal must be complete (§6.6), scoped to `workspace_id`, and hold every capability the primitive and action require. | `unauthorized`, `forbidden` |
+| 6 | **Lease** — if the primitive is `lease_required` or the host requires a lease for this path, verify it (§7). | `lease_conflict` |
+| 7 | **Resource prepare** — if the host coordinates an external resource (a domain, a phone number), reserve it. | `internal_error` |
+| 8 | **Dry-run exit** — if `dry_run`, release anything prepared in stage 7 and return success with `committed_at: null`. | — |
+| 9 | **Commit** — write the document with a compare-and-swap on the version read in stage 3 (create-if-absent for a new document), or remove it for `delete`. `event` envelopes write nothing here. | `version_conflict`, `internal_error` |
+| 10 | **Event append — the commit point.** Append the canonical event (§8.2). If the append fails, undo stage 9 and release stage 7. | `internal_error` |
+| 11 | **Resource finalize** — complete the external effect. A failure here MUST NOT undo the commit. The host reconciles and the response carries a warning. | warning only |
+| 12 | **Projections** — dispatch the event to projections (§10). A failure is a warning, never a rollback. | warning only |
+| 13 | **Record idempotency** — store the response under the key (§6.4). | warning only |
 
-A `dry_run` operation runs stages 1–5.5 and then stops: it MUST return the validation
-verdict with `success` reflecting validity, and MUST NOT commit (`committed_at` is
-`null`).
+**The commit point.** A mutation is committed exactly when its canonical event is
+durably appended. Before that, every failure leaves no trace in the vault. After
+it, nothing may undo the mutation, because the append-only log (§8) already says it
+happened. Work after the commit point is compensated forward, never rolled back.
 
-### 6.4 The Operation Response
+**Resource lifecycle.** If a host coordinates external resources, every successful
+`prepare` MUST be followed by exactly one `finalize` or `reconcile`. `reconcile`
+receives the phase it runs in (`dry_run`, `commit`, or `finalize`), so the host
+can tell a released reservation from a compensation after a committed intent.
+
+**Concurrency.** Two envelopes racing on one path are serialized by the stage-9
+compare-and-swap. The loser either finds a winner with the same key and returns
+that winner's result as a replay, or fails with `version_conflict`. Two `event`
+envelopes with the same key are serialized by the event store's uniqueness on
+`event_id` (§8.1).
+
+### 6.4 Idempotency
+
+Every envelope carries an `idempotency_key`, scoped to its `workspace_id`.
+
+- The **request hash** is SHA-256 over the canonical JSON (keys sorted
+  recursively, no insignificant whitespace) of `type`, `workspace_id`,
+  `idempotency_key`, `path`, `primitive_type`, `content`, `patches`, and the
+  verified principal's `id`. `dry_run`, `lease_id`, `operation_id`, and `intent`
+  are excluded, so retrying with a fresh lease is still the same request.
+- Only **successful commits** are recorded. A failed or dry-run envelope records
+  nothing, so it may be retried under the same key after the cause is fixed.
+- A recorded key replays: the same request hash returns the original response with
+  `replay: true` and changes nothing. A different request hash under the same key
+  fails with `idempotency_conflict`.
+- Because the principal is part of the hash, a key replayed by a *different*
+  principal is a conflict, never a disclosure of another principal's result.
+- A host MUST retain records for at least 24 hours and MAY retain them
+  indefinitely. The reference stores never expire.
+
+Keys are opaque strings. Use a random UUID for ad-hoc requests. Use a
+deterministic derivation where retries must converge, as with runtime-created work
+(§11.8) and bundle import (§17).
+
+### 6.5 The Response & Error Codes
 
 ```jsonc
 {
@@ -704,50 +916,132 @@ verdict with `success` reflecting validity, and MUST NOT commit (`committed_at` 
   "type": "operation",
   "operation_id": "uuid",
   "path": "assistants/bot/ASSISTANT.md",
-  "committed_at": "2026-05-16T14:00:00Z", // null for dry_run / failure
+  "committed_at": "2026-05-16T14:00:00Z", // null for dry_run and failures
   "dry_run": false,
+  "event_id": "uuid",                     // the canonical event (§8.2); absent unless committed
+  "replay": true,                         // present only on an idempotent replay
   "validation": {
     "valid": true,
-    "type": "assistant",        // resolved primitive type
+    "type": "ssss:assistant",             // resolved qualified type (§5.6)
     "errors": [],
-    "warnings": []
-  },
-  "replay": { },                 // present only on an idempotent replay
-  "repair": { }                  // present only on validation failure — see §9
+    "warnings": []                        // e.g. a projection or finalize failure
+  }
 }
 ```
 
-### 6.5 Error Codes
+A failed response has `success: false`, `committed_at: null`, `validation.valid:
+false`, the `repair` block of §9, and an `error` object:
 
-| Code | Meaning |
-|------|---------|
-| `400` | Invalid request — malformed envelope, or a path that fails the traversal guard. |
-| `401` | Authentication required. |
-| `403` | Agent lacks write access to the workspace. |
-| `404` | The `patch`/`delete` target does not exist. |
-| `409` | Lease conflict, version conflict, or idempotency conflict — path is locked, the supplied lease is invalid/expired, or the same idempotency key was reused for a different request hash. |
-| `422` | Validation failure — see `validation.errors` and `repair`. |
-| `500` | Internal error — the operation was not committed. |
+```jsonc
+{ "success": false, "error": { "code": "validation_failed", "message": "name: Missing required field 'name'." }, "…": "…" }
+```
 
-A host need not use HTTP; if it does, these are the canonical status codes.
+`error.code` is exactly one of the symbolic codes below. Clients MUST branch on
+`error.code`, never on message text. A host MAY use any transport. If it uses HTTP,
+it MUST use these statuses, `201` for a commit, and `200` for a replay or dry run:
+
+| Code | HTTP | Meaning |
+|------|------|---------|
+| `invalid_request` | 400 | Malformed envelope, non-JSON event content, or an unsafe path. |
+| `unauthorized` | 401 | No valid verified principal reached the kernel. |
+| `forbidden` | 403 | The principal is not scoped to the workspace or lacks a required capability. |
+| `not_found` | 404 | The `patch` or `delete` target does not exist. |
+| `lease_conflict` | 409 | A required lease is missing, mismatched, or expired. |
+| `version_conflict` | 409 | The document changed between read and commit, and no same-key winner exists. |
+| `idempotency_conflict` | 409 | The key was already used for a different request. |
+| `validation_failed` | 422 | The document fails §9, or the envelope would change a type, an immutable field, or an append-only document. |
+| `internal_error` | 500 | Unreadable stored state, a failed resource prepare, or a failed commit. Nothing was committed. |
+
+### 6.6 Identity & Authorization
+
+Authorization acts on a **verified principal** that the host attaches *outside* the
+envelope, after authenticating the caller:
+
+```jsonc
+{
+  "id": "user-42",                      // stable, recorded on every event
+  "kind": "human",                      // "human" | "agent" | "service" | "system"
+  "workspaceIds": ["ws-acme"],          // workspaces this principal may act in
+  "capabilities": ["ssss:assistant:*"], // §6.6 capability strings
+  "authentication": { "provider": "oidc", "assurance": "verified" }
+}
+```
+
+- A host that exposes the Operation Contract to untrusted callers MUST derive the
+  principal from its own authentication, never from the request body. This is why
+  the envelope carries no identity (§6.1).
+- A missing or malformed principal MUST be denied as `unauthorized`. There is no
+  default principal and no anonymous write.
+- A non-`system` principal MUST list the envelope's `workspace_id` in
+  `workspaceIds`.
+- The required capabilities are the primitive's registry `capabilities[<action>]`,
+  or `<qualified_type>:<action>` if none are declared. The action is one of
+  `create`, `replace`, `patch`, `append`, `event`, or `delete`. It is derived from
+  the envelope and the target's existence, never supplied by the client. `event`
+  envelopes require `write:event`.
+- A granted capability covers a required one if it is equal, if it is `*:*`, or if
+  it ends in `:*` and the required capability starts with everything before that
+  `*`. So `ssss:*` covers every core primitive and `ssss:assistant:*` covers every
+  action on assistants.
+- A `system` principal bypasses capability checks. It exists for trusted internal
+  callers such as import (§17). A host MUST NOT grant `system` to anything a remote
+  caller controls.
+- A host MAY layer **policy floors** (extra capabilities per primitive and action),
+  **step-up** (a minimum `authentication.assurance`), and **human confirmation**
+  (a `human` principal plus an explicit confirmation) on top of this. These only
+  ever add requirements.
+
+**Pre-0.9 role compatibility.** Hosts that still accept the pre-0.9 envelope field
+`actor.role` MUST convert it to a principal before stage 5. `system` becomes a
+`system` principal, `admin` receives `*:*`, and any other role receives the
+`permissions` of its `security_role` document at `roles/<role>/ROLE.md`, with
+`write:<type>` and `*:<type>` expanded to `<qualified_type>:*`, and `write:*`
+expanded to `*:*`. A missing role still MUST be denied, never promoted.
+
+### 6.7 Adapter Contracts
+
+A kernel owns the stages above. A host supplies the mechanics through adapters,
+each with a shared contract test in the conformance suite (§12):
+
+| Adapter | Contract |
+|---------|----------|
+| **VFS** | `read(path) → {bytes, version, hash} \| null`; `writeAtomic(path, bytes, {version \| ifAbsent})` and `remove(path, {version})`, both compare-and-swap, failing with a version conflict and never a partial write. Rejects unsafe paths and symlink traversal. |
+| **Event store** | `append(event)` durably and in order, rejecting a duplicate `event_id` across every writer; `replay({cursor, workspaceId})` in append order. |
+| **Idempotency store** | `get(workspace, key)`; `put(workspace, key, record)`, which rejects a second `put` for the same key across every writer. |
+| **Lease store** | `acquire`, `verify`, `renew`, `release` per §7, with at most one live lease per target across every writer. |
+| **Authorizer** | `authorize({principal, workspaceId, definition, action}) → {allowed, reason}`, per §6.6. Fails closed. |
+| **Projection coordinator** | `dispatch(event)`, `replay(id, {rebuild})`, `detectDrift(id, hash)` per §10. |
+| **Resource coordinator** | Optional `prepare`, `finalize`, `reconcile`, per the §6.3 resource lifecycle. |
+
+"Across every writer" means across threads, processes, and hosts sharing the same
+storage, not just within one instance.
 
 ---
 
 ## 7. Leases — Concurrency Control
 
-A **lease** is a file-level write lock that prevents two agents from racing on the
-same path.
+A **lease** is a time-bound write claim on one `(workspace_id, target)` pair. It
+lets an agent do long work (such as a workflow run, §11.8) without another agent
+writing the same path underneath it.
 
-- A lease is identified by a `lease_id` and scoped to a `(workspace_id, path)` pair.
-- At most one active lease MAY exist per `(workspace_id, path)`.
-- While a path is leased, an operation targeting it MUST present the matching,
-  unexpired `lease_id` or be rejected with `409`.
-- A lease MUST carry an expiry. An expired lease is treated as absent.
-- An agent that acquires a lease MUST release it after its operation completes. A
-  host SHOULD reclaim expired leases automatically.
+A lease record carries `lease_id`, `workspace_id`, `target`, `principal_id`,
+`operation_id`, `issued_at`, and `expires_at`.
 
-Leases are advisory coordination, not security. Authorization (§6.3 stage 3) is the
-security boundary.
+- **acquire** — grants a lease if no live lease exists on the target; otherwise it
+  fails. At most one live lease MAY exist per target, across every writer.
+- **verify** — succeeds only if a live lease exists and its `lease_id`,
+  `principal_id`, and `operation_id` all match the caller. A lease is bound to the
+  principal and the unit of work that took it. Presenting someone else's
+  `lease_id` is not enough. An envelope that writes under a lease therefore
+  carries both `lease_id` and the `operation_id` the lease was acquired with.
+- **renew** — extends `expires_at` for the verified holder.
+- **release** — deletes the lease for the verified holder.
+- An expired lease is treated as absent. A host SHOULD reclaim expired leases.
+
+Whether a write *requires* a lease is decided by the primitive's `lease_required`
+flag or by host policy. Unleased writes are otherwise protected by the stage-9
+compare-and-swap (§6.3). Leases are coordination, not security. Authorization
+(§6.6) is the security boundary.
 
 ---
 
@@ -758,28 +1052,42 @@ flat physical *log*, and a relational *event graph* layered on top of it.
 
 ### 8.1 The Log
 
-- Events are written via `type: event` operations (§6.2).
-- An entry, once written, MUST NOT be updated or deleted. There is no UPDATE and no
-  DELETE. Ordering is arrival order; adjacency in the log is purely temporal.
-- Audit entries (pipeline stage 7) are themselves events.
+- Every committed envelope appends exactly one canonical event (§6.3 stage 10). The
+  event *is* the audit record. There is no separate audit write.
+- An entry, once written, MUST NOT be updated or deleted.
+- `event_id` is unique within the log, across every writer. For `event` envelopes,
+  a kernel SHOULD derive `event_id` deterministically from (`workspace_id`,
+  `idempotency_key`). The reference uses UUIDv5 over their JSON array. That way,
+  concurrent duplicates of one event collide on the uniqueness check instead of
+  both landing.
+- Order is append order within a log.
 - The event log is the canonical history of *what happened*; the vault is the
   canonical state of *what is true now*. Both are source-of-truth; projections are
   not.
 
 ### 8.2 The Event Record
 
-An event is a typed record — **not** a document primitive. There is no `EVENT.md`;
-events exist only in the log. Each event carries:
+An event is a typed record, **not** a document primitive. There is no `EVENT.md`;
+events exist only in the log.
 
 | Field | Description |
 |-------|-------------|
-| `event_id` | Stable unique identity — makes the event addressable. |
-| `event_type` | The kind of event (e.g. `feedback`, `audit`, `spawn`). |
-| `correlation_id` | Groups every event of one logical flow ("saga"), however far apart in the log. |
-| `caused_by` | Zero or more `event_id`s of the event(s) that directly caused this one (causation). |
-| `subject` | The vault path / record the event is about. |
-| `payload` | The event-type-specific body. |
-| `ts` | ISO 8601 timestamp. |
+| `event_id` | Unique identity (§8.1). |
+| `event_type` | The kind of event. Kernel mutations use `ssss.mutation`. |
+| `schema_version` | Version of this record shape; currently `1`. |
+| `timestamp` | ISO 8601 commit time. |
+| `workspace_id` | The workspace. |
+| `primitive_id`, `primitive_version` | The qualified type (§5.6) and its version. `ssss:event` for `event` envelopes. |
+| `action` | `create`, `replace`, `patch`, `append`, `event`, or `delete`. |
+| `subject` | The vault path the event is about. |
+| `principal` | The verified principal (§6.6) that caused it. |
+| `operation_id`, `idempotency_key`, `request_hash` | Ties the event to its envelope (§6.4). |
+| `correlation_id` | Groups every event of one logical flow ("saga"). Defaults to `operation_id`. |
+| `causation_id` | The `event_id` that directly caused this one, or `null`. |
+| `before_hash`, `after_hash` | Content hashes of the target before and after, so the log alone can detect vault drift. |
+| `changed_fields` | For `patch`, the sorted keys that were patched. |
+| `resource_status` | `prepared` if a resource coordinator took part (§6.3), else `null`. |
+| `payload` | The event-type-specific body (for `event` envelopes, the parsed `content`). |
 
 ### 8.3 The Event Graph
 
@@ -788,7 +1096,7 @@ it rated, an investigation to the feedback that triggered it, a fix to the
 investigation. These references form a causal **graph** over the flat log.
 
 The graph is preserved without violating append-only because **edges point backward
-only**: a new event records its `caused_by` parents; an existing event is never
+only**: a new event records its `causation_id` parent; an existing event is never
 mutated to record a child. The forward view (an event's children, a full saga tree)
 is reconstructed by scanning — so the **event graph is a derived artifact** (§10),
 disposable and rebuildable. Relationships are canonical (backward `event_id`
@@ -802,15 +1110,29 @@ slice of the event graph: the saga tree of one coherent unit of work.
 ## 9. Validation & Repair
 
 Validation is **deterministic**: identical input always yields an identical verdict.
+It is a pure function of the document and the composed registry (§5.6).
 
-A file is valid if and only if:
+A document is valid if and only if:
 
-1. It has well-formed YAML frontmatter.
-2. The frontmatter `type` matches a primitive in the registry (§5).
-3. Every REQUIRED field for that primitive is present and non-empty.
-4. For append-type documents, the operation does not rewrite existing records.
+1. Its frontmatter parses (§4.5) to an object.
+2. `type` resolves, bare or qualified, to a primitive in the registry.
+3. Every universal field (§4.2) and every `required_fields` entry is present and
+   non-empty. `null`, `""`, and `[]` count as empty.
+4. Every `required_when` condition that holds has its fields present and non-empty.
+5. Every present field with an `enums` entry takes allowed values only.
+6. Every present field with a `patterns` entry matches it.
+7. Every `references` field names a safe vault path to an existing document (unless
+   `must_exist: false`) of an allowed type and portability. If a `hash_field` is
+   declared, it equals the target's current content hash.
+8. A `primitive` document also satisfies the §5.4 `primitive` meta-schema.
 
-Hosts MUST NOT reject a file due to the presence of unknown or unrecognized frontmatter keys. Unrecognized keys MUST be silently preserved to support agent scratchpads and forward compatibility with OKF extensions.
+On top of the document rules, stage 4 (§6.3) rejects an envelope that would change
+a document's `type`, change an `immutable_fields` value, rewrite an append-type
+document, or delete one.
+
+Hosts MUST NOT reject a document because of unknown frontmatter keys. Unknown keys
+MUST be preserved to support agent scratchpads and forward compatibility with OKF
+extensions.
 
 On failure, the host MUST return structured **repair feedback** so an agent can
 self-correct without guesswork:
@@ -819,14 +1141,14 @@ self-correct without guesswork:
 {
   "repair": {
     "field_errors": [
-      { "field": "name", "issue": "Missing required field 'name' for type 'assistant'." }
+      { "field": "name", "issue": "Missing required field 'name'." }
     ]
   }
 }
 ```
 
-A host MAY additionally emit non-blocking `warnings` (e.g. deprecated fields,
-low-confidence content). Warnings MUST NOT block a commit.
+A host MAY also emit non-blocking `warnings` (deprecated fields, low-confidence
+content, a failed projection). Warnings MUST NOT block a commit.
 
 ---
 
@@ -861,7 +1183,7 @@ directory declaring each projection as disposable and recording provenance:
     { "file": "memory-layers.jsonl",  "disposable": true },
     { "file": "embeddings.json",      "disposable": true }
   ],
-  "rebuild_command": "npx total-recall compile"
+  "rebuild_command": "<host-defined rebuild command>"
 }
 ```
 
@@ -960,7 +1282,7 @@ embedding similarity).
 Because the control vocabulary is symbolic and never translated (§11.1), a workspace
 that wishes to *present* itself in a given human language does so with data, not by
 translating keys. The `language_convention` primitive (a `structural`, extension-owned
-type — festech ships it) records a workspace's presentation conventions: its default
+type) records a workspace's presentation conventions: its default
 language/locale, formality, date and currency formatting, and terminology preferences.
 
 It is `structural` and therefore travels in `template`/`sale` bundles (§5.5): a sold
@@ -1127,9 +1449,22 @@ Fixtures are distributed as a JSON document carrying:
 
 The conformance fixture set is the shared test contract between all SSSS
 implementations. A host MUST NOT claim SSSS conformance without passing the current
-fixture set. Hosts implementing workflow daemons SHOULD also run the reference
-  runtime checks exposed by `@gregiteen/ssss-cli/runtime`. Hosts exposing semantic
-  search or runtime rendering MUST also pass the §11.9 checks.
+fixture set, including each fixture's `expected_http_status` if it speaks HTTP
+(§6.5). Beyond the fixtures:
+
+- Hosts implementing workflow daemons SHOULD run the runtime checks exposed by
+  `@gregiteen/ssss-cli/runtime` (§11.8).
+- Hosts exposing semantic search or runtime rendering MUST pass the §11.9 checks.
+- Hosts supplying their own adapters (§6.7) MUST pass the shared adapter
+  contracts: VFS, event store, idempotency store, and lease store, including
+  their multi-process races.
+- Kernel implementations MUST pass the resource-lifecycle, error-code,
+  append-only, capability, and frontmatter-subset checks.
+
+The reference suite also checks **this document**: every example document in it
+must validate, §5.1 must list every core primitive with its registry portability,
+and the §6.5 table must match the reference error codes. A spec edit that breaks
+an example fails the build, just like a code change would.
 
 ---
 
@@ -1143,7 +1478,7 @@ fixture set. Hosts implementing workflow daemons SHOULD also run the reference
 | Canonical filename | `UPPERCASE.md` | `ASSISTANT.md` |
 | VFS path | relative, no leading `/`, `/`-separated | `assistants/bot/ASSISTANT.md` |
 | Conflict ID | `conflict-YYYY-MM-DD-NNN` | `conflict-2026-05-16-001` |
-| Idempotency key | UUID v4, min 8 chars | `11111111-1111-...` |
+| Idempotency key | Opaque string; random UUID for ad-hoc requests, deterministic derivation for runtime work (§6.4, §11.8) | `runtime-run-3f9a…` |
 | Timestamp | ISO 8601, `Z` suffix (UTC) | `2026-05-16T14:03:00Z` |
 
 Slugs and names MAY contain non-ASCII Unicode letters so that non-Latin scripts are
@@ -1231,7 +1566,7 @@ A bundle is a JSON object with three top-level members:
 }
 ```
 
-`files` MUST be sorted by `path` (byte order) so that two exports of the same vault state
+`files` MUST be sorted by `path` (§16.3 order) so that two exports of the same vault state
 are identical and content-hashable (§16.3, `provenance.content_hash`).
 
 ### 16.2 The Manifest
@@ -1246,30 +1581,40 @@ inside, the resources it must bind at provision time, and provenance.
 | `description` | yes | One-line summary. |
 | `version` | yes | The bundle's own semver, independent of the spec. |
 | `exported_at` | yes | ISO-8601 timestamp of export. |
-| `ssss_core_version` | yes | The `registry/core.json` `spec_version` the bundle targets (e.g. `"0.3"`). A host MUST refuse a bundle whose core version it does not support. |
-| `required_extensions` | yes | Array of extension registry ids the files rely on (e.g. `["festech"]`). Empty array if the bundle uses only core primitives. A host MUST refuse a bundle naming an extension it has not loaded. |
+| `ssss_core_version` | yes | The `registry/core.json` `spec_version` the bundle targets (e.g. `"0.9"`). A host MUST refuse a bundle whose core version it does not support. |
+| `required_extensions` | yes | Array of extension registry ids the files rely on (e.g. `["acme"]`). Empty array if the bundle uses only core primitives. A host MUST refuse a bundle naming an extension it has not loaded. |
 | `export_profile` | yes | `backup` \| `template` \| `sale` — the §5.5 profile this bundle was built under. Determines the allowed portability classes. |
 | `primitive_inventory` | yes | Map of primitive `type` → count, over every file in the bundle (replaces the legacy hard-coded `categories`; it is registry-driven, so extension types appear automatically). |
 | `provisioning` | yes | Array of provisioning steps (§17.2) — the ordered, declarative plan for binding this bundle into a live workspace. Empty for a pure `backup` that is restored in place. |
 | `parameters` | no | Array of parameter definitions (§16.5) the importer must resolve (e.g. business name, domain). |
 | `source_workspace_id` | no | Origin workspace; OMITTED or nulled in `template`/`sale` profiles (it is operator-identifying). |
+| `dependencies` | no | `{ primitives, extensions, migrations, integrity }`: the sorted primitive types and extension ids the files use, the `migration` ids they carry, and `integrity: { content_hash, ssss_core_version }`. If present, `integrity.content_hash` MUST equal `provenance.content_hash`. |
 | `file_count` | yes | Length of `files`; a cheap integrity check. |
 | `provenance` | yes | `{ content_hash, exporter, signature? }` (§16.3). |
 
 `primitive_inventory` supersedes the legacy fixed `categories` object and `provisioning`
 supersedes its `capabilities` booleans: both are now open and registry-driven rather than a
-closed enum, so a bundle full of `festech` extension primitives inventories and provisions
-them without a spec change.
+closed enum, so a bundle full of extension primitives inventories and provisions them
+without a spec change.
 
 ### 16.3 Provenance & Integrity
 
 `provenance` makes a bundle verifiable and attributable:
 
-- `content_hash` — a hash (SHA-256, hex, prefixed `sha256:`) over the canonical
-  serialization of `files` (path-sorted, §16.1). An importer MUST recompute it and reject
-  a bundle whose files do not match. This is what makes a bundle tamper-evident and what a
-  marketplace lists against.
-- `exporter` — an identifier for the tool/host that produced the bundle (`"@gregiteen/ssss-cli@0.8.0"`).
+- `content_hash` — `sha256:` followed by the lowercase hex SHA-256 of the UTF-8 bytes of
+  the **canonical file serialization**, defined as:
+  1. Take each file as `{ "path": …, "content": … }`, in that key order, dropping any
+     other member (such as a cached `frontmatter`).
+  2. Sort by `path`, comparing strings by UTF-16 code units. This equals byte order
+     for ASCII paths.
+  3. Serialize the array as JSON with no insignificant whitespace, escaping strings
+     exactly as ECMAScript `JSON.stringify` does: `"`, `\`, and control characters
+     are escaped, and all other characters, including non-ASCII, are emitted
+     literally.
+
+  An importer MUST recompute it and reject a bundle whose files do not match. This is
+  what makes a bundle tamper-evident and what a marketplace lists against.
+- `exporter` — an identifier for the tool/host that produced the bundle (`"@gregiteen/ssss-cli@0.9.3"`).
 - `signature` — OPTIONAL detached signature over `content_hash` for a sold bundle, so a
   buyer can verify authorship. Unsigned bundles are valid; signing is a marketplace concern.
 
@@ -1342,9 +1687,10 @@ A **step** is `{ id, label, system, mode, required, notes? }`:
 Dependency and resource relationships between primitives are expressed with the canonical
 **edge relations**: `uses_brand | owns_domain | routes_calls_to | deploys_to | has_surface
 | contains_page | installs_pack | authenticates_account | runs_workflow`. The
-`resource_bound` primitives of §5.5 each declare which relation binds them (festech's
-`domain` → `owns_domain`, `phone_number` → `routes_calls_to`, `integration_connection` →
-`connects_to`), so an importer knows exactly what real-world binding each requires.
+`resource_bound` primitives of §5.5 each declare which relation binds them (for example,
+an extension's `domain` → `owns_domain`, `phone_number` → `routes_calls_to`, and
+`integration_connection` → `connects_to`), so an importer knows exactly what real-world
+binding each requires.
 
 ### 17.3 Determinism, Id-Remap & Link Integrity
 
@@ -1362,9 +1708,8 @@ cannot resolve a link MUST fail the provision rather than emit a dangling refere
   `installMode` of `optional | recommended | required` (adopted from the legacy
   `WorkspaceMarketplaceRecommendation`). `provision` installs `required` dependencies before
   the bundle itself; `optional`/`recommended` are surfaced to the operator.
-- **Upgrade** — moving an installed bundle from `v2` to a `v1`-conformant shape (or any
-  version step) is performed through a `migration` primitive (§5) plus **structural-only**
-  `patch` envelopes (§6.2). An upgrade MUST NOT touch `tenant_private` data: it rewrites the
+- **Upgrade** — moving an installed bundle from one version to the next is performed
+  through a `migration` primitive (§5.4) plus **structural-only** `patch` envelopes (§6.2). An upgrade MUST NOT touch `tenant_private` data: it rewrites the
   structural model, never the operator's private records. This is what lets a sold business
   receive standard updates without the vendor reaching into customer data.
 
@@ -1373,8 +1718,15 @@ cannot resolve a link MUST fail the provision rather than emit a dangling refere
 ## Appendix A — Reserved Frontmatter Keys
 
 The following frontmatter keys are reserved by this spec across all primitives and
-MUST NOT be repurposed by hosts: `type`, `slug`, `schema_version`, `status`,
-`feedback`, `confidence`, `semantic_id`, `relations`, and `language`.
+MUST NOT be repurposed by hosts:
+
+- Universal (§4.2): `type`, `title`, `description`, `timestamp`.
+- Semantic (§4.2, §11): `semantic_id`, `relations`, `language`, `resource`, `tags`,
+  `aliases`, `feedback`, `confidence`.
+- Lifecycle: `slug`, `schema_version`, `status`.
+- Portability (§5.5): `x_portability`.
+
+The patch key `__body__` (§6.2) is reserved and can never be a frontmatter key.
 
 Hosts adding their own frontmatter fields SHOULD prefix them `x_` to remain
 forward-compatible with future spec revisions.

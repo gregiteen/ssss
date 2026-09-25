@@ -1,0 +1,41 @@
+{
+  "version": 3,
+  "toolchain": "javascript",
+  "repoDescription": "@gregiteen/ssss-cli — Reference engine and CLI for the Structured Semantic Syntax System. Zero external dependencies, pure Node ESM.",
+  "globalLock": true,
+  "memory": {
+    "maxOldSpaceMb": 4096
+  },
+  "lock": {
+    "staleAfterMinutes": 45
+  },
+  "sourceExtensions": [
+    ".mjs",
+    ".js",
+    ".json",
+    ".md"
+  ],
+  "checks": [
+    {
+      "id": "conformance-engine",
+      "tier": "fast",
+      "description": "SSSS conformance verification against the reference engine.",
+      "cmd": [
+        "npm",
+        "test"
+      ],
+      "parser": "generic"
+    },
+    {
+      "id": "conformance-full",
+      "tier": "full",
+      "description": "Full SSSS conformance suite including all fixtures and CLI smoke.",
+      "cmd": [
+        "npm",
+        "run",
+        "conformance"
+      ],
+      "parser": "generic"
+    }
+  ]
+}
