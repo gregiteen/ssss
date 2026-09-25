@@ -7,6 +7,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.9.3] - 2026-09-24
+### Fixed
+- Two processes sending an `event` envelope with the same idempotency key at the
+  same moment could both append an event, because the kernel records the result
+  only after committing and `event` envelopes have no VFS compare-and-swap. The
+  kernel now derives an `event` envelope's `event_id` from `(workspace_id,
+  idempotency_key)` (`idempotentEventId`, UUIDv5), so the event store rejects
+  the second append. Any request that loses at commit re-reads the idempotency
+  store and returns the winner's result as a replay, or an idempotency conflict
+  when its request differs. If a process dies after appending an event but
+  before recording its result, retries of that key now fail instead of
+  appending a second event.
+
+### Added
+- `idempotentEventId(workspaceId, idempotencyKey)` in `@gregiteen/ssss-cli/events`.
+- Conformance checks racing six kernel processes on one `event` idempotency key,
+  with identical and with differing content.
+
 ## [0.9.2] - 2026-09-24
 ### Fixed
 - The file adapters are now safe to share between processes. Each one checked

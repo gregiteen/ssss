@@ -7,7 +7,7 @@ import { parseDocument, serializeDocument } from './frontmatter.mjs';
 import { createValidator } from './validator.mjs';
 import { isAppendType, resolvePrimitiveDefinition } from './registry.mjs';
 import { createCapabilityAuthorizer } from './authorization.mjs';
-import { createCanonicalEvent } from './events.mjs';
+import { createCanonicalEvent, idempotentEventId } from './events.mjs';
 import { MemoryIdempotencyStore } from './idempotency.mjs';
 
 export { MemoryIdempotencyStore } from './idempotency.mjs';
@@ -92,13 +92,17 @@ export function createKernel(options = {}) {
     }
 
     const requestHash = canonicalRequestHash(envelope, principal);
-    const replay = await idempotencyStore.get(envelope.workspace_id, envelope.idempotency_key);
-    if (replay) {
-      if (replay.request_hash !== requestHash) {
+    // A stored result for this key: replay it, or refuse a different request.
+    const settled = async () => {
+      const stored = await idempotencyStore.get(envelope.workspace_id, envelope.idempotency_key);
+      if (!stored) return null;
+      if (stored.request_hash !== requestHash) {
         return failure(envelope, operationId, ['Idempotency key was already used for a different request.'], [{ field: 'idempotency_key', issue: 'Request hash conflict.' }]);
       }
-      return { ...replay.response, replay: true };
-    }
+      return { ...stored.response, replay: true };
+    };
+    const replay = await settled();
+    if (replay) return replay;
 
     let current;
     try { current = await vfs.read(envelope.path); }
@@ -211,6 +215,9 @@ export function createKernel(options = {}) {
       }
 
       const event = createCanonicalEvent({
+        // `event` envelopes have no VFS compare-and-swap, so a key-derived id
+        // lets the event store reject a concurrent request with the same key.
+        event_id: envelope.type === 'event' ? idempotentEventId(envelope.workspace_id, envelope.idempotency_key) : undefined,
         workspace_id: envelope.workspace_id,
         primitive_id: definition.qualified_type,
         primitive_version: definition.primitive_version || 1,
@@ -252,6 +259,12 @@ export function createKernel(options = {}) {
           return failure(envelope, operationId, [`Commit failed: ${error.message}; rollback failed: ${rollbackError.message}`]);
         }
       }
+      // A concurrent request with the same key may have won the commit (VFS
+      // compare-and-swap or duplicate event_id); answer with its result.
+      try {
+        const winner = await settled();
+        if (winner) return winner;
+      } catch {}
       return failure(envelope, operationId, [`Commit failed: ${error.message}`]);
     }
   }

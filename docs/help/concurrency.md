@@ -13,6 +13,23 @@ most one racer wins:
 
 `.ssss-locks/` is reserved: VFS paths under it are rejected and `list()` skips it.
 
+## Same idempotency key from two processes
+
+The kernel records a request's result only after it commits, so two processes
+can both miss the stored result for one key. The commit step then decides:
+
+- `operation`, `patch`, `delete`: the VFS compare-and-swap lets one commit; the
+  other fails its precondition.
+- `event`: the event's `event_id` is derived from `(workspace_id,
+  idempotency_key)` (`idempotentEventId`, a UUIDv5), so the event store rejects
+  the second append.
+
+The loser then re-reads the idempotency store: if the winner has already
+recorded its result, the loser returns it as a replay (or an idempotency
+conflict when its request differs); otherwise it fails and a retry replays. If a
+process dies after appending an event but before recording the result, retries
+of that key fail rather than append a second event.
+
 ## Crashed holders
 
 A lock records its holder's pid and host. A waiter breaks the lock when the
@@ -31,10 +48,6 @@ Symlinked lock files are refused.
 
 - Locks are advisory: only writers using these adapters take them. Writers from
   `@gregiteen/ssss-cli` 0.9.1 and earlier do not.
-- The kernel's idempotency check for `event` envelopes is read before commit and
-  written after, so two processes sending the same idempotency key at the same
-  moment can each append an event. `operation`, `patch`, and `delete` are
-  protected by the VFS compare-and-swap.
 - Network filesystems must support exclusive create (`O_EXCL`).
 - Dead-holder detection assumes processes that share the filesystem have
   distinct hostnames (containers with the same hostname and separate pid

@@ -53,23 +53,34 @@ Goal: every published version has a matching tag.
 - [x] Push skill publishes from a clean clone of the tag
 - [x] `v0.8.0` (`5a57d61`) and `v0.9.0` (`64fa895`) tags reproduce the published tarballs
 
-## ⏳ Phase 5: Release and downstream
+## ✅ Phase 5: Release and downstream
 
-- [ ] Release 0.9.2 via `skills/push`
-- [ ] Dabber CRM bumped to `^0.9.2` and `test:ssss` green
+- [x] Release 0.9.2 via `skills/push` (published from a clean clone of `v0.9.2`; npm `gitHead` = `ccadfb2`)
+- [x] Dabber CRM bumped to `^0.9.2` and `test:ssss` green
 
-## ⏳ Phase 6: Verification
+## ⏳ Phase 6: Kernel same-key dedupe (0.9.3)
 
-- [ ] `npm test` green
-- [ ] `npm run conformance` green
-- [ ] `node skills/push/scripts/preflight-release.mjs` green
-- [ ] Dabber-shaped benchmark still ~seconds with locking
+Goal: one event per `(workspace_id, idempotency_key)` across processes.
 
-## Open decision
+- [x] `idempotentEventId` (UUIDv5) in [events.mjs](../../../../src/events.mjs); kernel uses it for `event` envelopes
+- [x] Kernel answers a lost commit race with the winner's stored result
+- [x] Conformance: six kernel processes, same key with identical and with differing content; retry replays
+- [x] Race checks fail against the 0.9.2 kernel
+- [x] Release 0.9.3 via `skills/push`
+- [ ] Dabber CRM on `^0.9.3`, shipped with its `/push` protocol
 
-- Kernel exactly-once for concurrent same-key `event` envelopes across
-  processes needs an idempotency reservation step in the adapter contract
-  (see PRD "Out of scope"). Awaiting a decision.
+## ✅ Phase 7: Verification
+
+- [x] `npm test` green (149/149 on 0.9.3)
+- [x] `npm run conformance` green
+- [x] `node skills/push/scripts/preflight-release.mjs` green
+- [x] Dabber-shaped benchmark still ~seconds with locking (2.4 s on 0.9.3 vs 279.5 s on 0.9.0)
+
+## Decisions
+
+- 2026-09-24 (Greg): close the kernel same-key `event` race by deriving
+  `event_id` from the idempotency key (not an idempotency reservation contract).
+- 2026-09-24 (Greg): `/push` Dabber CRM with the dependency bump.
 
 ## Verification Log
 
@@ -83,3 +94,6 @@ Goal: every published version has a matching tag.
 - 2026-09-24: lock cost on APFS ~0.55 ms; 1,000 kernel commits 1.6–1.8 s (0.9.1) vs 3.0–3.8 s (locked); 3,250 event appends 1.6 s vs 3.2 s
 - 2026-09-24: `scripts/release.sh` in a scratch copy — moves [Unreleased] entries, stubs when empty, idempotent on rerun
 - 2026-09-24: `v0.8.0`/`v0.9.0` commits vs npm tarballs — 54 and 70 package files, 0 content or mode mismatches
+- 2026-09-24: 0.9.2 published from a clean clone of `v0.9.2`; `npm view … gitHead` = `ccadfb2`; Dabber `test:ssss` on 0.9.2 — pass
+- 2026-09-24: kernel race checks on the 0.9.2 kernel, 10 runs — duplicate events in 5 (same content) and 9 (differing content); with key-derived ids 10/10 full passes; `npm test` 149/149
+- 2026-09-24: 0.9.3 — `npm test` 149/149, conformance and preflight green; 3,250 event appends 2.39 s; 1,000 kernel commits 2.97 s

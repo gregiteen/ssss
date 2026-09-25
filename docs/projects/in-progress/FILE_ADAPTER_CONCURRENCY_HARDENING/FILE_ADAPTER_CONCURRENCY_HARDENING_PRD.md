@@ -52,12 +52,12 @@ In scope:
   tags for the published 0.8.0 and 0.9.0 tarballs.
 - Release 0.9.2 and bump Dabber CRM.
 
-Out of scope (needs a contract decision, tracked below):
-- Kernel-level exactly-once for concurrent `event` envelopes that share an
+- Kernel exactly-once for concurrent `event` envelopes that share an
   idempotency key across processes. `event` envelopes have no VFS
-  compare-and-swap, so the kernel's only guard is the idempotency store, which
-  is read before commit and written after. Closing it needs an idempotency
-  reservation step in the adapter contract.
+  compare-and-swap, and the kernel records the result only after committing.
+  Decision (2026-09-24, Greg): derive the `event_id` from
+  `(workspace_id, idempotency_key)` so the event store's duplicate check
+  decides the race (0.9.3).
 
 ## Requirements
 
@@ -70,5 +70,8 @@ Out of scope (needs a contract decision, tracked below):
 4. Lock files never collide with document paths; symlinked locks are refused.
 5. Existing single-process behavior, error messages, symlink refusal, 0600
    modes, and replay order are unchanged. `npm test` stays green.
-6. Every published version has a git tag whose package files match the npm
+6. At most one event is appended per `(workspace_id, idempotency_key)` for
+   `event` envelopes, and a request that loses the commit race answers with the
+   winner's stored result when it exists.
+7. Every published version has a git tag whose package files match the npm
    tarball, and future releases are published from a clean checkout of the tag.

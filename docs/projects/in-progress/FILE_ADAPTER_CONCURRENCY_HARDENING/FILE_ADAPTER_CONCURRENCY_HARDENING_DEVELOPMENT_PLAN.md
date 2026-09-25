@@ -42,7 +42,12 @@ tag; create `v0.8.0`/`v0.9.0` from the published tarballs.
 
 Release 0.9.2 via the push skill; bump Dabber CRM and run its SSSS test.
 
-## Phase 6 — Verification
+## Phase 6 — Kernel same-key dedupe (0.9.3)
+
+Key-derived `event_id` for `event` envelopes; winner replay after a lost
+commit; multi-process kernel race checks; release 0.9.3; Dabber `/push`.
+
+## Phase 7 — Verification
 
 `npm test`, `npm run conformance`, push-skill preflight, Dabber-shaped benchmark,
 Dabber `test:ssss` against the published package.
