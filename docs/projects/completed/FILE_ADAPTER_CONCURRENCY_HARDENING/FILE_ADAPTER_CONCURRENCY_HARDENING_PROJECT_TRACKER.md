@@ -8,7 +8,7 @@ timestamp: 2026-09-25T03:21:52Z
 # FILE_ADAPTER_CONCURRENCY_HARDENING — Project Tracker
 
 > **Project Prefix**: `FILE_ADAPTER_CONCURRENCY_HARDENING`
-> **Kanban State**: 🏗️ In Progress
+> **Kanban State**: ✅ Completed
 > **Author**: Claude (Opus 5.5) with Greg Iteen
 > **Date**: 2026-09-24
 
@@ -58,7 +58,7 @@ Goal: every published version has a matching tag.
 - [x] Release 0.9.2 via `skills/push` (published from a clean clone of `v0.9.2`; npm `gitHead` = `ccadfb2`)
 - [x] Dabber CRM bumped to `^0.9.2` and `test:ssss` green
 
-## ⏳ Phase 6: Kernel same-key dedupe (0.9.3)
+## ✅ Phase 6: Kernel same-key dedupe (0.9.3)
 
 Goal: one event per `(workspace_id, idempotency_key)` across processes.
 
@@ -67,7 +67,7 @@ Goal: one event per `(workspace_id, idempotency_key)` across processes.
 - [x] Conformance: six kernel processes, same key with identical and with differing content; retry replays
 - [x] Race checks fail against the 0.9.2 kernel
 - [x] Release 0.9.3 via `skills/push`
-- [ ] Dabber CRM on `^0.9.3`, shipped with its `/push` protocol
+- [x] Dabber CRM on `^0.9.3`, shipped with its `/push` protocol (gates green, pushed `88d92d8`/`624d33c`; droplet deploy waits on SSH access, tracked in Dabber `HANDOFF.md`)
 
 ## ✅ Phase 7: Verification
 
@@ -97,3 +97,4 @@ Goal: one event per `(workspace_id, idempotency_key)` across processes.
 - 2026-09-24: 0.9.2 published from a clean clone of `v0.9.2`; `npm view … gitHead` = `ccadfb2`; Dabber `test:ssss` on 0.9.2 — pass
 - 2026-09-24: kernel race checks on the 0.9.2 kernel, 10 runs — duplicate events in 5 (same content) and 9 (differing content); with key-derived ids 10/10 full passes; `npm test` 149/149
 - 2026-09-24: 0.9.3 — `npm test` 149/149, conformance and preflight green; 3,250 event appends 2.39 s; 1,000 kernel commits 2.97 s
+- 2026-09-24: 0.9.3 published from a clean clone of `v0.9.3`; npm `gitHead` = `ac62acd`. Dabber `/push`: full remote gates green on the working tree and on the rebased commits; pushed; deploy blocked (droplet SSH closed to `73.34.0.175`)
