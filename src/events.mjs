@@ -2,6 +2,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import crypto from 'node:crypto';
+import { withFileLock } from './file-lock.mjs';
 
 export function createCanonicalEvent(input, options = {}) {
   const required = ['workspace_id', 'action', 'subject', 'operation_id', 'idempotency_key'];
@@ -90,10 +91,13 @@ export class JsonlEventStore {
   // Per-log index of event_ids, built on the first append to that log. Each
   // index records the stat of the bytes it covers; any change (another store
   // instance or process appended, or the file was replaced) rebuilds it.
+  // Appenders serialize on `<log>.lock` so the duplicate check and the append
+  // are atomic across processes.
   #indexes = new Map();
-  constructor(root) {
+  constructor(root, options = {}) {
     fs.mkdirSync(root, { recursive: true });
     this.root = fs.realpathSync(root);
+    this.lockOptions = options.lock || {};
   }
   #file(workspaceId) {
     if (!/^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$/.test(workspaceId || '')) throw new Error('Unsafe event workspace_id.');
@@ -116,6 +120,9 @@ export class JsonlEventStore {
   }
   async append(event) {
     const file = this.#file(event.workspace_id);
+    return withFileLock(`${file}.lock`, () => this.#appendLocked(file, event), this.lockOptions);
+  }
+  #appendLocked(file, event) {
     const index = this.#index(file);
     if (index.ids.has(event.event_id)) throw new Error(`Duplicate event_id '${event.event_id}'.`);
     const line = `${JSON.stringify(event)}\n`;
@@ -127,7 +134,8 @@ export class JsonlEventStore {
       after = fs.fstatSync(fd);
     } finally { fs.closeSync(fd); }
     // Keep the index only when the log grew by exactly this line on the same
-    // file; otherwise another writer interleaved and the next append rebuilds.
+    // file; otherwise a writer that skips the lock interleaved, and the next
+    // append rebuilds.
     const before = index.stat;
     const expectedSize = (before?.size || 0) + Buffer.byteLength(line);
     if (after.size === expectedSize && (!before || (before.dev === after.dev && before.ino === after.ino))) {

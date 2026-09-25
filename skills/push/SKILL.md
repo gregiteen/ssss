@@ -42,11 +42,18 @@ Use this skill when you need to push a new version of the `@gregiteen/ssss-cli` 
 
 ## Step 1: Update Version and Changelog
 
-If the user wants to cut a new release and bump the version, you can use the built-in release script:
+Write the release's changes under `## [Unreleased]` in `CHANGELOG.md`, then run:
 ```bash
 ./scripts/release.sh <new-version>
 ```
-This updates the `VERSION` file and stubs a new entry in `CHANGELOG.md`.
+This updates `VERSION`, `package.json`, and `package-lock.json`, and moves the
+`[Unreleased]` entries into a `## [<new-version>]` section. Then rebuild the
+version-stamped artifacts and run the preflight:
+```bash
+node scripts/build-reference-bundle.mjs
+node scripts/generate-sbom.mjs
+node skills/push/scripts/preflight-release.mjs
+```
 
 ## Step 2: Commit and Push Changes
 
@@ -66,11 +73,16 @@ git tag v<version>
 git push origin v<version>
 ```
 
-## Step 4: Publish to NPM
+## Step 4: Publish to NPM from a clean clone of the tag
 
-Finally, if the package is ready to be published to the public npm registry, you should run:
+Never run `npm publish` in a working checkout. 0.8.0 and 0.9.0 were published
+from uncommitted trees, so no commit matched either tarball. A publish from a
+git worktree also records no `gitHead`, because npm cannot read HEAD there.
+Publish from a fresh clone of the pushed tag instead:
 ```bash
-npm publish --access public
+rm -rf "$TMPDIR/ssss-release" && git clone --depth 1 --branch v<version> https://github.com/gregiteen/ssss.git "$TMPDIR/ssss-release"
+cd "$TMPDIR/ssss-release" && npm publish --access public
+npm view @gregiteen/ssss-cli@<version> gitHead   # must equal the tag's commit
 ```
 
 If it fails due to 404, it might mean the `@ssss` organization is not set up on npm, or the user needs to authenticate. Let the user know if that happens.

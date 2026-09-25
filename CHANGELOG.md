@@ -7,6 +7,34 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.9.2] - 2026-09-24
+### Fixed
+- The file adapters are now safe to share between processes. Each one checked
+  state and then wrote it as two steps, so concurrent processes could both pass
+  the check: `FileSystemVfs` could lose an update behind a passed
+  compare-and-swap, `FileLeaseStore` could grant the same lease twice (spec §7),
+  `FileIdempotencyStore.put` could replace an existing entry, and
+  `JsonlEventStore` could append one `event_id` twice. Each check-then-write now
+  runs under an exclusive lock file (`O_EXCL`). A lock whose holder process has
+  exited is broken immediately; any lock older than 30 s is treated as stale;
+  a waiter gives up after 40 s with `SSSS_LOCK_TIMEOUT`. Adapters accept
+  `{ lock: { timeoutMs, staleMs } }`. `FileSystemVfs` keeps its locks in a
+  reserved `.ssss-locks/` directory that VFS paths cannot address and `list()`
+  skips. Locking costs about 0.5 ms per write on APFS.
+- `scripts/release.sh` bumps `package.json` and `package-lock.json` and moves the
+  `[Unreleased]` entries into the new version's section instead of inserting a
+  stub above `[Unreleased]`.
+
+### Added
+- `ssss help concurrency`.
+- Conformance checks that race six processes against each file adapter, plus
+  lock checks for dead holders, stale locks, timeouts, symlinked locks, and the
+  reserved VFS lock directory.
+- Git tags `v0.8.0` and `v0.9.0` on commits whose package files match the
+  published npm tarballs byte-for-byte. Both versions were published from
+  uncommitted trees, so no existing commit matched. The push skill now publishes
+  from a clean clone of the release tag.
+
 ## [0.9.1] - 2026-09-24
 ### Fixed
 - `JsonlEventStore.append` no longer re-reads and re-parses the whole

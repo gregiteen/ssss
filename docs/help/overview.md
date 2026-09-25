@@ -33,7 +33,8 @@ vault ──export──▶ .ucw bundle ──provision──▶ envelope plan �
 
 Run `ssss help <topic>` for any of:
 `runtime`, `semantic`, `portability`, `bundle`, `provisioning`,
-`export`, `provision`, `import`, `conformance`, `autolink`.
+`export`, `provision`, `import`, `conformance`, `autolink`, `leases`,
+`concurrency`.
 
 Run `ssss <command> --help` for: `export`, `validate`, `inspect`, `provision`,
 `import`, `semantic`, `primitive`, `registry`, `adapter`, `migrate`,

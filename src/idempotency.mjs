@@ -2,6 +2,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import crypto from 'node:crypto';
+import { withFileLock } from './file-lock.mjs';
 
 function key(workspaceId, idempotencyKey) { return JSON.stringify([workspaceId, idempotencyKey]); }
 
@@ -16,7 +17,11 @@ export class MemoryIdempotencyStore {
 }
 
 export class FileIdempotencyStore {
-  constructor(root) { fs.mkdirSync(root, { recursive: true }); this.root = fs.realpathSync(root); }
+  constructor(root, options = {}) {
+    fs.mkdirSync(root, { recursive: true });
+    this.root = fs.realpathSync(root);
+    this.lockOptions = options.lock || {};
+  }
   #file(workspaceId, idempotencyKey) {
     const digest = crypto.createHash('sha256').update(key(workspaceId, idempotencyKey)).digest('hex');
     return path.join(this.root, `${digest}.json`);
@@ -31,12 +36,15 @@ export class FileIdempotencyStore {
   }
   async put(workspaceId, idempotencyKey, value) {
     const file = this.#file(workspaceId, idempotencyKey);
-    if (fs.existsSync(file)) throw new Error('Idempotency entry already exists.');
-    const temp = `${file}.${crypto.randomUUID()}.tmp`;
-    try {
-      fs.writeFileSync(temp, `${JSON.stringify(value)}\n`, { flag: 'wx', mode: 0o600 });
-      fs.renameSync(temp, file);
-    } finally { fs.rmSync(temp, { force: true }); }
+    // Serialize writers of one key so a second put fails instead of replacing the first.
+    return withFileLock(`${file}.lock`, () => {
+      if (fs.existsSync(file)) throw new Error('Idempotency entry already exists.');
+      const temp = `${file}.${crypto.randomUUID()}.tmp`;
+      try {
+        fs.writeFileSync(temp, `${JSON.stringify(value)}\n`, { flag: 'wx', mode: 0o600 });
+        fs.renameSync(temp, file);
+      } finally { fs.rmSync(temp, { force: true }); }
+    }, this.lockOptions);
   }
 }
 
