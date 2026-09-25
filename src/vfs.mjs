@@ -3,6 +3,10 @@ import fs from 'node:fs';
 import path from 'node:path';
 import crypto from 'node:crypto';
 import { isSafeDocumentPath } from './registry.mjs';
+import { withFileLock } from './file-lock.mjs';
+
+/** Reserved FileSystemVfs directory for per-path write locks; never a document path. */
+export const VFS_LOCK_DIR = '.ssss-locks';
 
 export class VfsConflictError extends Error {
   constructor(message) { super(message); this.name = 'VfsConflictError'; this.code = 'SSSS_VFS_CONFLICT'; }
@@ -77,14 +81,28 @@ export class MemoryVfs {
 }
 
 export class FileSystemVfs {
-  constructor(root) {
+  constructor(root, options = {}) {
     if (!root) throw new Error('FileSystemVfs requires a root directory.');
     fs.mkdirSync(root, { recursive: true });
     this.root = fs.realpathSync(root);
+    this.lockOptions = options.lock || {};
+  }
+
+  // Writers to one path serialize on a lock so precondition checks and commits
+  // are atomic across processes.
+  #locked(vfsPath, fn) {
+    const dir = path.join(this.root, VFS_LOCK_DIR);
+    let stat = null;
+    try { stat = fs.lstatSync(dir); } catch (error) { if (error.code !== 'ENOENT') throw error; }
+    if (stat && (stat.isSymbolicLink() || !stat.isDirectory())) throw new VfsPathError(`VFS lock directory '${VFS_LOCK_DIR}' must be a real directory.`);
+    const name = crypto.createHash('sha256').update(vfsPath).digest('hex');
+    return withFileLock(path.join(dir, `${name}.lock`), fn, { ...this.lockOptions, createDir: true });
   }
 
   #resolve(vfsPath, { allowMissing = true } = {}) {
     if (!isSafeDocumentPath(vfsPath)) throw new VfsPathError(`Unsafe VFS path '${vfsPath}'.`);
+    // Case-insensitive: on APFS/NTFS any casing reaches the same directory.
+    if (vfsPath.split('/')[0].toLowerCase() === VFS_LOCK_DIR) throw new VfsPathError(`VFS path '${vfsPath}' is reserved.`);
     const target = path.resolve(this.root, ...vfsPath.split('/'));
     if (target === this.root || !target.startsWith(`${this.root}${path.sep}`)) {
       throw new VfsPathError(`VFS path '${vfsPath}' escapes the root.`);
@@ -131,6 +149,7 @@ export class FileSystemVfs {
     while (stack.length) {
       const dir = stack.pop();
       for (const entry of fs.readdirSync(dir, { withFileTypes: true }).sort((a, b) => a.name.localeCompare(b.name))) {
+        if (dir === this.root && entry.name === VFS_LOCK_DIR) continue;
         const absolute = path.join(dir, entry.name);
         const relative = path.relative(this.root, absolute).split(path.sep).join('/');
         if (entry.isSymbolicLink()) throw new VfsPathError(`Symlinked VFS entry is forbidden: '${relative}'.`);
@@ -144,6 +163,10 @@ export class FileSystemVfs {
 
   async writeAtomic(vfsPath, bytes, precondition = {}) {
     const target = this.#resolve(vfsPath);
+    return this.#locked(vfsPath, () => this.#commit(vfsPath, target, bytes, precondition));
+  }
+
+  async #commit(vfsPath, target, bytes, precondition) {
     const current = await this.read(vfsPath);
     checkPrecondition(current, precondition);
     fs.mkdirSync(path.dirname(target), { recursive: true });
@@ -171,12 +194,15 @@ export class FileSystemVfs {
   }
 
   async remove(vfsPath, precondition = {}) {
-    const target = this.#resolve(vfsPath, { allowMissing: false });
-    const current = await this.read(vfsPath);
-    checkPrecondition(current, precondition);
-    if (!target || !current) return { path: vfsPath, removed: false };
-    fs.rmSync(target);
-    return { path: vfsPath, removed: true, previous_hash: current.hash };
+    this.#resolve(vfsPath);
+    return this.#locked(vfsPath, async () => {
+      const target = this.#resolve(vfsPath, { allowMissing: false });
+      const current = await this.read(vfsPath);
+      checkPrecondition(current, precondition);
+      if (!target || !current) return { path: vfsPath, removed: false };
+      fs.rmSync(target);
+      return { path: vfsPath, removed: true, previous_hash: current.hash };
+    });
   }
 }
 

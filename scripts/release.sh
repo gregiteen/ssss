@@ -2,7 +2,9 @@
 # ============================================================
 # SSSS — Version Release Script
 #
-# Bumps the VERSION file and adds a stub in CHANGELOG.md
+# Bumps VERSION, package.json and package-lock.json, and turns the
+# CHANGELOG's [Unreleased] entries into a section for the new version
+# (a stub when [Unreleased] is empty).
 # ============================================================
 
 set -euo pipefail
@@ -20,16 +22,21 @@ if [[ ! "$NEW_VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+(-[0-9A-Za-z.-]+)?$ ]]; then
     exit 1
 fi
 
+cd "$(dirname "$0")/.."
+
 echo "$NEW_VERSION" > VERSION
+npm version "$NEW_VERSION" --no-git-tag-version --allow-same-version > /dev/null
 
-# Quick sed to insert new version at the top of the changelog
-sed -i.bak "/^## \[.*\]/i \\
-## [$NEW_VERSION] - $(date +%Y-%m-%d)\\
-### Added\\
-- \\
-\\
-" CHANGELOG.md
+node --input-type=module -e '
+import fs from "node:fs";
+const [version, date] = process.argv.slice(1);
+const text = fs.readFileSync("CHANGELOG.md", "utf8");
+if (text.includes(`## [${version}]`)) process.exit(0);
+const match = text.match(/^## \[Unreleased\]\n([\s\S]*?)(?=^## \[)/m);
+if (!match) { console.error("CHANGELOG.md has no ## [Unreleased] section followed by a release."); process.exit(1); }
+const entries = match[1].trim() || "### Added\n- ";
+const section = `## [Unreleased]\n\n## [${version}] - ${date}\n${entries}\n\n`;
+fs.writeFileSync("CHANGELOG.md", text.replace(match[0], section));
+' "$NEW_VERSION" "$(date +%Y-%m-%d)"
 
-rm -f CHANGELOG.md.bak
-
-echo "✅ Bumped version to $NEW_VERSION"
+echo "✅ Bumped version to $NEW_VERSION (VERSION, package.json, package-lock.json, CHANGELOG.md)"

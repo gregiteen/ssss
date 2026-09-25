@@ -2,6 +2,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import crypto from 'node:crypto';
+import { withFileLock } from './file-lock.mjs';
 
 function validateLeaseInput(value) {
   for (const field of ['workspace_id', 'target', 'principal_id', 'operation_id']) {
@@ -56,9 +57,15 @@ export class FileLeaseStore {
     fs.mkdirSync(root, { recursive: true });
     this.root = fs.realpathSync(root);
     this.clock = options.clock || (() => Date.now());
+    this.lockOptions = options.lock || {};
   }
   #file(workspaceId, target) {
     return leaseStatePath(this.root, workspaceId, target);
+  }
+  // Mutations of one lease serialize on a lock so "at most one active lease"
+  // holds across processes.
+  #locked(input, fn) {
+    return withFileLock(`${this.#file(input.workspace_id, input.target)}.lock`, fn, this.lockOptions);
   }
   #load(workspaceId, target) {
     const file = this.#file(workspaceId, target);
@@ -78,11 +85,13 @@ export class FileLeaseStore {
   }
   async acquire(input, ttlMs = 30_000) {
     validateLeaseInput(input);
-    const existing = this.#load(input.workspace_id, input.target);
-    if (existing && existing.expires_at > this.clock()) throw new Error('Lease conflict.');
-    const lease = { ...input, lease_id: input.lease_id || crypto.randomUUID(), issued_at: this.clock(), expires_at: this.clock() + ttlMs };
-    this.#write(lease);
-    return { ...lease };
+    return this.#locked(input, () => {
+      const existing = this.#load(input.workspace_id, input.target);
+      if (existing && existing.expires_at > this.clock()) throw new Error('Lease conflict.');
+      const lease = { ...input, lease_id: input.lease_id || crypto.randomUUID(), issued_at: this.clock(), expires_at: this.clock() + ttlMs };
+      this.#write(lease);
+      return { ...lease };
+    });
   }
   async verify(input) {
     const lease = this.#load(input.workspace_id, input.target);
@@ -94,17 +103,21 @@ export class FileLeaseStore {
     return { valid: true, lease };
   }
   async renew(input, ttlMs = 30_000) {
-    const verified = await this.verify(input);
-    if (!verified.valid) throw new Error(verified.reason);
-    verified.lease.expires_at = this.clock() + ttlMs;
-    this.#write(verified.lease);
-    return verified.lease;
+    return this.#locked(input, async () => {
+      const verified = await this.verify(input);
+      if (!verified.valid) throw new Error(verified.reason);
+      verified.lease.expires_at = this.clock() + ttlMs;
+      this.#write(verified.lease);
+      return verified.lease;
+    });
   }
   async release(input) {
-    const verified = await this.verify(input);
-    if (!verified.valid) throw new Error(verified.reason);
-    fs.rmSync(this.#file(input.workspace_id, input.target), { force: true });
-    return { released: true, lease_id: input.lease_id };
+    return this.#locked(input, async () => {
+      const verified = await this.verify(input);
+      if (!verified.valid) throw new Error(verified.reason);
+      fs.rmSync(this.#file(input.workspace_id, input.target), { force: true });
+      return { released: true, lease_id: input.lease_id };
+    });
   }
 }
 

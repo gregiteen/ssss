@@ -1,5 +1,5 @@
 import fs from 'node:fs';
-import { execFileSync } from 'node:child_process';
+import { execFileSync, spawn, spawnSync } from 'node:child_process';
 import os from 'node:os';
 import path from 'node:path';
 import { definePrimitive, definitionsToExtensionRegistry } from '../src/primitive.mjs';
@@ -25,7 +25,7 @@ import { createKernel } from '../src/kernel.mjs';
 import { UiRegistry, actionToEnvelope, createDeterministicUi, planUi, validateUiManifest } from '../src/ui.mjs';
 import { createCommandHandler, createDomainCommand } from '../src/http.mjs';
 import { detectDirectWrites } from '../src/guard.mjs';
-import { MemoryLeaseStore, FileLeaseStore, runLeaseContract } from '../src/leases.mjs';
+import { MemoryLeaseStore, FileLeaseStore, leaseStatePath, runLeaseContract } from '../src/leases.mjs';
 import { MemoryIdempotencyStore, FileIdempotencyStore, runIdempotencyContract } from '../src/idempotency.mjs';
 import { createCapabilityAuthorizer } from '../src/authorization.mjs';
 import { validateVerifiedPrincipal } from '../src/authorization.mjs';
@@ -40,14 +40,122 @@ async function replayed(store, options) {
   return items;
 }
 
-// Counts bytes JsonlEventStore reads from disk, to prove appends do not re-read the log.
-async function bytesReadDuring(fn) {
-  const { readSync, readFileSync } = fs;
+// Counts bytes read from `file` during `fn`, to prove appends do not re-read the log.
+async function bytesReadFrom(file, fn) {
+  const original = { openSync: fs.openSync, closeSync: fs.closeSync, readSync: fs.readSync, readFileSync: fs.readFileSync };
+  const fds = new Set();
   let bytes = 0;
-  fs.readSync = (...args) => { const read = readSync(...args); bytes += read; return read; };
-  fs.readFileSync = (...args) => { const out = readFileSync(...args); bytes += Buffer.byteLength(out); return out; };
-  try { await fn(); } finally { fs.readSync = readSync; fs.readFileSync = readFileSync; }
+  fs.openSync = (target, ...rest) => { const fd = original.openSync(target, ...rest); if (target === file) fds.add(fd); return fd; };
+  fs.closeSync = (fd) => { fds.delete(fd); return original.closeSync(fd); };
+  fs.readSync = (fd, ...rest) => { const read = original.readSync(fd, ...rest); if (fds.has(fd)) bytes += read; return read; };
+  fs.readFileSync = (target, ...rest) => {
+    const out = original.readFileSync(target, ...rest);
+    if (target === file || fds.has(target)) bytes += Buffer.byteLength(out);
+    return out;
+  };
+  try { await fn(); } finally { Object.assign(fs, original); }
   return bytes;
+}
+
+// Runs `body` in `count` child processes released on one shared deadline, so
+// their check-then-write sections overlap. Each resolves to { ok, racer, error }.
+function raceProcesses(count, imports, body) {
+  const startAt = Date.now() + 1000;
+  const code = [
+    ...Object.entries(imports).map(([name, file]) => `import { ${name} } from ${JSON.stringify(new URL(file, import.meta.url).href)};`),
+    'const racer = Number(process.env.SSSS_RACER);',
+    `while (Date.now() < ${startAt});`,
+    `try { ${body}; console.log(JSON.stringify({ ok: true, racer })); }`,
+    'catch (error) { console.log(JSON.stringify({ ok: false, racer, error: error.message })); }',
+  ].join('\n');
+  return Promise.all(Array.from({ length: count }, (_, racer) => new Promise((resolve) => {
+    const child = spawn(process.execPath, ['--input-type=module', '-e', code], { env: { ...process.env, SSSS_RACER: String(racer) } });
+    let out = '';
+    let err = '';
+    child.stdout.on('data', (chunk) => { out += chunk; });
+    child.stderr.on('data', (chunk) => { err += chunk; });
+    child.on('close', () => {
+      try { resolve(JSON.parse(out.trim().split('\n').pop())); }
+      catch { resolve({ ok: false, racer, error: `no result: ${err || out}` }); }
+    });
+  })));
+}
+
+const winners = (results) => results.filter((result) => result.ok);
+const describe = (results) => JSON.stringify(results.map(({ ok, racer, error }) => (ok ? racer : `${racer}:${error}`)));
+
+async function checkFileAdapterRaces(root, principal, check) {
+  const racers = 6;
+  const eventsRoot = path.join(root, 'events');
+  const event = createCanonicalEvent({ workspace_id: 'acme', action: 'event', subject: 'events/race.md', operation_id: 'race', idempotency_key: 'race', principal });
+  const appends = await raceProcesses(racers, { JsonlEventStore: '../src/events.mjs' },
+    `await new JsonlEventStore(${JSON.stringify(eventsRoot)}).append(${JSON.stringify(event)})`);
+  const lines = fs.readFileSync(path.join(eventsRoot, 'acme.jsonl'), 'utf8').split('\n').filter(Boolean);
+  check('jsonl event store lets one of several processes append the same event_id', winners(appends).length === 1 && lines.length === 1, describe(appends));
+
+  const vfsRoot = path.join(root, 'vfs');
+  const creates = await raceProcesses(racers, { FileSystemVfs: '../src/vfs.mjs' },
+    `await new FileSystemVfs(${JSON.stringify(vfsRoot)}).writeAtomic('race/create.md', 'racer-' + racer, { ifAbsent: true })`);
+  const created = fs.readFileSync(path.join(vfsRoot, 'race', 'create.md'), 'utf8');
+  check('filesystem VFS lets one of several processes create the same path',
+    winners(creates).length === 1 && created === `racer-${winners(creates)[0]?.racer}`, describe(creates));
+  const base = await new FileSystemVfs(vfsRoot).writeAtomic('race/cas.md', 'base', { ifAbsent: true });
+  const swaps = await raceProcesses(racers, { FileSystemVfs: '../src/vfs.mjs' },
+    `await new FileSystemVfs(${JSON.stringify(vfsRoot)}).writeAtomic('race/cas.md', 'racer-' + racer, { version: ${JSON.stringify(base.version)} })`);
+  const swapped = fs.readFileSync(path.join(vfsRoot, 'race', 'cas.md'), 'utf8');
+  check('filesystem VFS lets one of several processes compare-and-swap the same version',
+    winners(swaps).length === 1 && swapped === `racer-${winners(swaps)[0]?.racer}`, describe(swaps));
+
+  const leaseRoot = path.join(root, 'leases');
+  const leases = await raceProcesses(racers, { FileLeaseStore: '../src/leases.mjs' },
+    `await new FileLeaseStore(${JSON.stringify(leaseRoot)}).acquire({ workspace_id: 'acme', target: 'race.md', principal_id: 'p' + racer, operation_id: 'o' + racer }, 60000)`);
+  const held = JSON.parse(fs.readFileSync(leaseStatePath(fs.realpathSync(leaseRoot), 'acme', 'race.md'), 'utf8'));
+  check('filesystem lease store grants one of several processes the same lease',
+    winners(leases).length === 1 && held.principal_id === `p${winners(leases)[0]?.racer}`, describe(leases));
+
+  const idempotencyRoot = path.join(root, 'idempotency');
+  const puts = await raceProcesses(racers, { FileIdempotencyStore: '../src/idempotency.mjs' },
+    `await new FileIdempotencyStore(${JSON.stringify(idempotencyRoot)}).put('acme', 'race', { request_hash: 'racer-' + racer })`);
+  const stored = await new FileIdempotencyStore(idempotencyRoot).get('acme', 'race');
+  check('filesystem idempotency store accepts one of several processes putting the same key',
+    winners(puts).length === 1 && stored?.request_hash === `racer-${winners(puts)[0]?.racer}`, describe(puts));
+}
+
+async function checkFileLocks(root, principal, check) {
+  const make = (id) => createCanonicalEvent({ workspace_id: 'acme', action: 'event', subject: 'events/lock.md', operation_id: id, idempotency_key: id, principal });
+  const lock = path.join(root, 'acme.jsonl.lock');
+  const holder = (fields) => fs.writeFileSync(lock, JSON.stringify({ token: 'other', host: os.hostname(), ...fields }));
+  const store = new JsonlEventStore(root, { lock: { timeoutMs: 500, staleMs: 60_000 } });
+
+  holder({ pid: process.pid });
+  const started = Date.now();
+  check('file locks make a writer wait for a live holder and then time out',
+    await rejects(store.append(make('lock-live')), /Timed out waiting for lock/) && Date.now() - started >= 450 && fs.existsSync(lock));
+  const exited = spawnSync(process.execPath, ['-e', '']).pid;
+  holder({ pid: exited });
+  await store.append(make('lock-dead'));
+  check('file locks break a lock whose holder process has exited', !fs.existsSync(lock));
+  holder({ pid: process.pid, host: 'another-host' });
+  const past = new Date(Date.now() - 120_000);
+  fs.utimesSync(lock, past, past);
+  await new JsonlEventStore(root, { lock: { timeoutMs: 500, staleMs: 30_000 } }).append(make('lock-stale'));
+  check('file locks break a lock older than the stale threshold', !fs.existsSync(lock));
+  const decoy = path.join(root, 'decoy.txt');
+  fs.writeFileSync(decoy, 'untouched');
+  fs.symlinkSync(decoy, lock);
+  check('file locks refuse a symlinked lock file',
+    await rejects(store.append(make('lock-symlink')), /not a regular file/) && fs.readFileSync(decoy, 'utf8') === 'untouched');
+  fs.rmSync(lock);
+
+  const vfs = new FileSystemVfs(path.join(root, 'vfs'));
+  await vfs.writeAtomic('docs/one.md', 'one', { ifAbsent: true });
+  fs.writeFileSync(path.join(vfs.root, '.ssss-locks', 'leftover.lock'), '{}');
+  const listed = [];
+  for await (const entry of vfs.list()) listed.push(entry.path);
+  check('filesystem VFS reserves its lock directory',
+    await rejects(vfs.writeAtomic('.ssss-locks/forged.lock', 'x'), /reserved/)
+    && await rejects(vfs.writeAtomic('.SSSS-Locks/forged.lock', 'x'), /reserved/)
+    && JSON.stringify(listed) === JSON.stringify(['docs/one.md']));
 }
 
 async function checkJsonlEventStoreIndex(root, principal, check) {
@@ -56,9 +164,9 @@ async function checkJsonlEventStoreIndex(root, principal, check) {
     workspace_id: workspace, action: 'event', subject: 'events/indexed.md',
     operation_id: `indexed-${++seq}`, idempotency_key: `indexed-${seq}`, principal,
   });
-  const log = path.join(root, 'acme.jsonl');
   const first = new JsonlEventStore(root);
   const second = new JsonlEventStore(root);
+  const log = path.join(first.root, 'acme.jsonl');
   const appended = [];
   const add = async (store, event) => { await store.append(event); appended.push(event.event_id); return event; };
 
@@ -78,10 +186,10 @@ async function checkJsonlEventStoreIndex(root, principal, check) {
 
   const seeded = fs.statSync(log).size;
   const fresh = new JsonlEventStore(root);
-  const batchBytes = await bytesReadDuring(async () => { for (let i = 0; i < 200; i++) await add(fresh, make()); });
+  const batchBytes = await bytesReadFrom(log, async () => { for (let i = 0; i < 200; i++) await add(fresh, make()); });
   check('jsonl event store reads the log once for many appends from one instance', batchBytes === seeded, `read ${batchBytes} bytes; log was ${seeded}`);
   await add(second, make());
-  const revalidateBytes = await bytesReadDuring(() => add(fresh, make()));
+  const revalidateBytes = await bytesReadFrom(log, () => add(fresh, make()));
   check('jsonl event store rebuilds its index after another writer appends', revalidateBytes > seeded);
 
   const other = [];
@@ -277,6 +385,8 @@ export async function runKernel09Conformance() {
       check(`${name} event store is append-only and replayable`, duplicate && replayed === 1);
     }
     await checkJsonlEventStoreIndex(path.join(temp, 'events-index'), principal, check);
+    await checkFileAdapterRaces(path.join(temp, 'races'), principal, check);
+    await checkFileLocks(path.join(temp, 'locks'), principal, check);
     const denied = await kernel.execute({ type: 'patch', workspace_id: 'acme', idempotency_key: 'denied', path: 'bookings/one.md', patches: { status: 'pending' } }, {
       principal: { ...principal, id: 'outsider', workspaceIds: [], capabilities: ['*:*'] },
     });

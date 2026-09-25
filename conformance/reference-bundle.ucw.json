@@ -106,7 +106,7 @@
     "file_count": 14,
     "provenance": {
       "content_hash": "sha256:7febd673938a3dc04c068e0bf08097a9783c09e612606d2df9a4db8dcb8907f5",
-      "exporter": "@gregiteen/ssss-cli@0.9.1"
+      "exporter": "@gregiteen/ssss-cli@0.9.2"
     }
   },
   "files": [
