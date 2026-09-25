@@ -15,6 +15,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - The reference frontmatter parser handles the documented block-scalar subset,
   and capability and legacy-role checks match the v0.9 authorization contract.
 
+### Behavior changes hosts should check
+- An `operation` can no longer replace an existing append-type document
+  (`conversation`, `run`). This now fails with `validation_failed`, per spec §5.3.
+  Append with a `patch` carrying `__body__` instead.
+- Registry `references` are enforced on every kernel write. Targets are read
+  through the kernel's VFS unless the host passes its own `resolveReference`.
+  Before this release, a write skipped the check when no resolver was given.
+- A request with no principal fails as `unauthorized` before the kernel reads
+  storage. It no longer receives `not_found` or validation details.
+- Double-quoted frontmatter strings now decode their escapes (`"a\"b"` becomes
+  `a"b`), matching YAML. Values that relied on literal backslashes inside double
+  quotes will change when parsed. An invalid escape such as `"C:\path"` is still
+  read literally.
+- Trailing-`*` capabilities are prefix-scoped: `ssss:assistant:*` now grants
+  every action on assistants, where before it granted nothing.
+
 ### Changed
 - Aligned the v0.9 specification, conformance fixture statuses, and reference
   implementation. The in-process runner checks expected HTTP statuses, and
