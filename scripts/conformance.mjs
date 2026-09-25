@@ -18,6 +18,7 @@ import crypto from 'node:crypto';
 import { execFileSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import { createEngine } from '../src/engine.mjs';
+import { statusForResponse } from '../src/http.mjs';
 import {
   DEFAULT_EXPORTER,
   contentHash,
@@ -38,6 +39,7 @@ import {
 } from '../src/semantic.mjs';
 import { auditRegistryFieldUsage } from './audit-registry-field-usage.mjs';
 import { validateSkills } from './validate-skills.mjs';
+import { auditSpecExamples } from './audit-spec-examples.mjs';
 import { runKernel09Conformance } from './conformance-09.mjs';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -175,12 +177,16 @@ async function runAgainstEngine(doc) {
       const wantType = want.validation && want.validation.type;
       const okType = wantType == null || (res.validation && res.validation.type === wantType);
       const okValid = !want.validation || want.validation.valid == null || res.validation.valid === want.validation.valid;
-      if (okSuccess && okType && okValid) { pass++; console.log(`  ✅ ${f.id} — ${f.name}`); }
+      // The reference transport's status must match the fixture's canonical code (§6.5).
+      const gotStatus = statusForResponse(res);
+      const okStatus = f.expected_http_status == null || gotStatus === f.expected_http_status;
+      if (okSuccess && okType && okValid && okStatus) { pass++; console.log(`  ✅ ${f.id} — ${f.name}`); }
       else {
         fail++;
         console.log(`  ❌ ${f.id} — ${f.name}`);
         console.log(`       want success=${want.success} valid=${want.validation?.valid} type=${wantType}`);
         console.log(`       got  success=${res.success} valid=${res.validation?.valid} type=${res.validation?.type} errors=${JSON.stringify(res.validation?.errors)}`);
+        if (!okStatus) console.log(`       want status=${f.expected_http_status} got status=${gotStatus} code=${res.error?.code}`);
       }
     }
   } finally {
@@ -903,6 +909,14 @@ async function main() {
     process.exit(1);
   }
   console.log('✅ Registry/engine parity: every enforcement-relevant registry key is referenced in src/engine.mjs.');
+
+  const specProblems = auditSpecExamples();
+  if (specProblems.length) {
+    console.error('❌ Spec/implementation parity audit failed:');
+    for (const p of specProblems) console.error(`   • ${p}`);
+    process.exit(1);
+  }
+  console.log('✅ Spec parity: every spec example validates and the spec tables match the registry and error codes.');
 
   const skillProblems = validateSkills();
   if (skillProblems.length) {

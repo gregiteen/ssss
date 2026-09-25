@@ -28,9 +28,8 @@ This is a **repo-specific overlay**, not a standalone system. The universal 4-fi
 mechanics — `docs/projects/<kanban-state>/<PROJECT_PREFIX>/` folder layout, the
 `PROJECT_PREFIX` naming rule (ALL CAPS WITH UNDERSCORES, unique, descriptive), the
 "no ephemeral planning artifacts" invariant, and standard tracker checkbox syntax — are
-defined once in the global `project-management` skill; read that first. This file's only
-delta is the **OKF-interoperable document header** below, which this repo deliberately
-layers on top of the universal header as part of dogfooding its own spec.
+defined once in the global `project-management` skill; read that first. This overlay
+adds SSSS readiness, severity, and document-header rules.
 
 ### Document Header Convention
 
@@ -62,6 +61,26 @@ OKF's recommended fields (`title`, `description`, `tags`, `timestamp`) alongside
 `type` discriminator. This is a voluntary interoperability goal, not a compliance claim —
 see the `okf` skill for the actual relationship between the two formats.
 
+## Readiness and severity
+
+A project is ready to close when the changed registry, normative spec, reference
+engine, and fixtures agree; the repo's full code-quality tier and relevant
+negative/replay cases pass; and the tracker verification phase is complete.
+Use [the core workflow](references/core-workflow.md) for a concrete walkthrough.
+Run `node skills/ssss-project-management/scripts/check-project-docs.mjs <PROJECT_PREFIX>`
+before moving the folder to `completed/`.
+
+- P0: Canonical Markdown or event-log loss, authorization bypass, or an unsafe published contract.
+- P1: Conformance regression, broken CLI core workflow, or registry/spec mismatch.
+- P2: Secondary adapter defect or unclear prose with a working reference path.
+- P3: Editorial polish without contract ambiguity.
+
+Review `registry/core.json`, `docs/ssss-spec.md`, the relevant `src/` module,
+and `conformance/fixtures.json` together. Markdown and append-only events are
+canonical; projections are rebuildable. Keep the package dependency-free Node
+ESM, and keep host-specific policy out of the core registry. The repository is
+`gregiteen/ssss`; `main` is trunk.
+
 ## Development Workflow
 
 When starting work on a new feature or project:
@@ -76,4 +95,4 @@ When starting work on a new feature or project:
 ## References
 
 - Global project-management skill (universal Kanban mechanics): `project-management`
-- SSSS Spec (current draft, v0.6): `docs/ssss-spec.md`
+- SSSS Spec (v0.9): `docs/ssss-spec.md`

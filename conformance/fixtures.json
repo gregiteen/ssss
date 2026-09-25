@@ -1,6 +1,6 @@
 {
   "$schema": "https://ssss.dev/conformance/v1",
-  "version": "1.5.0",
+  "version": "1.6.0",
   "description": "Canonical SSSS Operation Contract conformance fixtures. These define the canonical request/response shapes for the Operation Contract (spec §6) and are the shared test contract every SSSS implementation MUST pass. A host is conformant only if, for every fixture, it produces the expected response and status code (spec §12).",
   "spec_url": "../docs/ssss-spec.md",
   "operation_types": {
@@ -159,6 +159,9 @@
         "idempotency_key": "22222222-2222-2222-2222-222222222222",
         "path": "assistants/bad-bot/ASSISTANT.md",
         "workspace_id": "TEST_WORKSPACE_ID",
+        "actor": {
+          "role": "system"
+        },
         "content": "---\ntype: assistant\ntitle: \"Create Assistant — Missing Required Name Field\"\ntimestamp: \"2026-07-02T00:00:00Z\"\ndescription: \"Missing the name field.\"\n---\n\n## Instructions\n\nBroken bot.",
         "intent": "Conformance fixture: missing required name field"
       },
@@ -302,7 +305,7 @@
           ]
         }
       },
-      "expected_http_status": 422
+      "expected_http_status": 400
     },
     {
       "id": "fixture-008",
@@ -413,7 +416,7 @@
           ]
         }
       },
-      "expected_http_status": 422
+      "expected_http_status": 401
     },
     {
       "id": "fixture-012",
@@ -469,9 +472,9 @@
             "Missing required field 'object' for type 'memory' when schema_version==2 in memory/incomplete-schema2.md.",
             "Missing required field 'sentiment_polarity' for type 'memory' when schema_version==2 in memory/incomplete-schema2.md."
           ]
-        },
-        "expected_http_status": 422
-      }
+        }
+      },
+      "expected_http_status": 422
     },
     {
       "id": "fixture-014",
@@ -611,7 +614,7 @@
           ]
         }
       },
-      "expected_http_status": 422
+      "expected_http_status": 403
     },
     {
       "id": "fixture-019",
@@ -754,21 +757,27 @@
         "idempotency_key": "35353535-3535-3535-3535-353535353535",
         "path": "rules/translatable-refund-rule.md",
         "workspace_id": "TEST_WORKSPACE_ID",
-        "actor": { "role": "system" },
+        "actor": {
+          "role": "system"
+        },
         "content": "---\ntype: rule\ntitle: \"Política de reembolsos\"\ndescription: \"Explica cuándo están disponibles los reembolsos.\"\ntimestamp: \"2026-07-10T00:00:00Z\"\nname: refund-policy\nlanguage: es\n---\nLos reembolsos están disponibles antes de la fecha límite.",
         "intent": "Conformance fixture: create a non-English structural source"
       },
       "expected_response": {
         "success": true,
         "type": "operation",
-        "validation": { "valid": true, "type": "rule", "errors": [] }
+        "validation": {
+          "valid": true,
+          "type": "rule",
+          "errors": []
+        }
       }
     }
   ],
   "error_codes": {
     "400": "invalid_request — Invalid parameters, directory traversal, malformed request envelope, or path template mismatch",
-    "401": "unauthorized — Missing or invalid auth token / session",
-    "403": "forbidden — Access denied (workspace membership check failed or system scope isolation violation)",
+    "401": "unauthorized — Missing or invalid verified principal (no authenticated identity reached the kernel)",
+    "403": "forbidden — The verified principal is not scoped to the workspace or lacks a required capability",
     "404": "not_found — The requested file to patch or delete does not exist",
     "409": "lease_conflict, version_conflict, or idempotency_conflict — Lease locked, out-of-date expected version, or idempotency key replay payload mismatch",
     "422": "validation_failed — Primitive registry/conformance validation errors (contains validation.errors and repair in body)",
@@ -781,5 +790,5 @@
   ],
   "maintained_by": "SSSS standard (canonical: this repo)",
   "provenance": "Seeded from the festech.live reference implementation, which authored the original shared contract; canonicalized here as the vendor-neutral source of truth.",
-  "last_updated": "2026-07-10"
+  "last_updated": "2026-09-24"
 }

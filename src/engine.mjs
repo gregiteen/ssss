@@ -10,7 +10,7 @@ import { createKernel } from './kernel.mjs';
 import { FileSystemVfs } from './vfs.mjs';
 import { JsonlEventStore } from './events.mjs';
 import { createValidator } from './validator.mjs';
-import { loadRegistries } from './registry.mjs';
+import { loadRegistries, resolvePrimitiveDefinition } from './registry.mjs';
 import { parseDocument } from './frontmatter.mjs';
 
 export function resolveContainedPath(vaultRoot, vfsPath) {
@@ -25,7 +25,26 @@ export function resolveContainedPath(vaultRoot, vfsPath) {
   return target;
 }
 
-function legacyPrincipal(envelope, vaultRoot, callOptions = {}) {
+/**
+ * Translate pre-0.9 role permissions into 0.9 capabilities (spec §6.6). A role
+ * could grant `write:<type>`, `*:<type>`, `write:*`, or `*:*`; the kernel asks
+ * for `<qualified_type>:<action>`. Unknown types and `read:*` pass through
+ * unchanged, which grants nothing extra.
+ */
+export function legacyRoleCapabilities(permissions, registrySet) {
+  const capabilities = new Set();
+  for (const permission of Array.isArray(permissions) ? permissions : []) {
+    if (typeof permission !== 'string') continue;
+    capabilities.add(permission);
+    if (permission === 'write:*' || permission === '*:*') { capabilities.add('*:*'); continue; }
+    const match = permission.match(/^(write|\*):(.+)$/);
+    const definition = match && resolvePrimitiveDefinition(registrySet, match[2]);
+    if (definition?.qualified_type) capabilities.add(`${definition.qualified_type}:*`);
+  }
+  return [...capabilities];
+}
+
+function legacyPrincipal(envelope, vaultRoot, callOptions = {}, registrySet = null) {
   if (callOptions.principal) return callOptions.principal;
   const role = envelope.actor?.role;
   if (!role) return null;
@@ -36,7 +55,7 @@ function legacyPrincipal(envelope, vaultRoot, callOptions = {}) {
   else if (/^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$/.test(role)) {
     const roleFile = path.join(vaultRoot, 'roles', role, 'ROLE.md');
     if (fs.existsSync(roleFile)) {
-      try { capabilities = parseDocument(fs.readFileSync(roleFile, 'utf8')).data.permissions || []; }
+      try { capabilities = legacyRoleCapabilities(parseDocument(fs.readFileSync(roleFile, 'utf8')).data.permissions, registrySet); }
       catch { capabilities = []; }
     }
   }
@@ -101,7 +120,7 @@ export function createEngine(options = {}) {
     async processOperation(envelope, vaultRoot, callOptions = {}) {
       const principal = options.verifyPrincipal
         ? await options.verifyPrincipal(envelope, callOptions)
-        : legacyPrincipal(envelope, vaultRoot, callOptions);
+        : legacyPrincipal(envelope, vaultRoot, callOptions, registrySet);
       const response = await bound(vaultRoot, callOptions.eventLogDir).execute(envelope, {
         ...callOptions,
         principal,

@@ -21,8 +21,14 @@ export interface SsssCommand {
   dry_run?: boolean;
 }
 
+export type SsssErrorCode =
+  | 'invalid_request' | 'unauthorized' | 'forbidden' | 'not_found' | 'lease_conflict'
+  | 'version_conflict' | 'idempotency_conflict' | 'validation_failed' | 'internal_error';
+
 export interface SsssResponse {
   success: boolean;
+  /** Present exactly when success is false (spec §6.5). */
+  error?: { code: SsssErrorCode; message: string };
   type: SsssCommandType | null;
   operation_id: string;
   path: string;
@@ -40,6 +46,7 @@ export interface SsssKernel {
   validator: unknown;
 }
 
+export const ERROR_CODES: readonly SsssErrorCode[];
 export function canonicalRequestHash(command: SsssCommand, principal: VerifiedPrincipal): string;
 export class MemoryIdempotencyStore {
   get(workspaceId: string, idempotencyKey: string): Promise<unknown>;

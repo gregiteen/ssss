@@ -11,7 +11,7 @@
   },
   {
     "name": "four-documents-present",
-    "assertion": "A project folder contains exactly the 4 canonical documents (PRD, ARCHITECTURE, DEVELOPMENT_PLAN, PROJECT_TRACKER), each named <PREFIX>_<SUFFIX>.md",
+    "assertion": "A project folder contains the 4 canonical documents (PRD, ARCHITECTURE, DEVELOPMENT_PLAN, PROJECT_TRACKER), each named <PREFIX>_<SUFFIX>.md; supplementary audit documents are allowed",
     "severity": "error"
   },
   {
@@ -23,5 +23,10 @@
     "name": "no-ephemeral-planning-artifacts",
     "assertion": "No implementation_plan.md, task.md, or walkthrough.md file exists outside docs/projects/ for tracked project work",
     "severity": "warning"
+  },
+  {
+    "name": "verified-readiness",
+    "assertion": "The full code-quality tier and relevant negative and replay paths pass on the final tree before archival",
+    "severity": "error"
   }
 ]
