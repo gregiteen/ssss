@@ -121,7 +121,9 @@ export async function run(argv) {
     }
     if (withTR) {
       log('\nInitializing Total Recall memory vault…');
-      tryRun('npx', ['-p', 'total-recall-brain', 'total-recall', 'init'], root);
+      if (!tryRun('npx', ['-p', 'total-recall-brain', 'total-recall', 'init', '--project'], root)) {
+        die('scaffolded and installed, but project Total Recall init failed. Run `npx total-recall init --project` in the new directory.', 1);
+      }
     }
     log('\nVerifying the toolchain (npm test)…');
     if (!tryRun('npm', ['test'], root)) {
@@ -135,7 +137,7 @@ export async function run(argv) {
   console.log(`  cd ${path.relative(process.cwd(), root) || '.'}`);
   if (!flags.install) {
     console.log('  npm install');
-    if (withTR) console.log('  npx -p total-recall-brain total-recall init   # seed the memory vault');
+    if (withTR) console.log('  npx -p total-recall-brain total-recall init --project   # seed this project memory vault');
   }
   console.log('  npm test                       # replays the canonical fixtures + round-trips the vault');
   console.log('  npx ssss export vault --profile sale --out dist/bundle.ucw.json');
@@ -226,7 +228,7 @@ ${withTR ? `
 This project is also wired for [Total Recall](https://github.com/gregiteen/total-recall):
 
 \`\`\`bash
-npx -p total-recall-brain total-recall init      # seed .agent/skills/total-recall
+npx -p total-recall-brain total-recall init --project   # seed this project memory vault
 npx total-recall remember fact "..."             # persist a fact
 npx total-recall recall "..."                    # semantic recall
 \`\`\`

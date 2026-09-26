@@ -728,6 +728,42 @@ async function runCliSmokeConformance() {
       typeof lockOut.integrity === 'string' && lockOut.integrity.startsWith('sha256:'),
       JSON.stringify(lockOut));
 
+    const composed = JSON.parse(execFileSync('node', [
+      path.join(__dirname, 'ssss.mjs'),
+      'registry', 'compose',
+      '--extension', extensionPath,
+    ], { encoding: 'utf8' }));
+    check('ssss registry compose includes core and extension primitives',
+      !!composed.primitives.rule && composed.aliases['ssss:rule'] === 'rule' &&
+      composed.primitives[primitiveOut.primitive_id]?.registry === 'acme',
+      JSON.stringify(composed));
+
+    const fakeBin = path.join(tmp, 'bin');
+    const calls = path.join(tmp, 'install-calls.txt');
+    fs.mkdirSync(fakeBin);
+    for (const command of ['npm', 'npx']) {
+      const executable = path.join(fakeBin, command);
+      fs.writeFileSync(executable, '#!/bin/sh\nprintf "%s|%s|%s\\n" "$PWD" "$0" "$*" >> "$SSSS_TEST_CALLS"\n');
+      fs.chmodSync(executable, 0o755);
+    }
+    const trStarter = path.join(tmp, 'with-total-recall');
+    execFileSync('node', [path.join(__dirname, 'ssss.mjs'), 'new', trStarter,
+      '--with-total-recall', '--install', '--no-git'], {
+      stdio: 'ignore',
+      env: { ...process.env, PATH: `${fakeBin}${path.delimiter}${process.env.PATH}`, SSSS_TEST_CALLS: calls },
+    });
+    const installCalls = fs.readFileSync(calls, 'utf8').trim().split('\n');
+    const normalizedCalls = installCalls.map((line) => {
+      const [cwd, executable, args] = line.split('|');
+      return `${fs.realpathSync(cwd)}|${path.basename(executable)}|${args}`;
+    });
+    const realStarter = fs.realpathSync(trStarter);
+    check('ssss new initializes only the new project Total Recall brain',
+      normalizedCalls.some((line) => line === `${realStarter}|npx|-p total-recall-brain total-recall init --project`) &&
+      normalizedCalls.some((line) => line === `${realStarter}|npm|install --no-audit --no-fund`) &&
+      normalizedCalls.some((line) => line === `${realStarter}|npm|test`),
+      JSON.stringify(installCalls));
+
     const adapterOut = JSON.parse(execFileSync('node', [
       path.join(__dirname, 'ssss.mjs'),
       'adapter', 'conformance',
