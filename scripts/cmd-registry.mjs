@@ -6,7 +6,7 @@ import { parseArgs, die, wantsHelp } from './lib/cli.mjs';
 
 const HELP = 'Usage: ssss registry compose|lock|verify [--extension <file> ...] [--lock <file>] [--out <file>]';
 const read = (file) => JSON.parse(fs.readFileSync(path.resolve(file), 'utf8'));
-function serializable(set) { return { primitives: Object.fromEntries(set.primitives), aliases: Object.fromEntries(set.aliases), extension_versions: Object.fromEntries(set.extensionVersions) }; }
+function serializable(set) { return { primitives: Object.fromEntries(set.types), aliases: Object.fromEntries(set.aliases), extension_versions: Object.fromEntries(set.extensionVersions) }; }
 export async function run(argv) {
   if (wantsHelp(argv)) { console.log(HELP); return; }
   const verb = argv[0];

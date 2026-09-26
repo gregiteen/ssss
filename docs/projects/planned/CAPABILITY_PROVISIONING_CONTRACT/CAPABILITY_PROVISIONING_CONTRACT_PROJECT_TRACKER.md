@@ -27,8 +27,8 @@ Goal: Record what capability provisioning needs from SSSS, with evidence.
 
 Goal: Unblock Total Recall's composer work.
 
-- [ ] D1 `scripts/cmd-registry.mjs`: serialize `set.types`; CLI regression test for `registry compose` (S)
-- [ ] D7 `scripts/cmd-new.mjs`: `total-recall init --project` in the new dir; scaffold test (S)
+- [x] D1 `scripts/cmd-registry.mjs`: serialize `set.types`; CLI regression test for `registry compose` (S)
+- [x] D7 `scripts/cmd-new.mjs`: `total-recall init --project` in the new dir; scaffold test (S)
 
 ## ⏳ Phase 2: Spec decisions
 
@@ -82,3 +82,4 @@ Goal: Ship a contract Total Recall can depend on.
 ## Verification Log
 
 - 2026-09-25: Reproduced D1 with the installed CLI 0.9.6 (`ssss registry compose` → `undefined is not iterable`). `ssss new` scaffold succeeded in a temp dir. Read `src/bundle.mjs` `provisionBundle` (D2–D5), `scripts/cmd-new.mjs:124` + Total Recall `src/cli/init.mjs` (D7), `src/authorization.mjs` (G5), `src/http.mjs` (G3). `ssss adapter conformance`: 6/6 suites pass (vfs/lease/idempotency × memory/filesystem); no projection suite (G4). No code changed.
+- 2026-09-26: Fixed D1 and D7. CLI smoke checks now compose a generated extension and scaffold with stubbed install commands, proving `total-recall init --project` runs in the new directory. Full code-quality tier on the Mac mini passed both conformance checks with zero findings.
