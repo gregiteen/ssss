@@ -404,6 +404,29 @@ async function runOperationContractRegressionConformance() {
       patchRes.success === true && Array.isArray(patchedData.triggers) && patchedData.triggers[0]?.cron === '0 8 * * *',
       patched);
 
+    const codeRes = await engine.processOperation({
+      type: 'patch',
+      idempotency_key: 'leading-zero-patch',
+      workspace_id: 'ws-reg',
+      path: workflowPath,
+      actor: { role: 'system' },
+      patches: { zip: '07003', license: '00123', flag: 'true' },
+    }, vault);
+    await engine.processOperation({
+      type: 'patch',
+      idempotency_key: 'leading-zero-repatch',
+      workspace_id: 'ws-reg',
+      path: workflowPath,
+      actor: { role: 'system' },
+      patches: { description: 'A later, unrelated patch.' },
+    }, vault);
+    const codeText = fs.readFileSync(path.join(vault, workflowPath), 'utf8');
+    const codeData = parseDocument(codeText).data;
+    check('number-like strings (zip 07003, license 00123, "true") survive repeated patches',
+      codeRes.success === true && codeData.zip === '07003' && codeData.license === '00123'
+        && codeData.flag === 'true' && codeText.includes('zip: "07003"'),
+      codeText);
+
     const leaseTarget = 'rules/leased.md';
     const leasePathKey = crypto.createHash('sha256').update(leaseTarget).digest('hex');
     const leaseDir = path.join(leaseStore, 'ws-reg');

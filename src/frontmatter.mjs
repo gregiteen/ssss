@@ -36,7 +36,8 @@ function coerce(raw) {
   if (v === 'true') return true;
   if (v === 'false') return false;
   if (v === 'null' || v === '~') return null;
-  if (/^-?\d+$/.test(v)) return parseInt(v, 10);
+  // A leading zero (zip 07003, license 00123) marks a code, not a number.
+  if (/^-?(0|[1-9]\d*)$/.test(v)) return parseInt(v, 10);
   if (/^-?\d*\.\d+$/.test(v)) return parseFloat(v);
   if (v.startsWith('[') && v.endsWith(']')) {
     const inner = v.slice(1, -1).trim();
@@ -200,12 +201,18 @@ export function parseDocument(content) {
   return { data: parseFrontmatter(fm), body };
 }
 
+const LOOKS_TYPED =
+  /^(?:[-+]?\d+(?:\.\d*)?(?:[eE][-+]?\d+)?|[-+]?\.\d+|0[xXoObB][0-9a-fA-F_]+|true|false|yes|no|on|off|null|~|\.inf|\.nan)$/i;
+
 function serializeValue(v) {
   if (v === null) return 'null';
   if (typeof v === 'boolean' || typeof v === 'number') return String(v);
   if (Array.isArray(v)) return `[${v.map((x) => serializeValue(x)).join(', ')}]`;
   const s = String(v);
   if (s === '' || /[:#\[\]{}"'\\\n\r\t|>]/.test(s) || /^\s|\s$/.test(s)) return JSON.stringify(s);
+  // A string that would read back as a number, boolean or null stays quoted,
+  // so "07003" and "true" survive a round trip (here and in YAML 1.1 readers).
+  if (LOOKS_TYPED.test(s)) return JSON.stringify(s);
   return s;
 }
 

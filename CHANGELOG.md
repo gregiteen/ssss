@@ -7,6 +7,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.9.7] - 2026-09-27
+### Fixed
+- Frontmatter kept number-like strings as text only until the next patch. The
+  serializer wrote `"07003"` unquoted and the parser read any all-digit value
+  as an integer, so a zip code or license number with a leading zero lost it
+  (`07003` became `7003`) once any other field of the document was patched,
+  and YAML 1.1 readers such as PyYAML read the unquoted value as octal
+  (`07003` → 3587).
+
+### Behavior changes hosts should check
+- Strings that would read back as a number, boolean or null (`"07003"`,
+  `"00123"`, `"1.10"`, `"true"`, `"null"`) are now written double-quoted.
+- An unquoted scalar with a leading zero (`zip: 07003`) now parses as the
+  string `"07003"`, not an integer; plain integers (`0`, `42`, `-5`) are
+  unchanged. Documents already rewritten without the zero cannot be recovered
+  by the library.
+- New conformance check: number-like strings survive repeated patches.
+
 ## [0.9.6] - 2026-09-25
 ### Changed
 - The push skill describes this repo's real release path. `/push` is always a
