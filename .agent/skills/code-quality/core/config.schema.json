@@ -1,0 +1,83 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "code-quality repo configuration",
+  "description": "Repo-layer contract for the code-quality skill. Maintained with `total-recall skill config code-quality …`; config.json is its projection.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["version", "toolchain", "checks"],
+  "properties": {
+    "version": { "const": 3 },
+    "toolchain": { "type": "string", "minLength": 1, "description": "Primary toolchain label shown in reports (javascript, typescript, python, …)" },
+    "repoDescription": { "type": "string", "description": "What quality means in this repo" },
+    "repoRoot": { "type": "string", "description": "Override the repo root (default: three levels above the skill)" },
+    "globalLock": { "type": "boolean", "default": true, "description": "Take the machine-wide lock so only one check runs per host" },
+    "timeoutSeconds": { "type": "integer", "minimum": 1, "description": "Default per-check timeout" },
+    "memory": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": { "maxOldSpaceMb": { "type": "integer", "minimum": 256 } }
+    },
+    "lock": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": { "staleAfterMinutes": { "type": "integer", "minimum": 1 } }
+    },
+    "env": {
+      "type": "object",
+      "description": "Environment for every command check; ${REPO_ROOT} and ${env:NAME} expand",
+      "additionalProperties": { "type": "string" }
+    },
+    "sourceExtensions": {
+      "type": "array",
+      "items": { "type": "string", "pattern": "^\\.[A-Za-z0-9]+$" }
+    },
+    "checks": {
+      "type": "array",
+      "minItems": 1,
+      "x-collection": "gate",
+      "x-key": "id",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id"],
+        "properties": {
+          "id": { "type": "string", "pattern": "^[a-z0-9][a-z0-9_-]*$" },
+          "tier": { "type": "string", "enum": ["fast", "full", "remote"], "default": "fast" },
+          "kind": { "type": "string", "enum": ["command", "grep-forbid"] },
+          "description": { "type": "string" },
+          "cmd": {
+            "type": "array",
+            "minItems": 1,
+            "items": { "type": "string", "minLength": 1 },
+            "x-command": true
+          },
+          "cwd": { "type": "string" },
+          "env": { "type": "object", "additionalProperties": { "type": "string" } },
+          "parser": { "type": "string", "enum": ["tsc", "eslint-stylish", "eslint-compact", "biome", "flake8", "mypy", "black", "generic"] },
+          "timeoutSeconds": { "type": "integer", "minimum": 1 },
+          "remoteHint": { "type": "string" },
+          "extensions": { "type": "array", "items": { "type": "string", "pattern": "^\\.[A-Za-z0-9]+$" } },
+          "paths": { "type": "array", "items": { "type": "string" } },
+          "ignorePaths": { "type": "array", "items": { "type": "string" } },
+          "patterns": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["pattern"],
+              "properties": {
+                "pattern": { "type": "string", "minLength": 1 },
+                "flags": { "type": "string", "pattern": "^[dgimsuvy]*$" },
+                "code": { "type": "string" },
+                "message": { "type": "string" }
+              }
+            }
+          },
+          "scope": { "type": "string", "enum": ["all", "changed"] },
+          "baseline": { "type": "string" },
+          "fallbackViolationBaseline": { "type": "string" }
+        }
+      }
+    }
+  }
+}
