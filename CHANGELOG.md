@@ -7,6 +7,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.10.2] - 2026-09-28
+### Fixed
+- The 0.10.0 notes promised pointer fields for large-file assets, but the
+  `asset` registry entry never declared them. It now declares `storage_uri`
+  and `resource_ref`. An asset with `encoding: none` is a pointer: it must set
+  `storage_uri` and be marked `x_portability: resource_bound` (or
+  `tenant_private`). `resource_ref` must name a `resource` document. Template
+  and sale exports replace `storage_uri` with `REQUIREMENT` and keep `hash` and
+  `size_bytes`, so the buyer can check the file they bind.
+
+### Behavior changes hosts should check
+- An `asset` with `encoding: none` and no `storage_uri` or no
+  `x_portability: resource_bound|tenant_private` is now rejected.
+- An `asset`'s `x_portability` may only be `resource_bound` or `tenant_private`.
+- `resource_ref` on an `asset` must point at an existing `resource` document.
+- Template/sale bundles containing pointer assets now declare a
+  `asset_storage_uri` parameter and a `bind-asset` provisioning step.
+- New conformance section: asset pointers (§5.4 asset, §5.5).
+
 ## [0.10.1] - 2026-09-28
 ### Fixed
 - A required list field set to an empty list (`deferred_steps: []`) was
