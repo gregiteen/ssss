@@ -7,6 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.10.1] - 2026-09-28
+### Fixed
+- A required list field set to an empty list (`deferred_steps: []`) was
+  rejected as "Missing required field". Required means present: only an
+  absent, `null` or empty-string value is missing now. Hosts had to patch the
+  package to write valid documents with empty lists.
+
+### Behavior changes hosts should check
+- Documents with a required list field set to `[]` now validate.
+- New conformance checks: an empty list satisfies a required list field;
+  absent, `null` and empty-string values are still missing.
+
 ## [0.10.0] - 2026-09-28
 ### Added
 - **`asset` primitive**: Text-encoded files (Base64 for small binaries, UTF-8 for code/SVGs) and pointer metadata for large files (`resource_ref`, `storage_uri`, `hash`).

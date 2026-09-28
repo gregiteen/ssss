@@ -355,8 +355,9 @@ export function documentHash(content) {
 }
 
 function isEmpty(value) {
-  return value === undefined || value === null || value === '' ||
-    (Array.isArray(value) && value.length === 0);
+  // "Required" means present: an empty array (e.g. `deferred_steps: []`) is a
+  // valid value for a required list field, so it is not treated as missing.
+  return value === undefined || value === null || value === '';
 }
 
 /**
