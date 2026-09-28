@@ -103,6 +103,7 @@ export async function run(argv) {
   W(root, '.gitignore', 'node_modules/\ndist/\n*.ucw.json\n.DS_Store\n');
   W(root, 'README.md', readme(name, withTR));
   W(root, 'CLAUDE.md', claudeMd(name, withTR));
+  W(root, 'docs/design.md', designMd(name));
 
   // ── git + install (best-effort, flag-gated, no shell) ───────────────────
   const log = (m) => console.error(m);
@@ -261,4 +262,30 @@ ${withTR ? `
 - Persistent rules/decisions live in \`.agent/skills/total-recall\` via the
   \`npx total-recall remember\` / \`recall\` CLI. Save corrections and decisions there.
 ` : ''}`;
+}
+
+function designMd(name) {
+  return `# ${name} — System Architecture & Design
+
+> Technical design and architecture specification for ${name}.
+
+## Overview
+
+<High-level summary of the system and its primary goals.>
+
+## Component Architecture
+
+- **Vault Structure**: Typed Markdown documents under \`vault/\` serving as the source of truth.
+- **Workflows & Execution**: Automated procedures defined in \`vault/workflows/\` triggered by operational events.
+- **Capabilities & Resources**: Tools and external service integrations required for execution.
+
+## Data & Schema Contracts
+
+<Core entities, external dependencies, and integration interfaces.>
+
+## Open Decisions & Invariants
+
+- SSSS VFS is the single source of truth for application state.
+- Structural business logic is strictly decoupled from private tenant operational data.
+`;
 }

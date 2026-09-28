@@ -229,13 +229,18 @@ primitive — it implements the subset its product requires — but any primitiv
 |--------|--------|-------------|---------|
 | `memory` | knowledge | structural | A single unit of agent knowledge (rule, pattern, fact, preference). |
 | `skill` | capability | structural | A skill package manifest. |
+| `asset` | capability | structural | A text-encoded code, vector, or binary asset payload or pointer. |
+| `resource` | capability | resource_bound | An external infrastructure, cloud asset, domain, database, or API dependency. |
 | `rule` | governance | structural | A workspace-scoped behavior rule applied to assistants/agents. |
-| `security_role` | governance | structural | A security role definition for role-based access control (RBAC). |
+| `role` | governance | structural | A security role definition for role-based access control (RBAC). |
+| `security_role` | governance | structural | A security role definition for role-based access control (RBAC). Legacy alias of `role`. |
 | `task` | work | tenant_private | A unit of submitted work — one step or many. The universal work primitive. |
 | `assistant` | actor | structural | The definition of an AI assistant/persona. |
-| `workflow` | work | structural | A reusable **task template**: a defined procedure plus triggers. Firing a workflow submits a `task`. |
+| `workflow` | work | structural | A reusable **task template**: a defined procedure. Firing a workflow submits a `task`. |
+| `trigger` | work | structural | A standalone schedule or event-driven trigger that fires a workflow. |
 | `model` | catalog | structural | The definition of an inference model. |
-| `conversation` | transcript | tenant_private | An append-only chat transcript. |
+| `thread` | transcript | tenant_private | An append-only chat transcript. |
+| `conversation` | transcript | tenant_private | An append-only chat transcript. Legacy alias of `thread`. |
 | `run` | transcript | tenant_private | An append-only workflow execution record. |
 | `conflict` | meta | tenant_private | A record of two contradicting primitives, blocking promotion. |
 | `page` | capability | structural | A VFS-native sandboxed custom workspace page. |
@@ -344,6 +349,50 @@ timestamp: 2026-05-16T14:00:00Z
 ...
 ```
 
+#### `asset`
+
+A text-encoded asset payload: source code, vector graphics, or base64-encoded binary content, or pointer metadata for large files.
+
+REQUIRED: `type`, `name`, `mime_type`, `encoding` (`base64|utf-8|none`).
+
+```markdown
+---
+type: asset
+name: "logo-icon"
+title: "Brand Logo Icon"
+description: "A 1x1 pixel PNG icon encoded in base64."
+timestamp: 2026-05-16T14:00:00Z
+mime_type: "image/png"
+encoding: "base64"
+---
+
+iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==
+```
+
+#### `resource`
+
+An external infrastructure, cloud asset, domain, database, or API dependency bound to the workspace. Carries `portability: resource_bound`.
+
+REQUIRED: `type`, `name`, `kind`, `status` (`bound|unbound|pending|error`).
+
+```markdown
+---
+type: resource
+name: "Primary Database"
+title: "Primary Database"
+description: "Application production PostgreSQL database."
+timestamp: 2026-05-16T14:00:00Z
+kind: postgres
+status: bound
+binds:
+  host: "db.internal.net"
+  port: 5432
+  database: "app_prod"
+---
+
+Production PostgreSQL database connection.
+```
+
 #### `task`
 
 A unit of submitted work — the universal work primitive. A `task` MAY be ad-hoc or
@@ -445,6 +494,28 @@ isActive: true
 3. Send digest.
 ```
 
+#### `trigger`
+
+A standalone schedule or event-driven trigger that fires a task from a workflow template.
+
+REQUIRED: `type`, `name`, `source` (`cron|interval|webhook|event|file_change|condition|manual`), `status` (`active|paused|disabled`).
+
+```markdown
+---
+type: trigger
+name: "Daily Sync"
+title: "Daily Sync Trigger"
+description: "Fires the daily synchronization workflow at 08:00 UTC."
+timestamp: 2026-05-16T14:00:00Z
+source: cron
+status: active
+cron: "0 8 * * *"
+target_workflow: "workflows/sync.md"
+---
+
+Triggers daily synchronization.
+```
+
 #### `rule`
 
 A workspace-scoped behavior rule that constrains how assistants/agents act.
@@ -495,6 +566,27 @@ grants everything. A `security_role` is one way for a host to derive a
 principal's capabilities. The kernel only ever sees the resulting capability
 list, never the role name.
 
+#### `role`
+
+A named set of capabilities used for role-based access control (RBAC). Canonical form of `security_role`.
+
+REQUIRED: `type`, `name`, `permissions` (array). OPTIONAL: `description`.
+
+```markdown
+---
+type: role
+name: "support-agent"
+title: "Support agent"
+description: "Can write assistants and events, nothing else."
+timestamp: 2026-05-16T14:00:00Z
+permissions:
+  - "ssss:assistant:*"
+  - "write:event"
+---
+
+Maintains support assistants and records support events.
+```
+
 #### `model`
 
 The definition of an inference model.
@@ -528,6 +620,33 @@ REQUIRED: `type`, `thread_id`. Typical fields: `workspace_id`, `user_id`, `statu
 type: conversation
 title: "Greeting"
 description: "A two-turn support conversation."
+timestamp: 2026-05-16T14:00:05Z
+thread_id: "7f3a2b1c-5d6e-4f70-8a91-b2c3d4e5f607"
+workspace_id: "ws-acme"
+user_id: "user-42"
+status: active
+created_at: 2026-05-16T14:00:00Z
+---
+
+### turn 1 — user — 2026-05-16T14:00:00Z
+Hello.
+
+### turn 2 — assistant — 2026-05-16T14:00:05Z
+Hi — how can I help?
+```
+
+#### `thread`
+
+An append-only chat transcript. Append-type. Canonical form of `conversation`.
+
+REQUIRED: `type`, `thread_id`. Typical fields: `workspace_id`, `user_id`, `status`,
+`turn_count`, `created_at`.
+
+```markdown
+---
+type: thread
+title: "Support Thread"
+description: "A two-turn customer support thread."
 timestamp: 2026-05-16T14:00:05Z
 thread_id: "7f3a2b1c-5d6e-4f70-8a91-b2c3d4e5f607"
 workspace_id: "ws-acme"

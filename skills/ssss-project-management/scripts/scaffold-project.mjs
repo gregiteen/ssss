@@ -70,6 +70,7 @@ timestamp: ${nowIso()}
 }
 
 const DOC_TYPES = [
+  { suffix: 'AUDIT', title: 'Audit', body: (p) => `## Why this project exists\n\n<Context, motivation, and scope of investigation for ${p}.>\n\n## Verified defects\n\n| # | Evidence | Impact |\n| --- | --- | --- |\n| D1 | <verified defect in code/spec> | <impact on system> |\n\n## Spec gaps (not just code)\n\n| # | Gap |\n| --- | --- |\n| G1 | <spec ambiguity or missing normative rule> |\n\n## What already works and can be reused\n\n- <working components and existing test coverage>\n\n## Out of scope\n\n- <explicitly excluded areas>\n` },
   { suffix: 'PRD', title: 'Product Requirements', body: (p) => `## Problem\n\n<What problem does ${p} solve, and for whom?>\n\n## Scope\n\n<In scope / out of scope.>\n\n## Requirements\n\n<Numbered, testable requirements.>\n` },
   { suffix: 'ARCHITECTURE', title: 'Architecture', body: () => `## Design\n\n<Schema, API, component structure.>\n\n## Tradeoffs\n\n<Alternatives considered and why this one won.>\n` },
   { suffix: 'DEVELOPMENT_PLAN', title: 'Development Plan', body: () => `## Phases\n\n1. <Phase 1>\n2. <Phase 2>\n` },
@@ -111,8 +112,8 @@ function main() {
     written++;
   }
 
-  if (written === 0) die('nothing written — all 4 documents already exist. Use --force to refill missing ones.');
-  console.error(`\n${args.prefix} scaffolded under docs/projects/${args.stage}/${args.prefix}/ (${written}/4 documents written).`);
+  if (written === 0) die(`nothing written — all ${DOC_TYPES.length} documents already exist. Use --force to refill missing ones.`);
+  console.error(`\n${args.prefix} scaffolded under docs/projects/${args.stage}/${args.prefix}/ (${written}/${DOC_TYPES.length} documents written).`);
 }
 
 main();

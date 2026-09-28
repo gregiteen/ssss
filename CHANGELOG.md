@@ -7,6 +7,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.10.0] - 2026-09-28
+### Added
+- **`asset` primitive**: Text-encoded files (Base64 for small binaries, UTF-8 for code/SVGs) and pointer metadata for large files (`resource_ref`, `storage_uri`, `hash`).
+- **`resource` primitive**: First-class core support for external cloud infrastructure, databases, S3 buckets, domains, and mailboxes, completing the `resource_bound` portability class (§5.5) with automatic `resource.binds` stripping on bundle export.
+- **`trigger` primitive**: Standalone schedules and event sources (`cron`, `webhook`, `event`), decoupling procedural workflows from scheduling and enabling file-level distributed leasing without workflow lock contention.
+- **`role` and `thread` primitives**: Canonical, concise forms of `security_role` and `conversation` with 100% backward-compatible alias resolution.
+- **`docs/design.md` scaffolding**: `ssss new` now scaffolds a starter architecture and technical design specification alongside `README.md` and `CLAUDE.md`.
+- **Project Management Audit integration**: `scaffold-project.mjs` now includes `AUDIT` in canonical `DOC_TYPES` (the 5-document SWE sequence).
+
+### Behavior changes hosts should check
+- Core registry now recognizes `asset`, `resource`, `trigger`, `role`, and `thread`.
+- Existing documents using `security_role` and `conversation` continue to validate without modification via alias resolution.
+
 ## [0.9.7] - 2026-09-27
 ### Fixed
 - Frontmatter kept number-like strings as text only until the next patch. The

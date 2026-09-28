@@ -33,6 +33,36 @@
       "notes": "Compatible with the open Agent Skills standard (name + description). The `type: skill` discriminator is REQUIRED for SSSS-managed manifests.",
       "spec_ref": "§5.4 skill"
     },
+    "asset": {
+      "family": "capability",
+      "canonical_filename": null,
+      "filename_convention": "kebab-case slug matching the `slug` field",
+      "append_only": false,
+      "portability": "structural",
+      "required_fields": ["type", "name", "mime_type", "encoding"],
+      "optional_fields": ["slug", "hash", "size_bytes", "description"],
+      "enums": {
+        "encoding": ["base64", "utf-8", "none"]
+      },
+      "notes": "A text-encoded asset payload: source code, vector graphics, or base64-encoded binary content.",
+      "spec_ref": "§5.4 asset"
+    },
+    "resource": {
+      "family": "capability",
+      "canonical_filename": null,
+      "append_only": false,
+      "portability": "resource_bound",
+      "required_fields": ["type", "name", "kind", "status"],
+      "optional_fields": ["slug", "description", "binds", "provisioning"],
+      "enums": {
+        "status": ["bound", "unbound", "pending", "error"]
+      },
+      "resource": {
+        "binds": ["binds"]
+      },
+      "notes": "An external infrastructure, cloud asset, domain, database, or API dependency bound to the workspace.",
+      "spec_ref": "§5.4 resource"
+    },
     "rule": {
       "family": "governance",
       "canonical_filename": null,
@@ -41,6 +71,16 @@
       "required_fields": ["type", "name"],
       "optional_fields": ["description", "scope"],
       "spec_ref": "§5.4 rule"
+    },
+    "role": {
+      "family": "governance",
+      "canonical_filename": "ROLE.md",
+      "append_only": false,
+      "portability": "structural",
+      "required_fields": ["type", "name", "permissions"],
+      "optional_fields": ["description"],
+      "notes": "A named set of capabilities used for role-based access control (RBAC). Canonical form of security_role.",
+      "spec_ref": "§5.4 role"
     },
     "security_role": {
       "family": "governance",
@@ -78,6 +118,22 @@
       "optional_fields": ["workflow_id", "slug", "description", "triggers", "isActive", "priority", "misfire_policy", "concurrency"],
       "spec_ref": "§5.4 workflow"
     },
+    "trigger": {
+      "family": "work",
+      "canonical_filename": null,
+      "append_only": false,
+      "portability": "structural",
+      "required_fields": ["type", "name", "source", "status"],
+      "optional_fields": ["slug", "description", "cron", "interval", "timezone", "target_workflow", "target_params", "concurrency", "misfire_policy"],
+      "enums": {
+        "source": ["cron", "interval", "webhook", "event", "file_change", "condition", "manual"],
+        "status": ["active", "paused", "disabled"],
+        "concurrency": ["allow_parallel", "skip_if_running", "enqueue", "replace"],
+        "misfire_policy": ["skip", "run_once", "catch_up"]
+      },
+      "notes": "A standalone schedule or event-driven trigger that fires a task from a workflow template.",
+      "spec_ref": "§5.4 trigger"
+    },
     "model": {
       "family": "catalog",
       "canonical_filename": "MODEL.md",
@@ -85,6 +141,16 @@
       "portability": "structural",
       "required_fields": ["type", "model_id", "provider"],
       "spec_ref": "§5.4 model"
+    },
+    "thread": {
+      "family": "transcript",
+      "canonical_filename": "CONVERSATION.md",
+      "append_only": true,
+      "portability": "tenant_private",
+      "required_fields": ["type", "thread_id"],
+      "optional_fields": ["workspace_id", "user_id", "status", "turn_count", "created_at"],
+      "notes": "An append-only multi-turn chat transcript. Canonical form of conversation.",
+      "spec_ref": "§5.4 thread"
     },
     "conversation": {
       "family": "transcript",
