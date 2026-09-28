@@ -22,6 +22,7 @@ my-app/
   test/ssss-conformance.test.mjs   Replays the canonical fixtures through the engine
                                     AND round-trips the vault as a sale bundle.
   CLAUDE.md           Agent guide (source-of-truth + portability rules).
+  docs/design.md      Architecture & technical design specification.
   README.md  .gitignore
 ```
 
