@@ -9,6 +9,7 @@ import {
   createRegistryLock,
   loadRegistries,
   resolvePrimitiveDefinition,
+  validateDataConstraints,
   verifyRegistryLock,
 } from '../src/registry.mjs';
 import { createValidator } from '../src/validator.mjs';
@@ -256,6 +257,16 @@ function checkFrontmatterSubset(check) {
   const data = { title: 'say "hi" \\ there', description: 'two\nlines\n', note: 'a | b', list: [{ id: 'x', text: 'l1\nl2' }] };
   check('frontmatter: serialize then parse is lossless for quotes, backslashes, and newlines',
     JSON.stringify(parseDocument(serializeDocument(data, '\nbody')).data) === JSON.stringify(data));
+}
+
+// A required field is satisfied by any present value, including an empty
+// list; only an absent, null or empty-string value is missing.
+function checkRequiredPresence(check) {
+  const def = { required_fields: ['steps', 'name'] };
+  const missing = (data) => validateDataConstraints(def, data).map((i) => i.field).sort().join(',');
+  check('required fields: an empty list satisfies a required list field', missing({ steps: [], name: 'x' }) === '');
+  check('required fields: absent, null and empty-string values are missing',
+    missing({ name: '' }) === 'name,steps' && missing({ steps: null, name: 'x' }) === 'steps');
 }
 
 // Capabilities (spec §6.6): trailing-`*` grants are prefix scoped, and the
@@ -606,6 +617,7 @@ export async function runKernel09Conformance() {
     check('UI planning redacts prompt-injection content and falls back safely', planned.generated && planned.manifest.components[0].bind === 'status');
     await checkResourceLifecycle(check);
     checkFrontmatterSubset(check);
+  checkRequiredPresence(check);
     await checkCapabilities(temp, check);
   } finally {
     fs.rmSync(temp, { recursive: true, force: true });
