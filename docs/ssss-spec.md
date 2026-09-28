@@ -354,6 +354,7 @@ timestamp: 2026-05-16T14:00:00Z
 A text-encoded asset payload: source code, vector graphics, or base64-encoded binary content, or pointer metadata for large files.
 
 REQUIRED: `type`, `name`, `mime_type`, `encoding` (`base64|utf-8|none`).
+OPTIONAL: `slug`, `description`, `hash`, `size_bytes`, `storage_uri`, `resource_ref`.
 
 ```markdown
 ---
@@ -367,6 +368,33 @@ encoding: "base64"
 ---
 
 iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==
+```
+
+A file too large to carry in the vault is stored as a **pointer**: `encoding: none`
+and an empty body. A pointer REQUIRES `storage_uri`, the URI of the stored object,
+and `x_portability` set to `resource_bound` or `tenant_private` (§5.5), so a
+template or sale export never ships the seller's storage location: the exporter
+replaces `storage_uri` with `REQUIREMENT` and the buyer binds their own copy at
+provision. `resource_ref`, when present, is the vault path of the `resource`
+document (bucket, object store) that holds the object. `hash` (`sha256:<hex>`) and
+`size_bytes` pin the object's content and survive export, so the buyer can verify
+the file they supply.
+
+```markdown
+---
+type: asset
+name: "training-video"
+title: "Onboarding Video"
+description: "Staff onboarding video, stored in object storage."
+timestamp: 2026-09-28T00:00:00Z
+mime_type: "video/mp4"
+encoding: "none"
+storage_uri: "s3://media-bucket/training/onboarding.mp4"
+resource_ref: "resources/media-bucket.md"
+hash: "sha256:9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08"
+size_bytes: 734003200
+x_portability: resource_bound
+---
 ```
 
 #### `resource`

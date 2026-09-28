@@ -480,6 +480,98 @@ async function runOperationContractRegressionConformance() {
   return pass === checks.length;
 }
 
+async function runAssetPointerConformance() {
+  const checks = [];
+  const check = (name, cond, detail = '') => { checks.push({ name, cond, detail }); };
+
+  const vault = fs.mkdtempSync(path.join(os.tmpdir(), 'ssss-asset-'));
+  const doc = (fields, body = '') => ['---', ...fields, '---', '', body, ''].join('\n');
+  const assetHead = [
+    'type: asset',
+    'name: training-video',
+    'title: Training Video',
+    'description: Onboarding video stored outside the vault.',
+    'timestamp: 2026-09-28T00:00:00Z',
+    'mime_type: video/mp4',
+  ];
+  let n = 0;
+  const write = (filePath, content) => engine.processOperation({
+    type: 'operation',
+    idempotency_key: `asset-${++n}`,
+    workspace_id: 'ws-asset',
+    path: filePath,
+    actor: { role: 'system' },
+    content,
+  }, vault);
+  const errorsOf = (res) => (res.validation?.errors || []).join('; ');
+  const engine = createEngine({ registryDir: REGISTRY_DIR });
+  try {
+    const bucket = await write('resources/media-bucket.md', doc([
+      'type: resource',
+      'name: Media Bucket',
+      'title: Media Bucket',
+      'description: Object storage for large media.',
+      'timestamp: 2026-09-28T00:00:00Z',
+      'kind: s3_bucket',
+      'status: bound',
+      'binds: s3://seller-media',
+    ]));
+    check('resource fixture commits', bucket.success === true, errorsOf(bucket));
+
+    const inline = await write('assets/logo.md', doc([
+      'type: asset', 'name: logo', 'title: Logo', 'description: Inline icon.',
+      'timestamp: 2026-09-28T00:00:00Z', 'mime_type: image/svg+xml', 'encoding: utf-8',
+    ], '<svg xmlns="http://www.w3.org/2000/svg"/>'));
+    check('inline asset needs no pointer fields', inline.success === true, errorsOf(inline));
+
+    const noUri = await write('assets/no-uri.md', doc([...assetHead, 'encoding: none', 'x_portability: resource_bound']));
+    check('pointer asset without storage_uri is rejected',
+      noUri.success === false && errorsOf(noUri).includes('storage_uri'), errorsOf(noUri));
+
+    const noClass = await write('assets/no-class.md', doc([...assetHead, 'encoding: none', 'storage_uri: s3://seller-media/v.mp4']));
+    check('pointer asset without x_portability is rejected',
+      noClass.success === false && errorsOf(noClass).includes('x_portability'), errorsOf(noClass));
+
+    const structural = await write('assets/structural.md', doc([...assetHead, 'encoding: none',
+      'storage_uri: s3://seller-media/v.mp4', 'x_portability: structural']));
+    check('pointer asset cannot be marked structural',
+      structural.success === false && errorsOf(structural).includes('x_portability'), errorsOf(structural));
+
+    const wrongRef = await write('assets/wrong-ref.md', doc([...assetHead, 'encoding: none',
+      'storage_uri: s3://seller-media/v.mp4', 'x_portability: resource_bound', 'resource_ref: assets/logo.md']));
+    check('resource_ref must name a resource document',
+      wrongRef.success === false && errorsOf(wrongRef).includes('resource_ref'), errorsOf(wrongRef));
+
+    const hash = `sha256:${'a'.repeat(64)}`;
+    const pointer = await write('assets/training-video.md', doc([...assetHead, 'encoding: none',
+      'storage_uri: s3://seller-media/training/v.mp4', 'resource_ref: resources/media-bucket.md',
+      `hash: "${hash}"`, 'size_bytes: 734003200', 'x_portability: resource_bound']));
+    check('pointer asset with storage_uri, resource_ref, hash and size_bytes commits',
+      pointer.success === true, errorsOf(pointer));
+
+    const sale = exportBundle(vault, { registryDir: REGISTRY_DIR, profile: 'sale' });
+    const exported = sale.files.find((f) => f.path === 'assets/training-video.md');
+    const exportedData = exported ? parseDocument(exported.content).data : {};
+    check('sale export replaces storage_uri with REQUIREMENT and keeps the content pin',
+      exportedData.storage_uri === 'REQUIREMENT' && exportedData.hash === hash &&
+      exportedData.size_bytes === 734003200 && !exported.content.includes('seller-media/training'),
+      exported?.content || 'pointer asset missing from sale bundle');
+    check('sale bundle with a pointer asset validates',
+      validateBundle(sale, { registryDir: REGISTRY_DIR }).valid === true,
+      validateBundle(sale, { registryDir: REGISTRY_DIR }).errors.join('; '));
+  } finally {
+    fs.rmSync(vault, { recursive: true, force: true });
+  }
+
+  let pass = 0;
+  for (const c of checks) {
+    if (c.cond) { pass++; console.log(`  ✅ ${c.name}`); }
+    else console.log(`  ❌ ${c.name}${c.detail ? ` — ${c.detail}` : ''}`);
+  }
+  console.log(`\n  ${pass}/${checks.length} asset pointer checks passed (§5.4 asset, §5.5)`);
+  return pass === checks.length;
+}
+
 async function runSemanticLocalizationConformance() {
   const checks = [];
   const check = (name, cond, detail = '') => { checks.push({ name, cond, detail }); };
@@ -996,6 +1088,8 @@ async function main() {
     const runtimeOk = await runRuntimeConformance();
     console.log('\nRunning operation regression conformance (src/engine.mjs, §6/§7) ...');
     const operationRegressionOk = await runOperationContractRegressionConformance();
+    console.log('\nRunning asset pointer conformance (registry/core.json asset, §5.4/§5.5) ...');
+    const assetPointerOk = await runAssetPointerConformance();
     console.log('\nRunning extension-registry conformance (src/registry.mjs) ...');
     const extensionRegistryOk = runRegistryExtensionConformance();
     console.log('\nRunning semantic/multilingual rendering conformance (src/semantic.mjs, §11.9) ...');
@@ -1007,7 +1101,7 @@ async function main() {
     console.log('\nRunning CLI smoke conformance (scripts/ssss.mjs) ...');
     const cliSmokeOk = await runCliSmokeConformance();
     process.exit(
-      engineOk && runtimeOk && operationRegressionOk && extensionRegistryOk &&
+      engineOk && runtimeOk && operationRegressionOk && assetPointerOk && extensionRegistryOk &&
       semanticOk && kernel09Ok && bundleOk && cliSmokeOk ? 0 : 1
     );
   } else {
