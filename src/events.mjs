@@ -2,6 +2,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import crypto from 'node:crypto';
+import { StringDecoder } from 'node:string_decoder';
 import { withFileLock } from './file-lock.mjs';
 
 // UUIDv5 namespace for event ids derived from idempotency keys.
@@ -83,22 +84,33 @@ function sameStat(a, b) {
   return a.dev === b.dev && a.ino === b.ino && a.size === b.size && a.mtimeMs === b.mtimeMs && a.ctimeMs === b.ctimeMs;
 }
 
-/** Read every event_id in a log, bounded to the bytes covered by the returned stat. */
+/** Decode one line at a time, never materializing the complete log as a string. */
+function* logLines(fd, size) {
+  const buffer = Buffer.alloc(64 * 1024);
+  const decoder = new StringDecoder('utf8');
+  let offset = 0, pending = '';
+  while (offset < size) {
+    const read = fs.readSync(fd, buffer, 0, Math.min(buffer.length, size - offset), offset);
+    if (read === 0) break;
+    offset += read;
+    const text = pending + decoder.write(buffer.subarray(0, read));
+    let start = 0, newline;
+    while ((newline = text.indexOf('\n', start)) !== -1) {
+      yield text.slice(start, newline);
+      start = newline + 1;
+    }
+    pending = text.slice(start);
+  }
+  pending += decoder.end();
+  if (pending) yield pending;
+}
+
+/** Read every event_id, bounded to the bytes covered by the returned stat. */
 function loadIndex(file) {
   const fd = openLog(file, fs.constants.O_RDONLY | NOFOLLOW);
   try {
-    const stat = fs.fstatSync(fd);
-    const bytes = Buffer.alloc(stat.size);
-    let offset = 0;
-    while (offset < bytes.length) {
-      const read = fs.readSync(fd, bytes, offset, bytes.length - offset, offset);
-      if (read === 0) break;
-      offset += read;
-    }
-    const ids = new Set();
-    for (const line of bytes.subarray(0, offset).toString('utf8').split('\n')) {
-      if (line.trim()) ids.add(JSON.parse(line).event_id);
-    }
+    const stat = fs.fstatSync(fd), ids = new Set();
+    for (const line of logLines(fd, stat.size)) if (line.trim()) ids.add(JSON.parse(line).event_id);
     return { ids, stat };
   } finally { fs.closeSync(fd); }
 }
@@ -168,12 +180,15 @@ export class JsonlEventStore {
     for (const file of files) {
       if (!fs.existsSync(file)) continue;
       if (fs.lstatSync(file).isSymbolicLink()) throw new Error('Symlinked event logs are forbidden.');
-      for (const line of fs.readFileSync(file, 'utf8').split('\n')) {
-        if (!line.trim()) continue;
-        cursor++;
-        if (cursor <= (options.cursor || 0)) continue;
-        yield { cursor, event: JSON.parse(line) };
-      }
+      const fd = openLog(file, fs.constants.O_RDONLY | NOFOLLOW);
+      try {
+        for (const line of logLines(fd, fs.fstatSync(fd).size)) {
+          if (!line.trim()) continue;
+          cursor++;
+          if (cursor <= (options.cursor || 0)) continue;
+          yield { cursor, event: JSON.parse(line) };
+        }
+      } finally { fs.closeSync(fd); }
     }
   }
 }

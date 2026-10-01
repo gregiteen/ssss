@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.10.3] - 2026-10-01
+### Fixed
+- Read event logs in 64 KiB chunks when building duplicate-ID indexes or
+  replaying events. Large histories no longer require one full-log string.
+  UTF-8 decoding, replay cursors, file locks and duplicate detection retain
+  their contracts. A regression check guards bounded reads and corrupt-log
+  rejection.
+
 ## [0.10.2] - 2026-09-28
 ### Fixed
 - The 0.10.0 notes promised pointer fields for large-file assets, but the
