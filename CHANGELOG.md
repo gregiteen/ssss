@@ -6,6 +6,16 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+### Added
+- `trigger` gains `event_subject` and `event_match`, and `assistant` gains `owns`.
+  `@gregiteen/ssss-cli/runtime` exports `triggerMatchesEvent`, `subjectMatches`
+  and `resolveSubjectOwner`; the spec (§11.8) defines event matching and subject
+  ownership, which `source: event` previously left undefined.
+
+### Fixed
+- Work caused by an event is now keyed by `event_id` (and carries it as
+  `causation_id`), not by the event's timestamp. Two events in the same
+  millisecond no longer collapse into one task path and key.
 
 ## [0.10.3] - 2026-10-01
 ### Fixed

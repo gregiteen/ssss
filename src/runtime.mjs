@@ -69,6 +69,59 @@ export function normalizeRuntimeTrigger(trigger = {}) {
   };
 }
 
+/** Glob over event subjects: `*` stays within one `/` segment, `**` crosses segments. */
+export function subjectMatches(pattern, subject) {
+  if (typeof pattern !== 'string' || typeof subject !== 'string' || !pattern) return false;
+  const re = pattern.split('**').map((part) => part.split('*').map((lit) => lit.replace(/[.+?^${}()|[\]\\]/g, '\\$&')).join('[^/]*')).join('.*');
+  return new RegExp(`^${re}$`).test(subject);
+}
+
+function valueAt(object, dotted) {
+  return String(dotted).split('.').reduce((value, key) => (value && typeof value === 'object' ? value[key] : undefined), object);
+}
+
+/**
+ * Whether an `event` trigger selects a canonical event (§5.4 trigger, §11.8).
+ * `event_subject` is a subject glob. `event_match` maps dotted event paths to a
+ * literal or an array of allowed literals; every entry must hold. Pure and
+ * deterministic: no clock, no I/O. A trigger that is not `source: event`, or
+ * is not active, never matches.
+ */
+export function triggerMatchesEvent(trigger = {}, event = {}) {
+  const source = trigger.source || trigger.type;
+  if (source !== 'event') return false;
+  if (trigger.status && trigger.status !== 'active') return false;
+  if (!trigger.event_subject && !trigger.event_match) return false;
+  if (trigger.event_subject && !subjectMatches(trigger.event_subject, event.subject)) return false;
+  for (const [key, expected] of Object.entries(trigger.event_match || {})) {
+    const actual = valueAt(event, key);
+    const allowed = Array.isArray(expected) ? expected : [expected];
+    if (!allowed.some((candidate) => candidate === actual)) return false;
+  }
+  return true;
+}
+
+/**
+ * The assistant that owns a subject: the one whose `owns` globs claim it with
+ * the longest literal prefix. Equal best claims are a conflict, never a silent
+ * pick. Returns { owner, conflict } where `conflict` lists the tied assistants.
+ */
+export function resolveSubjectOwner(subject, assistants = []) {
+  let best = -1;
+  let winners = [];
+  for (const assistant of assistants) {
+    for (const pattern of [].concat(assistant?.owns || [])) {
+      if (!subjectMatches(pattern, subject)) continue;
+      const specificity = pattern.split('*')[0].length;
+      if (specificity > best) { best = specificity; winners = [assistant]; }
+      else if (specificity === best && !winners.includes(assistant)) winners.push(assistant);
+    }
+  }
+  if (winners.length === 0) return { owner: null, conflict: [] };
+  if (winners.length === 1) return { owner: winners[0], conflict: [] };
+  return { owner: null, conflict: winners };
+}
+
 export function planWorkflowTrigger({
   workflowPath,
   workflowContent,
@@ -78,6 +131,7 @@ export function planWorkflowTrigger({
   firedAt = scheduledFor || new Date().toISOString(),
   payload = {},
   actor = { role: 'system' },
+  event = null,
 } = {}) {
   if (!workflowPath) throw new Error('workflowPath is required.');
   if (!workflowContent) throw new Error('workflowContent is required.');
@@ -89,11 +143,14 @@ export function planWorkflowTrigger({
 
   const normalizedTrigger = normalizeRuntimeTrigger(trigger);
   const workflow_id = workflowIdFromPath(workflowPath, data);
-  const scheduled_for = iso(scheduledFor || firedAt, 'scheduledFor');
+  // Event-driven work is identified by the event that caused it, so two events in the
+  // same millisecond make two tasks and a replayed event makes none.
+  const eventId = event?.event_id || null;
+  const scheduled_for = iso(scheduledFor || event?.timestamp || firedAt, 'scheduledFor');
   const fired_at = iso(firedAt || scheduled_for, 'firedAt');
-  const basis = `${workspaceId}:${workflow_id}:${normalizedTrigger.trigger_id}:${scheduled_for}`;
+  const basis = `${workspaceId}:${workflow_id}:${normalizedTrigger.trigger_id}:${eventId || scheduled_for}`;
   const dedupe_key = `runtime:${hash(basis, 40)}`;
-  const stamp = compactTimestamp(scheduled_for);
+  const stamp = compactTimestamp(scheduled_for) + (eventId ? `-${hash(eventId, 8)}` : '');
   const taskPath = `tasks/${workflow_id}/${normalizedTrigger.trigger_id}-${stamp}.md`;
   const eventPath = `events/workflows/${workflow_id}/${normalizedTrigger.trigger_id}-${stamp}`;
 
@@ -107,6 +164,7 @@ export function planWorkflowTrigger({
     fired_at,
     dedupe_key,
     payload,
+    ...(eventId ? { source_event_id: eventId, causation_id: eventId, correlation_id: event.correlation_id || eventId } : {}),
   };
 
   const taskContent = [

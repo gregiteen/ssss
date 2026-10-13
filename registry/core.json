@@ -115,6 +115,7 @@
       "append_only": false,
       "portability": "structural",
       "required_fields": ["type", "name"],
+      "optional_fields": ["owns"],
       "spec_ref": "§5.4 assistant"
     },
     "workflow": {
@@ -132,7 +133,7 @@
       "append_only": false,
       "portability": "structural",
       "required_fields": ["type", "name", "source", "status"],
-      "optional_fields": ["slug", "description", "cron", "interval", "timezone", "target_workflow", "target_params", "concurrency", "misfire_policy"],
+      "optional_fields": ["slug", "description", "cron", "interval", "timezone", "target_workflow", "target_params", "concurrency", "misfire_policy", "event_subject", "event_match"],
       "enums": {
         "source": ["cron", "interval", "webhook", "event", "file_change", "condition", "manual"],
         "status": ["active", "paused", "disabled"],
