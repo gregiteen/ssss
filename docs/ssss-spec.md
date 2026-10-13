@@ -1487,6 +1487,24 @@ Core trigger types are:
 | `file_change` | A matching vault path is created, patched, or deleted. |
 | `condition` | A host-defined predicate over vault/projection state becomes true. |
 
+An `event` trigger selects canonical events (§8) with two optional fields on the
+`trigger` primitive, evaluated as a pure function of the trigger and the event:
+
+- `event_subject` is a glob over the event `subject`. `*` matches within one `/`
+  segment and `**` matches across segments.
+- `event_match` maps dotted event paths (for example `principal.kind`) to a literal
+  or an array of allowed literals. Every entry MUST hold.
+
+A trigger with neither field matches nothing. An event nobody matches is only
+recorded. Work an event causes MUST carry the event's `event_id` as `causation_id`,
+and its idempotency basis uses `event_id` in place of `scheduled_for`, so a replayed
+event creates no second task and two events at the same instant create two.
+
+An `assistant` MAY declare `owns`, a list of subject globs it is responsible for.
+The owner of a subject is the assistant whose claim has the longest literal prefix.
+Equal best claims are a conflict that a host MUST surface rather than resolve
+silently. Ownership says who is responsible; a lease (§7) says who is acting now.
+
 Trigger entries SHOULD use the fields documented in §5.4 `workflow`. Hosts MAY add
 type-specific `x_` fields, but MUST preserve unknown fields when rewriting the
 workflow document (§4.2).
@@ -1497,6 +1515,7 @@ The idempotency basis for runtime-created work is:
 
 ```text
 workspace_id + workflow_id + trigger_id + scheduled_for
+workspace_id + workflow_id + trigger_id + event_id        (event-driven work)
 ```
 
 Two daemon ticks evaluating the same trigger for the same scheduled instant MUST

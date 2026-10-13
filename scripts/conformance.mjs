@@ -29,7 +29,7 @@ import {
 } from '../src/bundle.mjs';
 import { parseDocument } from '../src/frontmatter.mjs';
 import { loadRegistries } from '../src/registry.mjs';
-import { createRunEnvelope, planWorkflowTrigger } from '../src/runtime.mjs';
+import { createRunEnvelope, planWorkflowTrigger, resolveSubjectOwner, subjectMatches, triggerMatchesEvent } from '../src/runtime.mjs';
 import {
   buildSemanticIndex,
   enrichSemanticIndex,
@@ -970,6 +970,32 @@ async function runRuntimeConformance() {
     `${firstPlan.envelopes[1].path} !== ${secondPlan.envelopes[1].path}`);
   check('same workflow trigger plans the same task idempotency key',
     firstPlan.envelopes[1].idempotency_key === secondPlan.envelopes[1].idempotency_key);
+  const eventTrigger = { source: 'event', status: 'active', event_subject: 'tool/*/exec', event_match: { 'principal.kind': ['agent', 'user'] } };
+  const toolEvent = { event_id: 'e1', timestamp: scheduledFor, subject: 'tool/ssh/exec', principal: { kind: 'agent', id: 'a' } };
+  check('event trigger matches by subject glob and payload predicate',
+    triggerMatchesEvent(eventTrigger, toolEvent) === true
+    && triggerMatchesEvent(eventTrigger, { ...toolEvent, subject: 'tool/ssh/a/exec' }) === false
+    && triggerMatchesEvent(eventTrigger, { ...toolEvent, principal: { kind: 'service', id: 's' } }) === false
+    && triggerMatchesEvent({ ...eventTrigger, status: 'paused' }, toolEvent) === false
+    && triggerMatchesEvent({ source: 'event', status: 'active' }, toolEvent) === false
+    && triggerMatchesEvent({ ...eventTrigger, source: 'cron' }, toolEvent) === false);
+  check('subject globs: * stays in a segment, ** crosses segments',
+    subjectMatches('secrets/*', 'secrets/KEY') && !subjectMatches('secrets/*', 'secrets/a/b') && subjectMatches('secrets/**', 'secrets/a/b'));
+  const planEvent = (event) => planWorkflowTrigger({ workflowPath, workflowContent, workspaceId: 'TEST_WORKSPACE_ID', trigger: { type: 'event', event_type: 'tool' }, event });
+  const planA = planEvent(toolEvent);
+  const planB = planEvent({ ...toolEvent, event_id: 'e2' });
+  check('event-driven work is keyed by the event: same event same task, same instant different event different task',
+    planEvent(toolEvent).envelopes[1].idempotency_key === planA.envelopes[1].idempotency_key
+    && planA.envelopes[1].idempotency_key !== planB.envelopes[1].idempotency_key
+    && planA.envelopes[1].path !== planB.envelopes[1].path
+    && JSON.parse(planA.envelopes[0].content).causation_id === 'e1');
+  const ownerA = { name: 'gate', owns: ['tool/**'] };
+  const ownerB = { name: 'mesh-warden', owns: ['tool/ssh/*'] };
+  check('subject ownership is the longest claim; equal claims are a conflict, not a pick',
+    resolveSubjectOwner('tool/ssh/exec', [ownerA, ownerB]).owner === ownerB
+    && resolveSubjectOwner('tool/other/x', [ownerA, ownerB]).owner === ownerA
+    && resolveSubjectOwner('x/y', [ownerA, ownerB]).owner === null
+    && resolveSubjectOwner('tool/ssh/exec', [ownerB, { name: 'twin', owns: ['tool/ssh/*'] }]).conflict.length === 2);
   check('runtime emits event then task envelopes',
     firstPlan.envelopes[0].type === 'event' && firstPlan.envelopes[1].type === 'operation');
 
