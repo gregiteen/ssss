@@ -19,6 +19,7 @@ import crypto from 'node:crypto';
 import {
   loadRegistries,
   resolvePortability,
+  resolvePrimitiveDefinition,
   validateDataConstraints,
   validateReferenceConstraints,
 } from './registry.mjs';
@@ -141,11 +142,15 @@ function walkVault(vaultRoot) {
 export function exportBundle(vaultRoot, opts = {}) {
   const { profile = 'backup', registryDir, name = 'untitled', description = '', version = '0.1.0',
     exporter = DEFAULT_EXPORTER, requiredExtensions = [], parameters = [], provisioning = [],
-    sourceWorkspaceId, exportedAt = '1970-01-01T00:00:00.000Z' } = opts;
+    sourceWorkspaceId, exportedAt = '1970-01-01T00:00:00.000Z', registryNames } = opts;
   const includes = PROFILE_INCLUDES[profile];
   if (!includes) throw new Error(`Unknown export profile '${profile}'. Use backup | template | sale.`);
 
-  const { types, core } = loadRegistries(registryDir);
+  // When a caller names the extension namespaces this vault belongs to, load only
+  // those. Unrelated product extensions may share a primitive name, which is a
+  // legitimate load-time collision when loaded together (§5.6).
+  const registrySet = loadRegistries(registryDir, registryNames ? { only: registryNames } : {});
+  const { types, core } = registrySet;
   const dropped = [];
   const kept = [];
   const inventory = {};
@@ -161,7 +166,7 @@ export function exportBundle(vaultRoot, opts = {}) {
   for (const document of vaultDocuments.values()) {
     const base = path.basename(document.path);
     if (base === 'index.md' || base === 'log.md') continue;
-    const definition = types.get(document.data.type);
+    const definition = resolvePrimitiveDefinition(registrySet, document.data.type);
     if (!definition) throw new Error(`Cannot export '${document.path}': unknown type '${document.data.type || '(missing)'}'.`);
     const issues = [
       ...validateDataConstraints(definition, document.data, core.universal_frontmatter?.required || ['type']),
@@ -237,8 +242,23 @@ export function exportBundle(vaultRoot, opts = {}) {
  */
 export function validateBundle(bundle, opts = {}) {
   const errors = [];
-  const { types, core, extensions } = loadRegistries(opts.registryDir);
   const m = bundle && bundle.manifest;
+  // Scope the registry load to the extensions this bundle declares. A registry
+  // directory may hold unrelated product extensions that collide by name (§5.6);
+  // the bundle's own `required_extensions` is the authority on what it needs.
+  const declaredExtensions = Array.isArray(m?.required_extensions) ? m.required_extensions : [];
+  const only = opts.registryNames || (declaredExtensions.length && !opts.loadAllExtensions ? declaredExtensions : null);
+  // A bundle may name an extension this host does not have. That is a validation
+  // error to report, not a crash: fall back to the default composition so the
+  // remaining checks still run and the caller sees every problem at once.
+  let registrySet;
+  try {
+    registrySet = loadRegistries(opts.registryDir, only ? { only } : {});
+  } catch (err) {
+    if (!only || !/is not present in/.test(err.message)) throw err;
+    registrySet = loadRegistries(opts.registryDir);
+  }
+  const { types, core, extensions } = registrySet;
   if (!m || typeof m !== 'object' || Array.isArray(m)) {
     return { valid: false, errors: ['bundle has no object manifest'] };
   }
@@ -340,7 +360,7 @@ export function validateBundle(bundle, opts = {}) {
       const base = path.basename(document.path);
       if (base === 'index.md' || base === 'log.md') continue;
       const { data } = document;
-      const def = types.get(data.type);
+      const def = resolvePrimitiveDefinition(registrySet, data.type);
       if (!def) {
         errors.push(`file '${document.path}' declares unknown type '${data.type || '(missing)'}'`);
         continue;
@@ -370,7 +390,7 @@ export function validateBundle(bundle, opts = {}) {
     }
   }
   for (const document of bundleDocuments.values()) {
-    const definition = types.get(document.data.type);
+    const definition = resolvePrimitiveDefinition(registrySet, document.data.type);
     const issues = validateReferenceConstraints(
       definition,
       document.data,
@@ -511,12 +531,12 @@ export async function importBundle(plan, vaultRoot, engine) {
     return {
       ok: true,
       committed: 0,
-      wouldCommit: preflight.filter((result) => !result.replay).length,
+      wouldCommit: preflight.filter((result) => !result.replay && !result.unchanged).length,
       results: preflight,
     };
   }
   const results = [];
   for (const env of plan) results.push(await engine.processOperation(env, vaultRoot, operationOptions));
-  const committed = results.filter((r) => r.success && !r.replay && !r.dry_run).length;
+  const committed = results.filter((r) => r.success && !r.replay && !r.dry_run && !r.unchanged).length;
   return { ok: results.every((r) => r.success), committed, wouldCommit: 0, results };
 }

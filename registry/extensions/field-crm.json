@@ -1,0 +1,1018 @@
+{
+  "$schema": "https://ssss.dev/registry/v1",
+  "registry": "dabber",
+  "extends": "core",
+  "version": "1.9.0",
+  "spec_version": "0.9",
+  "description": "Field CRM extension. Contacts, notes, companies, sales, products, settings, emails, calendar events, files and Signed, gi. envelopes are tenant-private Markdown records. A company document groups every location and contact of one retailer and records which rep claimed it. Google connection metadata is resource-bound; no secret values are stored in the vault.",
+  "document_primitives": {
+    "account_workflow": {
+      "family": "crm",
+      "canonical_path": "workflows/accounts/<workflow_id>.md",
+      "append_only": false,
+      "portability": "tenant_private",
+      "required_fields": [
+        "type",
+        "workflow_id",
+        "name",
+        "contact_id",
+        "owner",
+        "command",
+        "method",
+        "path",
+        "arguments",
+        "status",
+        "approved_at",
+        "next_run_at",
+        "triggers",
+        "approval_signature"
+      ],
+      "patterns": {
+        "workflow_id": "^workflow-[a-f0-9]{32}$",
+        "contact_id": "^contact-[a-z0-9-]{8,64}$"
+      },
+      "enums": {
+        "status": [
+          "queued",
+          "scheduled",
+          "running",
+          "succeeded",
+          "failed",
+          "needs_review",
+          "canceled"
+        ]
+      }
+    },
+    "contact": {
+      "family": "crm",
+      "canonical_path": "contacts/<company_slug>/<contact_id>.md",
+      "append_only": false,
+      "portability": "tenant_private",
+      "required_fields": [
+        "type",
+        "contact_id",
+        "name",
+        "company",
+        "contact_kind",
+        "lifecycle",
+        "owner",
+        "created_at",
+        "updated_at"
+      ],
+      "enums": {
+        "contact_kind": [
+          "retailer",
+          "distributor",
+          "budtender",
+          "event_partner",
+          "creator",
+          "other"
+        ],
+        "lifecycle": [
+          "prospect",
+          "contacted",
+          "qualified",
+          "active_account",
+          "nurture",
+          "closed_lost"
+        ],
+        "preferred_channel": [
+          "email",
+          "text"
+        ]
+      },
+      "patterns": {
+        "contact_id": "^contact-[a-z0-9-]{8,64}$"
+      }
+    },
+    "contact_note": {
+      "family": "crm",
+      "canonical_path": "contacts/<company_slug>/<contact_id>/NOTES.md",
+      "append_only": true,
+      "portability": "tenant_private",
+      "required_fields": [
+        "type",
+        "contact_id",
+        "note_stream_id",
+        "created_at"
+      ],
+      "patterns": {
+        "contact_id": "^contact-[a-z0-9-]{8,64}$",
+        "note_stream_id": "^notes-[a-z0-9-]{8,64}$"
+      }
+    },
+    "company": {
+      "family": "crm",
+      "canonical_path": "contacts/<company_slug>/COMPANY.md",
+      "append_only": false,
+      "portability": "tenant_private",
+      "required_fields": [
+        "type",
+        "company_id",
+        "company",
+        "company_slug",
+        "owner",
+        "location_count",
+        "contact_count",
+        "created_at",
+        "updated_at"
+      ],
+      "patterns": {
+        "company_id": "^company-[a-z0-9-]{1,120}$",
+        "company_slug": "^[a-z0-9-]{1,120}$"
+      }
+    },
+    "sale": {
+      "family": "crm",
+      "canonical_path": "sales/<sale_id>.md",
+      "append_only": false,
+      "portability": "tenant_private",
+      "required_fields": [
+        "type",
+        "sale_id",
+        "contact_id",
+        "name",
+        "stage",
+        "amount",
+        "currency",
+        "owner",
+        "created_at",
+        "updated_at"
+      ],
+      "enums": {
+        "stage": [
+          "discovery",
+          "sample_sent",
+          "proposal",
+          "negotiation",
+          "won",
+          "lost"
+        ],
+        "currency": [
+          "USD"
+        ]
+      },
+      "patterns": {
+        "sale_id": "^sale-[a-z0-9-]{8,64}$",
+        "contact_id": "^contact-[a-z0-9-]{8,64}$"
+      }
+    },
+    "integration_connection": {
+      "family": "resource",
+      "canonical_path": "integrations/<provider>.md",
+      "append_only": false,
+      "portability": "resource_bound",
+      "resource": {
+        "kind": "api_connection",
+        "binds": [
+          "provider"
+        ],
+        "provision_relation": "connects_to"
+      },
+      "required_fields": [
+        "type",
+        "provider",
+        "status",
+        "capabilities",
+        "verified_at"
+      ],
+      "enums": {
+        "status": [
+          "not_connected",
+          "configured",
+          "verified",
+          "error"
+        ]
+      }
+    },
+    "product": {
+      "family": "crm",
+      "canonical_path": "products/<sku>.md",
+      "append_only": false,
+      "portability": "tenant_private",
+      "required_fields": [
+        "type",
+        "sku",
+        "name",
+        "category",
+        "wholesale_price",
+        "msrp",
+        "map_price",
+        "margin_percent",
+        "created_at",
+        "updated_at"
+      ]
+    },
+    "email": {
+      "family": "crm",
+      "canonical_path": "emails/<id>.md",
+      "append_only": false,
+      "portability": "tenant_private",
+      "required_fields": [
+        "type",
+        "id",
+        "from",
+        "to",
+        "subject",
+        "date",
+        "folder"
+      ]
+    },
+    "email_open": {
+      "family": "crm",
+      "canonical_path": "emails/opens/<message_id>.md",
+      "append_only": false,
+      "portability": "tenant_private",
+      "required_fields": [
+        "type",
+        "message_id",
+        "recipient",
+        "subject",
+        "sender",
+        "first_opened_at",
+        "last_opened_at",
+        "open_count"
+      ],
+      "description": "Tracking-pixel opens for an email sent from the platform, recorded by the public cloud instance and synced to every peer."
+    },
+    "email_sms_reminder": {
+      "family": "crm",
+      "canonical_path": "emails/sms-reminders/<account_id>/<message_id>.md",
+      "append_only": false,
+      "portability": "tenant_private",
+      "required_fields": [
+        "type",
+        "account_id",
+        "message_id",
+        "received_at",
+        "sms_sent_at",
+        "baseline"
+      ],
+      "description": "One SMS alert receipt per Gmail message plus a mailbox baseline marker."
+    },
+    "calendar_event": {
+      "family": "crm",
+      "canonical_path": "calendar/<id>.md",
+      "append_only": false,
+      "portability": "tenant_private",
+      "required_fields": [
+        "type",
+        "id",
+        "summary",
+        "start",
+        "status"
+      ]
+    },
+    "file_asset": {
+      "family": "crm",
+      "canonical_path": "files/meta/<id>.md",
+      "append_only": false,
+      "portability": "tenant_private",
+      "required_fields": [
+        "type",
+        "id",
+        "filename",
+        "title",
+        "size",
+        "mimetype",
+        "category",
+        "visibility",
+        "uploaded_at"
+      ],
+      "description": "Catalogue record for a collateral file in vault/files/<filename>; owner + visibility (team|private) + shared_with control who can see it. Binaries sync alongside these records."
+    },
+    "signed_gi_envelope": {
+      "family": "crm",
+      "canonical_path": "signedgi/<envelope_id>.md",
+      "append_only": false,
+      "portability": "tenant_private",
+      "required_fields": [
+        "type",
+        "envelope_id",
+        "document_id",
+        "title",
+        "recipient_name",
+        "recipient_email",
+        "status",
+        "signing_url",
+        "created_at"
+      ],
+      "description": "A Documenso (Signed, gi.) document sent for signature; status mirrors Documenso (pending_signature|signed|rejected|draft) and is never set by hand."
+    },
+    "email_account": {
+      "family": "crm",
+      "canonical_path": "integrations/accounts/<id>.md",
+      "append_only": false,
+      "portability": "tenant_private",
+      "required_fields": [
+        "type",
+        "id",
+        "email",
+        "label",
+        "provider",
+        "created_at"
+      ]
+    },
+    "contact_attachment": {
+      "family": "crm",
+      "canonical_path": "files/attachments/<id>.md",
+      "append_only": false,
+      "portability": "tenant_private",
+      "required_fields": [
+        "type",
+        "id",
+        "contact_id",
+        "file_id",
+        "filename",
+        "title",
+        "attached_at"
+      ]
+    },
+    "setting": {
+      "family": "crm",
+      "canonical_path": "settings/<key>.md",
+      "append_only": false,
+      "portability": "tenant_private",
+      "required_fields": [
+        "type",
+        "key",
+        "value",
+        "created_at",
+        "updated_at"
+      ],
+      "patterns": {
+        "key": "^[a-z][a-z0-9_]{1,60}$"
+      }
+    },
+    "user_profile": {
+      "family": "crm",
+      "canonical_path": "users/<profile_id>.md",
+      "append_only": false,
+      "portability": "tenant_private",
+      "required_fields": [
+        "type",
+        "profile_id",
+        "email",
+        "created_at",
+        "updated_at"
+      ],
+      "patterns": {
+        "profile_id": "^user-[a-f0-9]{24}$"
+      },
+      "description": "Authenticated CRM user profile. Details are incrementally completed by the rep; when present, the saved address is the sole source for account proximity ranking."
+    },
+    "user_preferences": {
+      "family": "crm",
+      "canonical_path": "users/preferences/<profile_id>.md",
+      "append_only": false,
+      "portability": "tenant_private",
+      "required_fields": [
+        "type",
+        "profile_id",
+        "version",
+        "work",
+        "selling",
+        "communication",
+        "ai",
+        "notifications",
+        "market_intel",
+        "assistant",
+        "updated_at"
+      ],
+      "patterns": {
+        "profile_id": "^user-[a-f0-9]{24}$"
+      },
+      "description": "Per-rep working preferences, selling parameters, communication tone, AI model choices and automation guardrails."
+    },
+    "user_connection": {
+      "family": "crm",
+      "canonical_path": "integrations/users/<profile_id>/<provider>.md",
+      "append_only": false,
+      "portability": "tenant_private",
+      "required_fields": [
+        "type",
+        "profile_id",
+        "provider",
+        "status",
+        "credential_ref",
+        "capabilities",
+        "monthly_budget_usd",
+        "spent_this_month_usd"
+      ],
+      "required_when": {
+        "status==verified": [
+          "last_verified_at"
+        ]
+      },
+      "enums": {
+        "provider": [
+          "openrouter",
+          "openai",
+          "anthropic",
+          "claude",
+          "gemini",
+          "meta",
+          "x_api",
+          "social_provider",
+          "gmail"
+        ],
+        "status": [
+          "not_connected",
+          "configured",
+          "verified",
+          "error"
+        ]
+      },
+      "patterns": {
+        "profile_id": "^user-[a-f0-9]{24}$"
+      },
+      "description": "Per-rep third-party integration connection metadata and budget guardrails. Secret values are stored exclusively in the machine's Total Recall secrets store."
+    },
+    "auth_credentials": {
+      "family": "resource",
+      "canonical_path": "auth/credentials.md",
+      "append_only": false,
+      "portability": "tenant_private",
+      "required_fields": [
+        "type",
+        "users",
+        "updated_at"
+      ]
+    },
+    "market_source": {
+      "family": "resource",
+      "canonical_path": "market/sources/<source_id>.md",
+      "append_only": false,
+      "portability": "tenant_private",
+      "required_fields": [
+        "type",
+        "source_id",
+        "kind",
+        "brand",
+        "schedule",
+        "enabled",
+        "monthly_budget_usd",
+        "updated_at"
+      ],
+      "enums": {
+        "kind": [
+          "shopify_feed",
+          "store_locator",
+          "rss",
+          "social_profile"
+        ]
+      }
+    },
+    "market_run": {
+      "family": "crm",
+      "canonical_path": "market/runs/<date>/<job>-<run_id>.md",
+      "append_only": true,
+      "portability": "tenant_private",
+      "required_fields": [
+        "type",
+        "job",
+        "started_at",
+        "finished_at",
+        "status",
+        "items_seen",
+        "changes",
+        "cost_usd"
+      ],
+      "enums": {
+        "status": [
+          "ok",
+          "partial",
+          "failed",
+          "skipped"
+        ]
+      }
+    },
+    "competitor_product": {
+      "family": "crm",
+      "canonical_path": "market/products/<brand>/<handle>.md",
+      "append_only": false,
+      "portability": "tenant_private",
+      "required_fields": [
+        "type",
+        "brand",
+        "title",
+        "sku",
+        "price",
+        "first_seen",
+        "last_seen",
+        "updated_at"
+      ]
+    },
+    "retail_listing": {
+      "family": "crm",
+      "canonical_path": "market/listings/<brand>/<listing_id>.md",
+      "append_only": false,
+      "portability": "tenant_private",
+      "required_fields": [
+        "type",
+        "brand",
+        "name",
+        "address",
+        "state",
+        "first_seen",
+        "last_seen",
+        "status",
+        "dd_listed",
+        "updated_at"
+      ],
+      "enums": {
+        "status": [
+          "active",
+          "gone"
+        ]
+      }
+    },
+    "social_snapshot": {
+      "family": "crm",
+      "canonical_path": "market/social/<platform>/<handle>/<date>.md",
+      "append_only": true,
+      "portability": "tenant_private",
+      "required_fields": [
+        "type",
+        "brand",
+        "platform",
+        "handle",
+        "followers",
+        "posts_total",
+        "date",
+        "updated_at"
+      ]
+    },
+    "news_item": {
+      "family": "crm",
+      "canonical_path": "market/news/<news_id>.md",
+      "append_only": false,
+      "portability": "tenant_private",
+      "required_fields": [
+        "type",
+        "title",
+        "url",
+        "source",
+        "published_at",
+        "topics",
+        "brands",
+        "updated_at"
+      ]
+    },
+    "market_signal": {
+      "family": "crm",
+      "canonical_path": "market/signals/<date>/<signal_id>.md",
+      "append_only": true,
+      "portability": "tenant_private",
+      "required_fields": [
+        "type",
+        "signal_id",
+        "kind",
+        "severity",
+        "brand",
+        "summary",
+        "timestamp"
+      ],
+      "enums": {
+        "kind": [
+          "price_change",
+          "new_product",
+          "stock_out",
+          "map_violation",
+          "new_door",
+          "lost_door",
+          "follower_spike",
+          "promo_detected",
+          "news",
+          "regulatory"
+        ]
+      }
+    },
+    "season_event": {
+      "family": "crm",
+      "canonical_path": "marketing/calendar/<season_event_id>.md",
+      "append_only": false,
+      "portability": "tenant_private",
+      "required_fields": [
+        "type",
+        "season_event_id",
+        "name",
+        "starts",
+        "ends",
+        "kind",
+        "updated_at"
+      ],
+      "enums": {
+        "kind": [
+          "holiday",
+          "regulatory",
+          "trade_show",
+          "competitor_promo"
+        ]
+      }
+    },
+    "recommendation": {
+      "family": "crm",
+      "canonical_path": "marketing/recommendations/<rec_id>.md",
+      "append_only": false,
+      "portability": "tenant_private",
+      "required_fields": [
+        "type",
+        "rec_id",
+        "kind",
+        "status",
+        "rationale",
+        "expected_effect",
+        "updated_at"
+      ],
+      "enums": {
+        "kind": [
+          "package",
+          "content",
+          "event",
+          "offer",
+          "outreach",
+          "pricing_watch"
+        ],
+        "status": [
+          "pending",
+          "accepted",
+          "dismissed"
+        ]
+      }
+    },
+    "promo_code": {
+      "family": "crm",
+      "canonical_path": "marketing/promos/<code>.md",
+      "append_only": false,
+      "portability": "tenant_private",
+      "required_fields": [
+        "type",
+        "code",
+        "offer",
+        "starts",
+        "channel",
+        "redemptions",
+        "updated_at"
+      ]
+    },
+    "marketing_partner": {
+      "family": "crm",
+      "canonical_path": "marketing/partners/<partner_id>.md",
+      "append_only": false,
+      "portability": "tenant_private",
+      "required_fields": [
+        "type",
+        "partner_id",
+        "kind",
+        "name",
+        "updated_at"
+      ],
+      "enums": {
+        "kind": [
+          "creator",
+          "affiliate",
+          "retailer_staff"
+        ]
+      }
+    },
+    "market_digest": {
+      "family": "crm",
+      "canonical_path": "market/digests/<date>.md",
+      "append_only": false,
+      "portability": "tenant_private",
+      "required_fields": [
+        "type",
+        "date",
+        "signals_count",
+        "recommendations_count",
+        "updated_at"
+      ]
+    },
+    "market_research": {
+      "family": "crm",
+      "canonical_path": "market/research/<research_id>.md",
+      "append_only": false,
+      "portability": "tenant_private",
+      "required_fields": [
+        "type",
+        "research_id",
+        "topic",
+        "priority",
+        "status",
+        "created_at",
+        "updated_at"
+      ],
+      "enums": {
+        "priority": [
+          "low",
+          "medium",
+          "high"
+        ],
+        "status": [
+          "queued",
+          "failed",
+          "done"
+        ]
+      }
+    },
+    "api_key": {
+      "family": "crm",
+      "canonical_path": "auth/api-keys/<id>.md",
+      "append_only": false,
+      "portability": "tenant_private",
+      "required_fields": [
+        "type",
+        "id",
+        "owner",
+        "name",
+        "scope",
+        "token_hash",
+        "created_at",
+        "updated_at",
+        "expires_at",
+        "revoked_at"
+      ],
+      "enums": {
+        "scope": [
+          "read",
+          "write",
+          "admin"
+        ]
+      }
+    },
+    "google_identity": {
+      "family": "crm",
+      "canonical_path": "auth/google/<identity_id>.md",
+      "append_only": false,
+      "portability": "tenant_private",
+      "required_fields": [
+        "type",
+        "identity_id",
+        "subject",
+        "owner",
+        "created_at",
+        "updated_at"
+      ]
+    },
+    "user_role": {
+      "family": "crm",
+      "canonical_path": "auth/roles/<identity_id>.md",
+      "append_only": false,
+      "portability": "tenant_private",
+      "required_fields": [
+        "type",
+        "identity_id",
+        "email",
+        "role",
+        "updated_at"
+      ],
+      "enums": {
+        "role": [
+          "admin",
+          "rep",
+          "sales_director"
+        ]
+      }
+    },
+    "two_factor": {
+      "family": "security",
+      "canonical_path": "auth/totp/<identity_id>.md",
+      "append_only": false,
+      "portability": "tenant_private",
+      "required_fields": [
+        "type",
+        "identity_id",
+        "owner",
+        "enabled",
+        "last_counter",
+        "updated_at"
+      ],
+      "patterns": {
+        "identity_id": "^[a-f0-9]{64}$"
+      }
+    },
+    "social_feed_source": {
+      "family": "crm",
+      "canonical_path": "users/social/<profile_id>/sources/<feed_id>.md",
+      "append_only": false,
+      "portability": "tenant_private",
+      "required_fields": [
+        "type",
+        "owner",
+        "profile_id",
+        "feed_id",
+        "url",
+        "platform",
+        "handle",
+        "enabled",
+        "position",
+        "created_at",
+        "updated_at"
+      ]
+    },
+    "social_feed_item": {
+      "family": "crm",
+      "canonical_path": "users/social/<profile_id>/items/<item_id>.md",
+      "append_only": true,
+      "portability": "tenant_private",
+      "required_fields": [
+        "type",
+        "owner",
+        "profile_id",
+        "item_id",
+        "feed_id",
+        "platform",
+        "source_url",
+        "observed_at",
+        "post"
+      ]
+    },
+    "social_scan_run": {
+      "family": "crm",
+      "canonical_path": "users/social/<profile_id>/runs/<run_id>.md",
+      "append_only": true,
+      "portability": "tenant_private",
+      "required_fields": [
+        "type",
+        "owner",
+        "profile_id",
+        "run_id",
+        "started_at",
+        "sources",
+        "items_added"
+      ]
+    },
+    "user_memory": {
+      "family": "crm",
+      "canonical_path": "users/brain/<profile_id>/memories/<memory_id>.md",
+      "append_only": false,
+      "portability": "tenant_private",
+      "required_fields": [
+        "type",
+        "owner",
+        "profile_id",
+        "memory_id",
+        "category",
+        "title",
+        "content",
+        "created_at",
+        "updated_at"
+      ],
+      "enums": {
+        "category": [
+          "chat_thread",
+          "note",
+          "objection",
+          "preference",
+          "call_insight"
+        ]
+      }
+    },
+    "user": {
+      "family": "crm",
+      "canonical_path": "auth/users/<identity_id>.md",
+      "append_only": false,
+      "portability": "tenant_private",
+      "required_fields": [
+        "type",
+        "identity_id",
+        "email",
+        "status",
+        "updated_at"
+      ],
+      "enums": {
+        "status": [
+          "invited",
+          "active",
+          "disabled",
+          "deleted"
+        ]
+      }
+    },
+    "passkey": {
+      "family": "crm",
+      "canonical_path": "auth/passkeys/<credential_hash>.md",
+      "append_only": false,
+      "portability": "tenant_private",
+      "required_fields": [
+        "type",
+        "credential_hash",
+        "credential_id",
+        "owner",
+        "public_key",
+        "sign_count",
+        "updated_at"
+      ]
+    },
+    "setup_code": {
+      "family": "crm",
+      "canonical_path": "auth/setup-codes/<code_hash>.md",
+      "append_only": false,
+      "portability": "tenant_private",
+      "required_fields": [
+        "type",
+        "code_hash",
+        "owner",
+        "expires_at",
+        "updated_at"
+      ]
+    },
+    "user_policy": {
+      "family": "crm",
+      "canonical_path": "auth/user-policy.md",
+      "append_only": false,
+      "portability": "tenant_private",
+      "required_fields": [
+        "type",
+        "enforce",
+        "allow_shared_password",
+        "updated_at"
+      ]
+    },
+    "email_watch": {
+      "family": "crm",
+      "canonical_path": "emails/watches/<watch_id>.md",
+      "append_only": false,
+      "portability": "tenant_private",
+      "required_fields": [
+        "type",
+        "id",
+        "owner",
+        "account_id",
+        "thread_id",
+        "status",
+        "updated_at"
+      ],
+      "enums": {
+        "status": [
+          "waiting",
+          "replied",
+          "stopped"
+        ]
+      }
+    },
+    "campaign": {
+      "family": "crm",
+      "canonical_path": "campaigns/<id>.md",
+      "append_only": false,
+      "portability": "tenant_private",
+      "required_fields": [
+        "type",
+        "id",
+        "name",
+        "campaign_type",
+        "status",
+        "author",
+        "created_at",
+        "updated_at",
+        "target_filter",
+        "steps"
+      ],
+      "enums": {
+        "campaign_type": [
+          "drip",
+          "blast",
+          "sequence",
+          "newsletter"
+        ],
+        "status": [
+          "draft",
+          "scheduled",
+          "sending",
+          "sent",
+          "paused",
+          "cancelled"
+        ]
+      },
+      "patterns": {
+        "id": "^camp-[a-f0-9]{12}$"
+      },
+      "notes": "A multi-step outbound email campaign plus its recipient set and delivery stats. tenant_private: it names real recipients."
+    },
+    "cron_health_status": {
+      "family": "crm",
+      "canonical_path": "integrations/cron-status.md",
+      "append_only": false,
+      "portability": "tenant_private",
+      "required_fields": [
+        "type",
+        "checked_at",
+        "integrations"
+      ],
+      "notes": "Singleton snapshot of third-party integration connectivity, rewritten each health check. `integrations` is a map of provider -> state, not a scalar enum."
+    },
+    "local_lists_status": {
+      "family": "crm",
+      "canonical_path": "integrations/local-lists.md",
+      "append_only": false,
+      "portability": "tenant_private",
+      "required_fields": [
+        "type",
+        "finished_at",
+        "result"
+      ],
+      "notes": "Singleton result of the last local-territory list rebuild across sales reps. `error` is empty on success, so it is optional."
+    }
+  }
+}

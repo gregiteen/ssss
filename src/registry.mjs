@@ -298,25 +298,67 @@ export function resolvePrimitiveDefinition(registrySet, type) {
 }
 
 /**
+ * Names of the extensions loaded when a caller does not scope the load.
+ *
+ * A registry directory accumulates one extension per product. Two unrelated
+ * products may each legitimately define a shared primitive name (e.g. both a
+ * CRM and a ticketing product needing `integration_connection`), and §5.6 makes
+ * that a load-time collision. `extensions/defaults.json` names the set that is
+ * safe to compose together; every other extension MUST be selected explicitly by
+ * the caller that owns it. Without the manifest, every extension is loaded and
+ * any cross-product collision stays a hard error rather than a silent preference.
+ */
+function loadExtensionDefaults(registryDir) {
+  const manifest = path.join(registryDir, 'extensions', 'defaults.json');
+  if (!fs.existsSync(manifest)) return null;
+  const parsed = JSON.parse(fs.readFileSync(manifest, 'utf8'));
+  const names = parsed?.default_extensions;
+  if (!Array.isArray(names) || names.some((n) => typeof n !== 'string')) {
+    throw new Error('extensions/defaults.json: default_extensions must be an array of registry names.');
+  }
+  return names;
+}
+
+/**
  * Load the core registry and merge extension registries.
+ *
+ * `only` scopes the load to a set of registry names (e.g. `['dabber']`). A
+ * registry directory may hold extensions for unrelated products that legitimately
+ * declare the same shared primitive name; loading them together is a load-time
+ * collision (§5.6), so a caller that knows which extension a vault belongs to
+ * MUST be able to load just that one. When `only` is omitted, the set named by
+ * `extensions/defaults.json` is loaded; failing that, every extension is loaded
+ * and any duplicate name remains a hard error rather than a silent preference.
+ *
  * @param {string} [registryDir] - directory containing core.json + extensions/
+ * @param {{ only?: string[]|Set<string> }} [options]
  * @returns {{ types: Map<string, object>, contractTypes: Set<string>, portabilityClasses: string[], core: object, extensions: Set<string> }}
  */
-export function loadRegistries(registryDir = DEFAULT_REGISTRY_DIR) {
+export function loadRegistries(registryDir = DEFAULT_REGISTRY_DIR, options = {}) {
   const corePath = path.join(registryDir, 'core.json');
   const core = JSON.parse(fs.readFileSync(corePath, 'utf8'));
+  const requested = options.only ? new Set(options.only) : null;
+  const defaults = requested ? null : loadExtensionDefaults(registryDir);
+  const only = requested || (defaults ? new Set(defaults) : null);
   const extensionInputs = [];
   const extDir = path.join(registryDir, 'extensions');
   if (fs.existsSync(extDir)) {
-    for (const file of fs.readdirSync(extDir).filter((f) => f.endsWith('.json')).sort()) {
+    for (const file of fs.readdirSync(extDir).filter((f) => f.endsWith('.json') && f !== 'defaults.json').sort()) {
       const extPath = path.join(extDir, file);
       if (fs.lstatSync(extPath).isSymbolicLink()) {
         throw new Error(`extensions/${file}: symlinked registries are not allowed.`);
       }
-      extensionInputs.push({
-        source: `extensions/${file}`,
-        registry: JSON.parse(fs.readFileSync(extPath, 'utf8')),
-      });
+      const registry = JSON.parse(fs.readFileSync(extPath, 'utf8'));
+      if (only && !only.has(registry.registry) && !only.has(file.replace(/\.json$/, ''))) continue;
+      extensionInputs.push({ source: `extensions/${file}`, registry });
+    }
+  }
+  if (only) {
+    const loaded = new Set(extensionInputs.map((e) => e.registry.registry));
+    for (const name of only) {
+      if (!loaded.has(name) && !extensionInputs.some((e) => e.source === `extensions/${name}.json`)) {
+        throw new Error(`registry '${name}' is not present in ${path.join(registryDir, 'extensions')}.`);
+      }
     }
   }
   return composeRegistries({ core, extensions: extensionInputs });

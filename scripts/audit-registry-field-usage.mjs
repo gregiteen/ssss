@@ -57,6 +57,7 @@ const KNOWN_NON_ENGINE_KEYS = new Set([
   'optional_fields', 'type', 'registry',
   'portability', // consumed by src/registry.mjs resolvePortability() + src/bundle.mjs export filtering, not write-time validation
   'resource', // extension-defined resource_bound metadata, consumed by src/bundle.mjs provisioning
+  'description', // human documentation on a primitive definition, same role as `notes`; never enforced at write time
 ]);
 
 function loadAllPrimitiveDefs() {

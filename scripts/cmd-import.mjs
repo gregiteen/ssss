@@ -31,6 +31,10 @@ const HELP = usage({
 export async function run(argv) {
   if (wantsHelp(argv)) { console.log(HELP); return; }
   const { positionals, flags } = parseArgs(argv, { booleans: ['dry-run'], multi: ['param'] });
+  // Extension namespaces this import must resolve. Seeded from the bundle's own
+  // `required_extensions` so the engine loads exactly the namespace the vault was
+  // exported against, rather than every extension in the registry directory.
+  let registryNames = null;
   if (!flags.vault) die('import needs --vault <dir>.\n\n' + HELP);
   const vault = path.resolve(flags.vault);
   fs.mkdirSync(vault, { recursive: true });
@@ -45,6 +49,8 @@ export async function run(argv) {
     if (!file) die('import needs a bundle file (or --plan).\n\n' + HELP);
     if (!fs.existsSync(file)) die(`no such file: ${file}`);
     const bundle = JSON.parse(fs.readFileSync(file, 'utf8'));
+    const declared = bundle?.manifest?.required_extensions;
+    if (Array.isArray(declared) && declared.length) registryNames = declared;
     const prov = provisionBundle(bundle, {
       parameters: parseKeyValues(flags.param),
       workspaceId: flags.workspace || 'ws-provision',
@@ -60,7 +66,7 @@ export async function run(argv) {
     envelopes = prov.plan;
   }
 
-  const engine = createEngine({ registryDir: flags.registry });
+  const engine = createEngine({ registryDir: flags.registry, ...(registryNames ? { registryNames } : {}) });
   const result = await importBundle(envelopes, vault, engine);
   const failed = result.results.filter((r) => !r.success);
   if (flags['dry-run']) {

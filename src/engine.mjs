@@ -96,7 +96,10 @@ class LegacyLeaseAdapter {
 }
 
 export function createEngine(options = {}) {
-  const registrySet = options.registrySet || loadRegistries(options.registryDir);
+  // `registryNames` scopes the load to specific extension namespaces: a registry
+  // directory may hold unrelated product extensions that collide by name (§5.6).
+  const registrySet = options.registrySet
+    || loadRegistries(options.registryDir, options.registryNames ? { only: options.registryNames } : {});
   const validator = options.validator || createValidator({ registrySet });
   const kernels = new Map();
   const legacyLease = typeof options.leaseStore === 'string' ? new LegacyLeaseAdapter(options.leaseStore) : options.leaseStore;
