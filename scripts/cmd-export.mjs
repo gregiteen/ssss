@@ -52,6 +52,9 @@ export async function run(argv) {
       version: flags['bundle-version'] || '0.1.0',
       exporter: flags.exporter || DEFAULT_EXPORTER,
       requiredExtensions: flags.ext || [],
+      // --ext also scopes the registry load: a registry directory may hold
+      // unrelated product extensions that collide by name (§5.6).
+      ...(flags.ext && flags.ext.length ? { registryNames: flags.ext } : {}),
       ...(flags['exported-at'] ? { exportedAt: flags['exported-at'] } : {}),
     });
   } catch (err) { die(err.message); }

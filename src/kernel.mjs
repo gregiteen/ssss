@@ -184,6 +184,28 @@ export function createKernel(options = {}) {
       if (currentData?.type && currentData.type !== nextData.type) {
         return failure('validation_failed', envelope, operationId, ['Operation may not change an existing document type.'], [{ field: 'type', issue: 'Use an explicit migration.' }]);
       }
+      // Replaying an identical full operation is a no-op, not a replace. This must
+      // be checked before the append-only guard so that re-importing a bundle that
+      // is already present reports `unchanged` instead of failing (spec §17.1).
+      if (current && current.bytes.toString('utf8') === nextContent) {
+        const noopAuth = await authorize({
+          principal, workspaceId: envelope.workspace_id, definition,
+          action: envelope.type === 'operation' ? 'replace' : actionFor(envelope, true, isAppendType(definition)),
+          context,
+        });
+        if (!noopAuth.allowed) {
+          const code = validateVerifiedPrincipal(principal).valid ? 'forbidden' : 'unauthorized';
+          return failure(code, envelope, operationId, [`Access denied: ${noopAuth.reason}`], [{ field: 'principal', issue: noopAuth.reason }]);
+        }
+        const response = {
+          success: true, type: envelope.type, operation_id: operationId, path: envelope.path,
+          committed_at: current.version?.committed_at || null, dry_run: false,
+          unchanged: true,
+          validation: { valid: true, type: definition.qualified_type, errors: [], warnings: [] },
+        };
+        try { await idempotencyStore.put(envelope.workspace_id, envelope.idempotency_key, { request_hash: requestHash, response }); } catch {}
+        return response;
+      }
       // A full replace would rewrite recorded history (spec §5.3).
       if (current && isAppendType(definition)) {
         return failure('validation_failed', envelope, operationId, [`Append-only primitive '${declaredType}' cannot be replaced.`], [{ field: 'content', issue: 'Append with a patch carrying __body__.' }]);

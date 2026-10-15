@@ -1,0 +1,5 @@
+{
+  "$schema": "https://ssss.dev/registry/v1",
+  "description": "Extensions composed when a caller does not scope a registry load. Extensions NOT listed here are product-specific: a host loads one only when it is operating on that product's vault, passing the extension name explicitly (`ssss export --ext <name>`). This keeps two unrelated products from colliding on a shared primitive name, which §5.6 makes a load-time error.",
+  "default_extensions": ["festech"]
+}
