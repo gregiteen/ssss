@@ -126,10 +126,73 @@ export class JsonlEventStore {
     fs.mkdirSync(root, { recursive: true });
     this.root = fs.realpathSync(root);
     this.lockOptions = options.lock || {};
+    // Rotation cap in bytes per live log (SSSS_EVENT_MAX_BYTES, default 32 MiB,
+    // 0 disables). Without it a single append-only log grows without bound --
+    // one reached 653 MB and made the vault impossible to back up, because
+    // GitHub hard-rejects blobs over 100 MB.
+    const cap = Number(options.maxBytes ?? process.env.SSSS_EVENT_MAX_BYTES ?? 32 * 1024 * 1024);
+    this.maxBytes = Number.isFinite(cap) && cap >= 0 ? cap : 32 * 1024 * 1024;
   }
   #file(workspaceId) {
     if (!/^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$/.test(workspaceId || '')) throw new Error('Unsafe event workspace_id.');
     return path.join(this.root, `${workspaceId}.jsonl`);
+  }
+  /**
+   * Archive segments for one workspace, in replay order.
+   *
+   * Segments are named `<workspaceId>.<seq>.jsonl` with a fixed-width
+   * zero-padded sequence, and replay() concatenates live-then-archives rather
+   * than relying on a plain alphabetical sort -- `default.0001.jsonl` sorts
+   * BEFORE `default.jsonl`, which would replay archived events out of order.
+   */
+  #archives(workspaceId) {
+    const prefix = `${workspaceId}.`;
+    const suffix = '.jsonl';
+    let names;
+    try { names = fs.readdirSync(this.root); } catch { return []; }
+    return names
+      .filter((n) => n.startsWith(prefix) && n.endsWith(suffix) && /^\d+$/.test(n.slice(prefix.length, -suffix.length)))
+      .sort((a, b) => {
+        const ai = Number(a.slice(prefix.length, -suffix.length));
+        const bi = Number(b.slice(prefix.length, -suffix.length));
+        return ai - bi;
+      })
+      .map((n) => path.join(this.root, n));
+  }
+  /**
+   * Moves the live log aside once it passes the cap, preserving every byte and
+   * the original line order. The live file is renamed, never rewritten or
+   * truncated, so no consumer holding a cursor loses a record: archives hold
+   * strictly older events and replay() yields archives first, then live.
+   *
+   * The duplicate-event_id index is rebuilt from the archives on demand by
+   * #index(), so uniqueness survives rotation.
+   */
+  #rotate(file, workspaceId) {
+    if (this.maxBytes <= 0) return 0;
+    let size;
+    try { size = fs.lstatSync(file).size; } catch { return 0; }
+    if (size <= this.maxBytes) return 0;
+    // Continue the sequence from the highest existing archive rather than the
+    // count, so a gap (a manually removed segment) cannot cause a collision.
+    const existing = this.#archives(workspaceId);
+    let seq = 1;
+    for (const p of existing) {
+      const m = /\.(\d+)\.jsonl$/.exec(p);
+      if (m) seq = Math.max(seq, Number(m[1]) + 1);
+    }
+    const target = path.join(this.root, `${workspaceId}.${String(seq).padStart(4, '0')}.jsonl`);
+    if (fs.existsSync(target)) return 0;
+    try {
+      fs.renameSync(file, target);
+      this.#indexes.delete(file);
+      this.#indexes.delete(target);
+      return 1;
+    } catch {
+      // Leave the oversized log in place rather than lose it; the next append
+      // retries. Growth stays bounded by the cap check on every append.
+      return 0;
+    }
   }
   #index(file) {
     let stat;
@@ -142,7 +205,21 @@ export class JsonlEventStore {
     if (stat.isSymbolicLink()) throw new Error('Symlinked event logs are forbidden.');
     const cached = this.#indexes.get(file);
     if (cached && sameStat(cached.stat, stat)) return cached;
-    const index = loadIndex(file);
+    // Duplicate detection spans the live log AND every archive segment:
+    // rotating a log must never let an already-recorded event_id be appended
+    // again. Archives are immutable, so their ids are collected once per
+    // rebuild; only the live file's stat decides when a rebuild is needed.
+    const ids = new Set();
+    const workspaceId = path.basename(file, '.jsonl');
+    for (const archive of this.#archives(workspaceId)) {
+      let archiveStat;
+      try { archiveStat = fs.lstatSync(archive); } catch { continue; }
+      if (archiveStat.isSymbolicLink()) throw new Error('Symlinked event logs are forbidden.');
+      for (const id of loadIndex(archive).ids) ids.add(id);
+    }
+    const live = loadIndex(file);
+    for (const id of live.ids) ids.add(id);
+    const index = { ids, stat };
     this.#indexes.set(file, index);
     return index;
   }
@@ -153,29 +230,44 @@ export class JsonlEventStore {
   #appendLocked(file, event) {
     const index = this.#index(file);
     if (index.ids.has(event.event_id)) throw new Error(`Duplicate event_id '${event.event_id}'.`);
+    // Rotate before writing so the live log never exceeds the cap by more than
+    // a single line. Safe under the append lock: no other writer is mid-append.
+    const rotated = this.#rotate(file, event.workspace_id);
     const line = `${JSON.stringify(event)}\n`;
     this.#indexes.delete(file);
+    const before = rotated ? null : index.stat;
     const fd = openLog(file, APPEND_FLAGS, 0o600);
     let after;
     try {
       fs.writeFileSync(fd, line);
       after = fs.fstatSync(fd);
     } finally { fs.closeSync(fd); }
-    // Keep the index only when the log grew by exactly this line on the same
-    // file; otherwise a writer that skips the lock interleaved, and the next
-    // append rebuilds.
-    const before = index.stat;
+    // Cache the index only when the log grew by exactly this line on the same
+    // file. After a rotation the live file is brand new, so the previous stat
+    // is meaningless and the next append rebuilds from the archives instead.
     const expectedSize = (before?.size || 0) + Buffer.byteLength(line);
-    if (after.size === expectedSize && (!before || (before.dev === after.dev && before.ino === after.ino))) {
+    if (!rotated && after.size === expectedSize && (!before || (before.dev === after.dev && before.ino === after.ino))) {
       index.ids.add(event.event_id);
       this.#indexes.set(file, { ids: index.ids, stat: after });
     }
     return structuredClone(event);
   }
   async *replay(options = {}) {
+    // Replay order is archives-then-live, oldest first. A plain alphabetical
+    // sort would put `default.0001.jsonl` before `default.jsonl` (correct by
+    // accident) but break as soon as a workspace has a name that sorts after a
+    // digit, and live-first would replay new events before old ones.
     const files = options.workspaceId
-      ? [this.#file(options.workspaceId)]
-      : fs.readdirSync(this.root).filter((name) => name.endsWith('.jsonl')).sort().map((name) => path.join(this.root, name));
+      ? [...this.#archives(options.workspaceId), this.#file(options.workspaceId)]
+      : (() => {
+          const names = fs.readdirSync(this.root).filter((name) => name.endsWith('.jsonl'));
+          const workspaces = new Set();
+          for (const name of names) {
+            const m = /^([A-Za-z0-9][A-Za-z0-9._-]{0,127}?)(?:\.\d+)?\.jsonl$/.exec(name);
+            if (m) workspaces.add(m[1]);
+          }
+          return [...workspaces].sort().flatMap((w) => [...this.#archives(w), this.#file(w)]);
+        })();
     let cursor = 0;
     for (const file of files) {
       if (!fs.existsSync(file)) continue;
