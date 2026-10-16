@@ -1,134 +1,1115 @@
 {
   "$schema": "https://ssss.dev/registry/v1",
-  "registry": "festech",
-  "extends": "core",
-  "spec_version": "0.3",
-  "description": "Festech extension registry. Defines the host-specific primitives that festech.live layers on top of the SSSS core (registry/core.json). Lifted from festech's docs/ssss/primitive-registry.json and assigned a portability class (§5.5) so a festech workspace can be exported as a backup/template/sale bundle. Core primitives (assistant, workflow, rule, security_role, skill, model, memory, task, conversation, run, conflict, page, migration, release) are NOT redefined here — they are governed by core.json. An extension MUST NOT redefine a core type.",
-  "conformance": "A festech-conformant host MUST resolve portability for these primitives from this registry. The `resource_bound` primitives MUST ship only a requirement declaration (never the seller's bound value) in a template/sale export; the `tenant_private` primitives MUST be dropped from template/sale entirely (§5.5).",
-
+  "conformance": "A festech-conformant host MUST resolve portability for these primitives from this registry. The `resource_bound` primitives MUST ship only a requirement declaration (never the seller's bound value) in a template/sale export; the `tenant_private` primitives MUST be dropped from template/sale entirely (\u00a75.5).",
+  "description": "Festech extension registry. Defines the host-specific primitives that festech.live layers on top of the SSSS core (registry/core.json). Lifted from festech's docs/ssss/primitive-registry.json and assigned a portability class (\u00a75.5) so a festech workspace can be exported as a backup/template/sale bundle. Core primitives (assistant, workflow, rule, security_role, skill, model, memory, task, conversation, run, conflict, page, migration, release) are NOT redefined here \u2014 they are governed by core.json. An extension MUST NOT redefine a core type. Derived from the Festech application registry (docs/ssss/primitive-registry.json, 198 primitives); the 73 types observed in live vault data are declared here.",
   "document_primitives": {
-    "domain": {
-      "family": "resource",
-      "canonical_path": "domains/<domain>.md",
+    "ai_integration": {
       "append_only": false,
-      "portability": "resource_bound",
-      "resource": { "kind": "domain", "binds": ["domain_name", "registrar"], "provision_relation": "owns_domain" },
-      "required_fields": ["type", "domain_name", "registrar", "status", "payment_status"],
-      "notes": "The seller's domain is NEVER transferred. In template/sale the bundle declares 'this business needs a domain'; the buyer binds their own at provision (§16)."
+      "canonical_path": "integrations/ai.md",
+      "family": "record",
+      "portability": "tenant_private",
+      "projection_strategy": "replace",
+      "required_fields": [
+        "type",
+        "use_platform_tokens"
+      ]
     },
-    "phone_number": {
-      "family": "resource",
-      "canonical_path": "telephony/PHONE_SYSTEM.md",
+    "asset_share": {
       "append_only": false,
+      "canonical_path": "asset_shares/<id>.md",
+      "family": "record",
+      "notes": "A time-limited share link for a festech file asset. Holds a bearer token, so it never travels in a template/sale export.",
       "portability": "resource_bound",
-      "resource": { "kind": "phone", "binds": ["phone_number", "provider"], "provision_relation": "routes_calls_to" },
-      "required_fields": ["type", "phone_number", "provider", "status"]
+      "required_fields": [
+        "type",
+        "id",
+        "token",
+        "asset_id"
+      ]
     },
-    "integration_connection": {
-      "family": "resource",
-      "canonical_path": "integrations/<provider>.md",
+    "audit_log": {
+      "append_only": true,
+      "canonical_path": "audit/logs/<year-month>/<audit-id>.md",
+      "family": "record",
+      "portability": "tenant_private",
+      "projection_strategy": "append_only_log",
+      "required_fields": [
+        "action",
+        "entity_id",
+        "entity_type",
+        "type"
+      ]
+    },
+    "automation": {
       "append_only": false,
-      "portability": "resource_bound",
-      "resource": { "kind": "api_connection", "binds": ["provider"], "provision_relation": "connects_to" },
-      "required_fields": ["type", "provider", "status", "capabilities", "verified_at"],
-      "notes": "Carries credentials/tokens to a third-party provider — the seller's connection value MUST be stripped; the buyer supplies their own at provision."
+      "canonical_path": "automations/<slug>.md",
+      "family": "record",
+      "notes": "App registry marks triggers required but they are absent in some live documents; not enforced.",
+      "portability": "tenant_private",
+      "projection_strategy": "vfs_event_router",
+      "required_fields": [
+        "name",
+        "type"
+      ]
     },
-    "legal_policy": {
-      "family": "governance",
+    "benefit-fulfillment": {
+      "append_only": false,
+      "canonical_path": "crm/fulfillments/<id>.md",
+      "family": "record",
+      "portability": "tenant_private",
+      "projection_strategy": "vfs_event_router",
+      "required_fields": [
+        "benefit_id",
+        "partnership_id",
+        "status",
+        "type"
+      ]
+    },
+    "call_log": {
+      "append_only": true,
+      "canonical_path": "comms/calls/<slug>.md",
+      "family": "record",
+      "portability": "tenant_private",
+      "projection_strategy": "insert_only",
+      "required_fields": [
+        "direction",
+        "phone_number",
+        "status",
+        "type"
+      ]
+    },
+    "channel": {
+      "append_only": false,
+      "canonical_path": "channels/<slug>.md",
+      "family": "record",
+      "portability": "tenant_private",
+      "required_fields": [
+        "type"
+      ]
+    },
+    "channel_membership": {
+      "append_only": false,
+      "canonical_path": "channel_memberships/<id>.md",
+      "family": "record",
+      "portability": "tenant_private",
+      "required_fields": [
+        "id",
+        "type"
+      ]
+    },
+    "chat_message": {
+      "append_only": true,
+      "canonical_path": "chat_messages/<slug>.md",
+      "family": "record",
+      "portability": "tenant_private",
+      "projection_strategy": "append",
+      "required_fields": [
+        "sender_id",
+        "thread_id",
+        "type"
+      ]
+    },
+    "chat_thread": {
+      "append_only": false,
+      "canonical_path": "chat_threads/<slug>.md",
+      "family": "record",
+      "portability": "tenant_private",
+      "projection_strategy": "replace",
+      "required_fields": [
+        "participant_a",
+        "type"
+      ]
+    },
+    "collective": {
+      "append_only": false,
+      "canonical_path": "collective.md",
+      "family": "record",
+      "portability": "tenant_private",
+      "projection_strategy": "replace",
+      "required_fields": [
+        "name",
+        "slug",
+        "type"
+      ]
+    },
+    "contact": {
+      "append_only": false,
+      "canonical_path": "crm/contacts/<slug>.md",
+      "family": "record",
+      "portability": "tenant_private",
+      "projection_strategy": "vfs_event_router",
+      "required_fields": [
+        "first_name",
+        "type"
+      ]
+    },
+    "contract": {
+      "append_only": false,
       "canonical_path": "contracts/<id>.md",
+      "family": "record",
+      "portability": "tenant_private",
+      "projection_strategy": "replace",
+      "required_fields": [
+        "contractor_contact_id",
+        "title",
+        "type"
+      ]
+    },
+    "crm_referral": {
       "append_only": false,
-      "portability": "structural",
-      "required_fields": ["type", "title", "version", "effective_date", "policy_type"]
+      "canonical_path": "crm_referrals/<id>.md",
+      "family": "record",
+      "portability": "tenant_private",
+      "required_fields": [
+        "id",
+        "type"
+      ]
+    },
+    "design": {
+      "append_only": false,
+      "canonical_path": "design-profiles/<id>/DESIGN.md",
+      "family": "record",
+      "portability": "tenant_private",
+      "projection_strategy": "vfs_event_router",
+      "required_fields": [
+        "type"
+      ]
+    },
+    "design_system": {
+      "append_only": false,
+      "canonical_path": "design_system.md",
+      "family": "record",
+      "portability": "tenant_private",
+      "projection_strategy": "replace",
+      "required_fields": [
+        "type"
+      ]
+    },
+    "document": {
+      "append_only": false,
+      "canonical_path": "documents/<id>.md",
+      "family": "record",
+      "portability": "tenant_private",
+      "projection_strategy": "none",
+      "required_fields": [
+        "type"
+      ]
+    },
+    "domain": {
+      "append_only": false,
+      "canonical_path": "domains/<domain>.md",
+      "family": "resource",
+      "notes": "The seller's domain is NEVER transferred. In template/sale the bundle declares 'this business needs a domain'; the buyer binds their own at provision (\u00a716).",
+      "portability": "resource_bound",
+      "required_fields": [
+        "type",
+        "domain_name",
+        "registrar",
+        "status",
+        "payment_status"
+      ],
+      "resource": {
+        "binds": [
+          "domain_name",
+          "registrar"
+        ],
+        "kind": "domain",
+        "provision_relation": "owns_domain"
+      }
+    },
+    "email_domain": {
+      "append_only": false,
+      "canonical_path": "communications/email/domains/<domain>.md",
+      "family": "record",
+      "portability": "tenant_private",
+      "projection_strategy": "vfs_event_router",
+      "required_fields": [
+        "domain",
+        "status",
+        "type"
+      ]
+    },
+    "email_mailbox": {
+      "append_only": false,
+      "canonical_path": "communications/email/mailboxes/<email>.md",
+      "family": "record",
+      "portability": "tenant_private",
+      "projection_strategy": "vfs_event_router",
+      "required_fields": [
+        "active",
+        "domain_id",
+        "email",
+        "quota",
+        "type"
+      ]
+    },
+    "event": {
+      "append_only": false,
+      "canonical_path": "events/<slug>.md",
+      "family": "record",
+      "portability": "tenant_private",
+      "projection_strategy": "vfs_event_router",
+      "required_fields": [
+        "event_type",
+        "type"
+      ]
+    },
+    "event_artist": {
+      "append_only": false,
+      "canonical_path": "events/<event-slug>/artists/<artist-slug>.md",
+      "family": "record",
+      "portability": "tenant_private",
+      "projection_strategy": "vfs_event_router",
+      "required_fields": [
+        "artist_name",
+        "event_slug",
+        "status",
+        "type"
+      ]
+    },
+    "event_asset": {
+      "append_only": false,
+      "canonical_path": "events/<event-slug>/assets/<slug>.md",
+      "family": "record",
+      "portability": "tenant_private",
+      "projection_strategy": "vfs_event_router",
+      "required_fields": [
+        "asset_category",
+        "file_name",
+        "file_type",
+        "file_url",
+        "type"
+      ]
+    },
+    "event_faq": {
+      "append_only": false,
+      "canonical_path": "event_faqs/<slug>.md",
+      "family": "record",
+      "portability": "tenant_private",
+      "projection_strategy": "replace",
+      "required_fields": [
+        "answer",
+        "event_id",
+        "question",
+        "type"
+      ]
+    },
+    "event_inventory": {
+      "append_only": false,
+      "canonical_path": "events/<event-slug>/inventory/<booking-id>.md",
+      "family": "record",
+      "portability": "tenant_private",
+      "projection_strategy": "vfs_event_router",
+      "required_fields": [
+        "event_slug",
+        "item_name",
+        "status",
+        "type"
+      ]
+    },
+    "event_marketing_campaign": {
+      "append_only": false,
+      "canonical_path": "events/<event_slug>/marketing/<slug>.md",
+      "family": "record",
+      "portability": "tenant_private",
+      "projection_strategy": "upsert_on_id",
+      "required_fields": [
+        "campaign_name",
+        "channel",
+        "status",
+        "type"
+      ]
+    },
+    "event_message": {
+      "append_only": false,
+      "canonical_path": "event_messages/<slug>.md",
+      "family": "record",
+      "portability": "tenant_private",
+      "projection_strategy": "replace",
+      "required_fields": [
+        "author_name",
+        "event_id",
+        "type"
+      ]
+    },
+    "event_sponsor": {
+      "append_only": false,
+      "canonical_path": "events/<event-slug>/sponsors/<sponsor-slug>.md",
+      "family": "record",
+      "portability": "tenant_private",
+      "projection_strategy": "vfs_event_router",
+      "required_fields": [
+        "event_slug",
+        "name",
+        "status",
+        "type"
+      ]
     },
     "extension": {
-      "family": "capability",
+      "append_only": false,
       "canonical_path": "extensions/<id>.md",
-      "append_only": false,
+      "family": "capability",
+      "notes": "Which extensions a workspace has installed is part of the business model and ships in a sale.",
       "portability": "structural",
-      "required_fields": ["type", "extension", "display_name", "status"],
-      "notes": "Which extensions a workspace has installed is part of the business model and ships in a sale."
+      "required_fields": [
+        "type",
+        "extension",
+        "display_name",
+        "status"
+      ]
     },
-    "media_asset": {
+    "favorite": {
+      "append_only": false,
+      "canonical_path": "favorites/<id>.md",
+      "family": "record",
+      "portability": "tenant_private",
+      "required_fields": [
+        "id",
+        "type"
+      ]
+    },
+    "file_asset": {
+      "append_only": false,
+      "canonical_path": "assets/<id>.md",
       "family": "asset",
-      "canonical_path": "media/assets/<asset-id>.md",
-      "append_only": false,
-      "portability": "structural",
-      "required_fields": ["type", "asset_id", "asset_type", "url"],
-      "notes": "Brand/marketing assets are structural. An asset holding customer-uploaded content SHOULD override with x_portability: tenant_private."
+      "notes": "Festech's uploaded-file record: points at an object via `file_upload`/`filename`. Distinct from core `ssss:asset` (a text-encoded payload) and from `media_asset` (brand assets under media/assets/).",
+      "portability": "resource_bound",
+      "required_fields": [
+        "type",
+        "slug",
+        "asset_id"
+      ],
+      "resource": {
+        "binds": [
+          "file_upload"
+        ],
+        "kind": "storage",
+        "provision_relation": "stores_asset"
+      }
     },
-    "language_convention": {
-      "family": "localization",
-      "canonical_path": "languages/<locale>/CONVENTION.md",
+    "grant_application": {
       "append_only": false,
-      "portability": "structural",
-      "required_fields": ["type", "locale", "language_name", "keys"]
+      "canonical_path": "grants/<id>.md",
+      "family": "record",
+      "portability": "tenant_private",
+      "projection_strategy": "none",
+      "required_fields": [
+        "funder_name",
+        "grant_title",
+        "status",
+        "type"
+      ]
+    },
+    "integration_connection": {
+      "append_only": false,
+      "canonical_path": "integrations/<provider>.md",
+      "family": "resource",
+      "notes": "Carries credentials/tokens to a third-party provider \u2014 the seller's connection value MUST be stripped; the buyer supplies their own at provision.",
+      "portability": "resource_bound",
+      "required_fields": [
+        "type",
+        "provider",
+        "status",
+        "capabilities",
+        "verified_at"
+      ],
+      "resource": {
+        "binds": [
+          "provider"
+        ],
+        "kind": "api_connection",
+        "provision_relation": "connects_to"
+      }
+    },
+    "inventory_category": {
+      "append_only": false,
+      "canonical_path": "inventory_categorys/<id>.md",
+      "family": "record",
+      "portability": "tenant_private",
+      "required_fields": [
+        "id",
+        "type"
+      ]
+    },
+    "inventory_checkout": {
+      "append_only": false,
+      "canonical_path": "inventory_checkouts/<id>.md",
+      "family": "record",
+      "portability": "tenant_private",
+      "required_fields": [
+        "id",
+        "type"
+      ]
+    },
+    "inventory_condition": {
+      "append_only": false,
+      "canonical_path": "inventory_conditions/<id>.md",
+      "family": "record",
+      "portability": "tenant_private",
+      "required_fields": [
+        "id",
+        "type"
+      ]
+    },
+    "inventory_item": {
+      "append_only": false,
+      "canonical_path": "inventory/<slug>.md",
+      "family": "record",
+      "portability": "tenant_private",
+      "projection_strategy": "replace",
+      "required_fields": [
+        "name",
+        "slug",
+        "status",
+        "type"
+      ]
+    },
+    "inventory_location": {
+      "append_only": false,
+      "canonical_path": "inventory_locations/<id>.md",
+      "family": "record",
+      "portability": "tenant_private",
+      "required_fields": [
+        "id",
+        "type"
+      ]
+    },
+    "inventory_review": {
+      "append_only": true,
+      "canonical_path": "inventory/reviews/<id>.md",
+      "family": "record",
+      "portability": "tenant_private",
+      "projection_strategy": "vfs_event_router",
+      "required_fields": [
+        "item_id",
+        "rating",
+        "reviewer_name",
+        "type"
+      ]
+    },
+    "inventory_stock_level": {
+      "append_only": false,
+      "canonical_path": "inventory/stock_levels/<id>.md",
+      "family": "record",
+      "portability": "tenant_private",
+      "projection_strategy": "vfs_event_router",
+      "required_fields": [
+        "quantity",
+        "type",
+        "variant_id"
+      ]
+    },
+    "inventory_transaction": {
+      "append_only": true,
+      "canonical_path": "inventory/transactions/<id>.md",
+      "family": "record",
+      "portability": "tenant_private",
+      "projection_strategy": "vfs_event_router",
+      "required_fields": [
+        "quantity",
+        "type",
+        "variant_id"
+      ]
+    },
+    "inventory_variant": {
+      "append_only": false,
+      "canonical_path": "inventory/variants/<id>.md",
+      "family": "record",
+      "portability": "tenant_private",
+      "projection_strategy": "vfs_event_router",
+      "required_fields": [
+        "item_id",
+        "name",
+        "sku",
+        "type"
+      ]
+    },
+    "invoice": {
+      "append_only": false,
+      "canonical_path": "finance/invoices/<id>.md",
+      "family": "record",
+      "portability": "tenant_private",
+      "projection_strategy": "replace",
+      "required_fields": [
+        "status",
+        "total",
+        "type"
+      ]
+    },
+    "invoice_item": {
+      "append_only": false,
+      "canonical_path": "finance/invoices/<invoice_id>/items/<id>.md",
+      "family": "record",
+      "portability": "tenant_private",
+      "projection_strategy": "none",
+      "required_fields": [
+        "amount_cents",
+        "description",
+        "id",
+        "invoice_id",
+        "type"
+      ]
+    },
+    "ip-contributor": {
+      "append_only": false,
+      "canonical_path": "ip-contributors/<id>.md",
+      "family": "record",
+      "portability": "tenant_private",
+      "projection_strategy": "replace",
+      "required_fields": [
+        "contact_id",
+        "share_percentage",
+        "type",
+        "work_id"
+      ]
+    },
+    "ip-work": {
+      "append_only": false,
+      "canonical_path": "ip-works/<id>.md",
+      "family": "record",
+      "portability": "tenant_private",
+      "projection_strategy": "replace",
+      "required_fields": [
+        "owner_contact_id",
+        "type",
+        "work_type"
+      ]
+    },
+    "ip_usage_log": {
+      "append_only": false,
+      "canonical_path": "ip_usage_logs/<id>.md",
+      "family": "record",
+      "portability": "tenant_private",
+      "required_fields": [
+        "id",
+        "type"
+      ]
     },
     "knowledge": {
-      "family": "knowledge",
-      "canonical_path": "knowledge/<slug>.md",
       "append_only": false,
+      "canonical_path": "knowledge/<slug>.md",
+      "family": "knowledge",
+      "notes": "The curated knowledge base is a core sellable asset of the business model.",
       "portability": "structural",
-      "required_fields": ["type", "name", "slug"],
-      "notes": "The curated knowledge base is a core sellable asset of the business model."
+      "required_fields": [
+        "type",
+        "name",
+        "slug"
+      ]
     },
     "knowledge_source": {
-      "family": "knowledge",
+      "append_only": false,
       "canonical_path": "knowledge/<knowledge-slug>/sources/<slug>.md",
-      "append_only": false,
+      "family": "knowledge",
+      "notes": "A source backing a structural knowledge base. A source ingesting private customer documents SHOULD override with x_portability: tenant_private.",
       "portability": "structural",
-      "required_fields": ["type", "title", "knowledge_base_slug"],
-      "notes": "A source backing a structural knowledge base. A source ingesting private customer documents SHOULD override with x_portability: tenant_private."
+      "required_fields": [
+        "type",
+        "title",
+        "knowledge_base_slug"
+      ]
     },
-    "onboarding_state": {
-      "family": "runtime",
-      "canonical_path": "onboarding_state.md",
+    "language_convention": {
       "append_only": false,
-      "portability": "tenant_private",
-      "required_fields": ["type", "state_version", "collective_id", "completed_steps", "deferred_steps", "dismissed"]
+      "canonical_path": "languages/<locale>/CONVENTION.md",
+      "family": "localization",
+      "portability": "structural",
+      "required_fields": [
+        "type",
+        "locale",
+        "language_name",
+        "keys"
+      ]
     },
-    "profile": {
-      "family": "actor",
-      "canonical_path": "PROFILE.md",
+    "legal_policy": {
       "append_only": false,
-      "portability": "tenant_private",
-      "required_fields": ["type", "user_id", "locale"]
+      "canonical_path": "contracts/<id>.md",
+      "family": "governance",
+      "portability": "structural",
+      "required_fields": [
+        "type",
+        "title",
+        "version",
+        "effective_date",
+        "policy_type"
+      ]
     },
-    "personalization": {
-      "family": "actor",
-      "canonical_path": "PERSONALIZATION.md",
+    "lost_found_item": {
       "append_only": false,
+      "canonical_path": "lost_found_items/<slug>.md",
+      "family": "record",
       "portability": "tenant_private",
-      "required_fields": ["type"]
+      "projection_strategy": "replace",
+      "required_fields": [
+        "category",
+        "description",
+        "type"
+      ]
+    },
+    "media_asset": {
+      "append_only": false,
+      "canonical_path": "media/assets/<asset-id>.md",
+      "family": "asset",
+      "notes": "Brand/marketing assets are structural. An asset holding customer-uploaded content SHOULD override with x_portability: tenant_private.",
+      "portability": "structural",
+      "required_fields": [
+        "type",
+        "asset_id",
+        "asset_type",
+        "url"
+      ]
+    },
+    "meeting": {
+      "append_only": false,
+      "canonical_path": "meetings/<slug>.md",
+      "family": "record",
+      "portability": "tenant_private",
+      "projection_strategy": "vfs_event_router",
+      "required_fields": [
+        "host_id",
+        "status",
+        "title",
+        "type"
+      ]
+    },
+    "member": {
+      "append_only": false,
+      "canonical_path": "members/<id>.md",
+      "family": "record",
+      "portability": "tenant_private",
+      "projection_strategy": "none",
+      "required_fields": [
+        "type"
+      ]
+    },
+    "message": {
+      "append_only": false,
+      "canonical_path": "message/<slug>.md",
+      "family": "record",
+      "portability": "tenant_private",
+      "required_fields": [
+        "type"
+      ]
     },
     "model-preferences": {
-      "family": "actor",
+      "append_only": false,
       "canonical_path": "models/preferences/MODEL-PREFERENCES.md",
-      "append_only": false,
-      "portability": "tenant_private",
-      "required_fields": ["type", "user_id", "workspace_id"]
-    },
-    "sharing_group": {
       "family": "actor",
-      "canonical_path": "sharing-groups/<id>.md",
-      "append_only": false,
       "portability": "tenant_private",
-      "required_fields": ["type", "name", "color", "owner_user_id"]
+      "required_fields": [
+        "type",
+        "user_id",
+        "workspace_id"
+      ]
+    },
+    "onboarding_state": {
+      "append_only": false,
+      "canonical_path": "onboarding_state.md",
+      "family": "runtime",
+      "portability": "tenant_private",
+      "required_fields": [
+        "type",
+        "state_version",
+        "collective_id",
+        "completed_steps",
+        "deferred_steps",
+        "dismissed"
+      ]
+    },
+    "order": {
+      "append_only": false,
+      "canonical_path": "order/<slug>.md",
+      "family": "record",
+      "portability": "tenant_private",
+      "required_fields": [
+        "type"
+      ]
+    },
+    "page_revision": {
+      "append_only": false,
+      "canonical_path": "page_revisions/<id>.md",
+      "family": "record",
+      "portability": "tenant_private",
+      "required_fields": [
+        "id",
+        "type"
+      ]
+    },
+    "personalization": {
+      "append_only": false,
+      "canonical_path": "PERSONALIZATION.md",
+      "family": "actor",
+      "portability": "tenant_private",
+      "required_fields": [
+        "type"
+      ]
+    },
+    "phone_number": {
+      "append_only": false,
+      "canonical_path": "telephony/PHONE_SYSTEM.md",
+      "family": "resource",
+      "portability": "resource_bound",
+      "required_fields": [
+        "type",
+        "phone_number",
+        "provider",
+        "status"
+      ],
+      "resource": {
+        "binds": [
+          "phone_number",
+          "provider"
+        ],
+        "kind": "phone",
+        "provision_relation": "routes_calls_to"
+      }
+    },
+    "profile": {
+      "append_only": false,
+      "canonical_path": "PROFILE.md",
+      "family": "actor",
+      "portability": "tenant_private",
+      "required_fields": [
+        "type",
+        "user_id",
+        "locale"
+      ]
+    },
+    "promo": {
+      "append_only": false,
+      "canonical_path": "promos/<id>.md",
+      "family": "record",
+      "portability": "tenant_private",
+      "projection_strategy": "replace",
+      "required_fields": [
+        "code",
+        "discount_type",
+        "discount_value",
+        "type"
+      ]
+    },
+    "recurring-invoice": {
+      "append_only": false,
+      "canonical_path": "recurring-invoices/<id>.md",
+      "family": "record",
+      "portability": "tenant_private",
+      "projection_strategy": "none",
+      "required_fields": [
+        "type"
+      ]
+    },
+    "resale_listing": {
+      "append_only": false,
+      "canonical_path": "resale/<id>.md",
+      "family": "record",
+      "portability": "tenant_private",
+      "projection_strategy": "replace",
+      "required_fields": [
+        "event_id",
+        "price_cents",
+        "seller_email",
+        "status",
+        "ticket_id",
+        "ticket_type_id",
+        "type"
+      ]
+    },
+    "rights-license": {
+      "append_only": false,
+      "canonical_path": "rights-licenses/<id>.md",
+      "family": "record",
+      "portability": "tenant_private",
+      "projection_strategy": "replace",
+      "required_fields": [
+        "license_type",
+        "licensee_contact_id",
+        "type",
+        "work_id"
+      ]
+    },
+    "rights_imported_royalty": {
+      "append_only": false,
+      "canonical_path": "rights_imported_royaltys/<id>.md",
+      "family": "record",
+      "portability": "tenant_private",
+      "required_fields": [
+        "id",
+        "type"
+      ]
+    },
+    "rights_royalty_import": {
+      "append_only": false,
+      "canonical_path": "rights_royalty_imports/<id>.md",
+      "family": "record",
+      "portability": "tenant_private",
+      "required_fields": [
+        "id",
+        "type"
+      ]
+    },
+    "rights_royalty_payout": {
+      "append_only": false,
+      "canonical_path": "royalty-payouts/<id>.md",
+      "family": "record",
+      "portability": "tenant_private",
+      "projection_strategy": "none",
+      "required_fields": [
+        "type"
+      ]
+    },
+    "rights_royalty_rule": {
+      "append_only": false,
+      "canonical_path": "royalty-rules/<id>.md",
+      "family": "record",
+      "portability": "tenant_private",
+      "projection_strategy": "none",
+      "required_fields": [
+        "type"
+      ]
+    },
+    "royalty-payout": {
+      "append_only": false,
+      "canonical_path": "royalty-payouts/<id>.md",
+      "family": "record",
+      "portability": "tenant_private",
+      "projection_strategy": "replace",
+      "required_fields": [
+        "amount_cents",
+        "statement_id",
+        "type"
+      ]
+    },
+    "royalty-rule": {
+      "append_only": false,
+      "canonical_path": "royalty-rules/<id>.md",
+      "family": "record",
+      "portability": "tenant_private",
+      "projection_strategy": "replace",
+      "required_fields": [
+        "contributor_contact_id",
+        "rate_percentage",
+        "royalty_type",
+        "type",
+        "work_id"
+      ]
     },
     "settings": {
-      "family": "config",
-      "canonical_path": "SETTINGS.md",
       "append_only": false,
+      "canonical_path": "SETTINGS.md",
+      "family": "config",
+      "notes": "Workspace settings configure the business model (structural). Account-scoped settings SHOULD override with x_portability: tenant_private.",
       "portability": "structural",
-      "required_fields": ["type"],
-      "notes": "Workspace settings configure the business model (structural). Account-scoped settings SHOULD override with x_portability: tenant_private."
+      "required_fields": [
+        "type"
+      ]
+    },
+    "sharing_group": {
+      "append_only": false,
+      "canonical_path": "sharing-groups/<id>.md",
+      "family": "actor",
+      "portability": "tenant_private",
+      "required_fields": [
+        "type",
+        "name",
+        "color",
+        "owner_user_id"
+      ]
+    },
+    "sms_message": {
+      "append_only": true,
+      "canonical_path": "sms/messages/<id>.md",
+      "family": "record",
+      "portability": "tenant_private",
+      "projection_strategy": "append_only_log",
+      "required_fields": [
+        "direction",
+        "phone_number",
+        "type"
+      ]
+    },
+    "social-post": {
+      "append_only": false,
+      "canonical_path": "social-posts/<id>.md",
+      "family": "record",
+      "portability": "tenant_private",
+      "projection_strategy": "replace",
+      "required_fields": [
+        "body",
+        "type"
+      ]
+    },
+    "sponsorship-benefit": {
+      "append_only": false,
+      "canonical_path": "crm/benefits/<id>.md",
+      "family": "record",
+      "portability": "tenant_private",
+      "projection_strategy": "vfs_event_router",
+      "required_fields": [
+        "name",
+        "tier_id",
+        "type"
+      ]
+    },
+    "sponsorship-tier": {
+      "append_only": false,
+      "canonical_path": "crm/tiers/<id>.md",
+      "family": "record",
+      "portability": "tenant_private",
+      "projection_strategy": "vfs_event_router",
+      "required_fields": [
+        "name",
+        "type"
+      ]
+    },
+    "storefront": {
+      "append_only": false,
+      "canonical_path": "storefronts/<slug>.md",
+      "family": "record",
+      "portability": "tenant_private",
+      "projection_strategy": "vfs_event_router",
+      "required_fields": [
+        "owner_id",
+        "owner_type",
+        "slug",
+        "type"
+      ]
+    },
+    "stream": {
+      "append_only": false,
+      "canonical_path": "streams/<slug>.md",
+      "family": "record",
+      "portability": "tenant_private",
+      "projection_strategy": "none",
+      "required_fields": [
+        "type"
+      ]
+    },
+    "survey": {
+      "append_only": false,
+      "canonical_path": "surveys/<id>.md",
+      "family": "record",
+      "portability": "tenant_private",
+      "projection_strategy": "replace",
+      "required_fields": [
+        "event_id",
+        "question",
+        "type"
+      ]
     },
     "system_settings": {
-      "family": "config",
-      "canonical_path": "SYSTEM_SETTINGS.md",
       "append_only": false,
+      "canonical_path": "SYSTEM_SETTINGS.md",
+      "family": "config",
+      "notes": "Host/operator-level configuration; never transfers to a buyer.",
       "portability": "tenant_private",
-      "required_fields": ["type"],
-      "notes": "Host/operator-level configuration; never transfers to a buyer."
+      "required_fields": [
+        "type"
+      ]
+    },
+    "telecom_10dlc_campaign": {
+      "append_only": false,
+      "canonical_path": "telephony/10dlc/<id>.md",
+      "family": "record",
+      "portability": "tenant_private",
+      "projection_strategy": "vfs_event_router",
+      "required_fields": [
+        "campaign_id",
+        "status",
+        "type"
+      ]
+    },
+    "telecom_e911_address": {
+      "append_only": false,
+      "canonical_path": "telephony/e911/<id>.md",
+      "family": "record",
+      "portability": "tenant_private",
+      "projection_strategy": "vfs_event_router",
+      "required_fields": [
+        "address_1",
+        "city",
+        "state",
+        "type",
+        "zip"
+      ]
+    },
+    "telecom_number": {
+      "append_only": false,
+      "canonical_path": "telephony/numbers/<id>.md",
+      "family": "record",
+      "portability": "tenant_private",
+      "projection_strategy": "vfs_event_router",
+      "required_fields": [
+        "phone_number",
+        "provider",
+        "status",
+        "type"
+      ]
+    },
+    "telecom_route": {
+      "append_only": false,
+      "canonical_path": "telephony/routes/<id>.md",
+      "family": "record",
+      "portability": "tenant_private",
+      "projection_strategy": "vfs_event_router",
+      "required_fields": [
+        "destination_type",
+        "number_id",
+        "type"
+      ]
+    },
+    "telecom_sms_quota": {
+      "append_only": false,
+      "canonical_path": "telephony/sms_quota/<id>.md",
+      "family": "record",
+      "portability": "tenant_private",
+      "projection_strategy": "vfs_event_router",
+      "required_fields": [
+        "balance",
+        "credits_used",
+        "month",
+        "type"
+      ]
+    },
+    "ticket_transfer": {
+      "append_only": false,
+      "canonical_path": "transfers/<id>.md",
+      "family": "record",
+      "portability": "tenant_private",
+      "projection_strategy": "none",
+      "required_fields": [
+        "from_order_id",
+        "from_ticket_id",
+        "recipient_email",
+        "to_order_id",
+        "to_ticket_id",
+        "type"
+      ]
+    },
+    "venue": {
+      "append_only": false,
+      "canonical_path": "venues/<slug>.md",
+      "family": "record",
+      "portability": "tenant_private",
+      "projection_strategy": "replace",
+      "required_fields": [
+        "type"
+      ]
+    },
+    "voucher": {
+      "append_only": false,
+      "canonical_path": "vouchers/<slug>.md",
+      "family": "record",
+      "portability": "tenant_private",
+      "projection_strategy": "replace",
+      "required_fields": [
+        "code",
+        "label",
+        "type"
+      ]
     }
-  }
+  },
+  "extends": "core",
+  "registry": "festech",
+  "spec_version": "0.3",
+  "version": "2.0.0"
 }
