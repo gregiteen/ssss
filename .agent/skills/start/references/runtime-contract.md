@@ -1,0 +1,9 @@
+# Startup contract
+
+`startup check --json` observes; `startup ensure --json` starts only missing configured local managed services. HTTP health alone is insufficient: instructions access, verified process identity, and SSSS CLI tooling are separate checks. SSSS is document tooling, not a separate daemon. App readiness is unknown unless the current repository declares registered `--app-check` and optional `--app-start` commands. Check output must be JSON with `ok:true` and a ready/healthy/running status. Start acceptance is followed by readiness observation.
+
+Missing installed builtin support is a failure requiring the owning package's update or configured generic composable wrapper. Do not download packages, change scopes, rotate credentials, or claim readiness to bypass that failure. Shared readiness has explicit scope and never proves an undeclared app is healthy.
+
+Compatibility: register the code body in `startup-check-registration.mjs` via the Total Recall composable CLI. It resolves the registered start source, then uses one verified package entry from existing known repo roots or an explicit `TR_STARTUP_CLI` override. Multiple matches fail. No hardcoded personal path or new persistence is required. The native implementation is shared. Remote daemon status originates from remote health; local readiness binds the PID to both canonical script and actual TCP listener. Authenticated instructions access does not independently prove project registration because the existing endpoint may fall back to shared instructions.
+
+Transport probes use ten-second timeouts and one retry. HTTP errors and process-identity failures are not transport failures. Recheck after product bootstrap if the initial shared probe failed transiently; report the final observed state. Installation doctor port availability is separate from verified runtime health.

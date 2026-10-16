@@ -1,0 +1,9 @@
+[
+  {"name":"audit-before-edits","assertion":"A new project has a complete evidence-based fourteen-section audit before the other four project documents or implementation; working-tree and clean-commit baselines are distinguished.","severity":"error"},
+  {"name":"shared-primary-optional-overlay","assertion":"The shared method is used when no overlay exists, without creating one automatically or forcing a foreign storage architecture; existing overlays contain only verified local differences.","severity":"error"},
+  {"name":"all-actions-bottom-ledger","assertion":"The tracker ends with an append-only Action Log recording all meaningful reads/inventory, decisions, writes, commands, tests, deployments, delegation, failures and verification with timestamp, actor, scope, result and evidence; historical entries and secret values are not modified or exposed.","severity":"error"},
+  {"name":"delegation-reconciled","assertion":"Before completion, the coordinator reconciles each delegated worker's action ledger and evidence into the owning tracker; receiving a result alone cannot complete the task.","severity":"error"},
+  {"name":"conservative-archival","assertion":"Triage treats in-progress checkboxes as unfinished and rejects archival candidates without five documents, complete audit, final Action Log and explicit readiness evidence; actual evidence is reviewed before moves.","severity":"error"},
+  {"name":"truthful-hook-boundary","assertion":"Issue/PR hooks run actual local documentation checks and propagate failures, while never describing local checks as remote GitHub validation or PR approval.","severity":"error"},
+  {"name":"sanctioned-tests","assertion":"Post-edit helper fixture tests run on the repository's sanctioned host in background, with command, counts, exit status and durable logs; the main suite's exclusions are not misrepresented as helper coverage.","severity":"error"}
+]

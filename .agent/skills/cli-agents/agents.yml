@@ -1,0 +1,36 @@
+# Compatible conservative profiles. Auth and execution require separate probes.
+# No model pins: use the selected account's supported configuration.
+# Other catalog CLIs need real host adapters before registry activation.
+agents:
+  - name: agy
+    binary: agy
+    flags: --mode plan --output-format json -p
+    priority: 1
+    enabled: true
+    exec: flag
+  - name: claude
+    binary: claude
+    flags: --output-format json --permission-mode plan --tools Read,Glob,Grep -p
+    priority: 2
+    enabled: true
+    exec: flag
+  - name: codex
+    binary: codex
+    flags: --sandbox read-only --json
+    priority: 3
+    enabled: true
+    exec: subcommand
+  - name: gemini
+    binary: gemini
+    flags: --approval-mode plan --sandbox --output-format json -p
+    priority: 9
+    enabled: false
+    exec: flag
+  - name: antigravity
+    binary: antigravity
+    flags: ''
+    priority: 10
+    enabled: false
+    exec: flag
+timeout: 300
+max_retries: 0
