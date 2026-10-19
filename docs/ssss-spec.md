@@ -210,9 +210,21 @@ exactly this subset.
   under the first. A map entry may itself hold an inline array.
 - **Folded strings**: `>` and `>-` block scalars.
 
-Anchors, aliases, tags, multi-document streams, and flow maps (`{a: 1}`) are
-outside the subset. A host MAY accept them but MUST NOT require them, and
-authors SHOULD NOT use them in documents that leave the host.
+Anchors, aliases, tags, and multi-document streams are outside the subset.
+Flow maps (`{a: 1}`) and JSON-style inline values (`[{"a": 1}]`) are also
+outside it, but the reference parser reads them because other tools write them
+(for example Total Recall's JSON-shaped metadata). A host MAY accept any of
+these but MUST NOT require them, and authors SHOULD NOT use them in documents
+that leave the host.
+
+Where the reference parser reads a form YAML 1.2 also defines, it follows YAML:
+keys may contain `-`, `.` and `@`; a `:` only splits a key when whitespace or
+end of line follows, so `context:universal` is a value; plain and quoted
+scalars may wrap onto indented continuation lines; a trailing ` # comment` on
+an unquoted value is dropped; and a block list may sit at its key's indent.
+Two deliberate deviations keep values lossless: an integer with a leading zero
+(`07885`) stays a **string**, since it is a code and not a number, and
+timestamps stay strings, as above.
 
 ---
 

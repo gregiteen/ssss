@@ -56,7 +56,7 @@
   ],
   "scripts": {
     "conformance": "node ./scripts/conformance.mjs conformance",
-    "test": "node ./scripts/conformance.mjs conformance --engine && node ./scripts/check-events-streaming.mjs"
+    "test": "node ./scripts/conformance.mjs conformance --engine && node ./scripts/check-events-streaming.mjs && node ./scripts/check-frontmatter.mjs"
   },
   "keywords": [
     "ssss",

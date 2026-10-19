@@ -6,6 +6,21 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+### Fixed
+- The frontmatter parser (`@gregiteen/ssss-cli/frontmatter`) now reads the YAML
+  that Total Recall and other tools actually write. It previously dropped
+  hyphenated keys (`allowed-tools`), truncated wrapped values, split quoted
+  commas inside inline arrays, left JSON flow maps and arrays of JSON objects
+  as strings, turned tags like `context:universal` into maps, and kept
+  trailing `# comments`; `patch` then wrote those mis-parsed values back to
+  disk. Verified against 27,536 vault files across 55 Total Recall brains: the
+  only differences from a js-yaml reading are leading-zero codes and ISO
+  timestamps, which SSSS keeps as strings on purpose (spec §4.5).
+- The serializer quotes strings containing commas or a leading indicator and
+  writes nested objects inside inline arrays as JSON, so values round-trip.
+
+### Added
+- `scripts/check-frontmatter.mjs`, run by `npm test`.
 
 ## [0.11.0] - 2026-10-13
 ### Added
