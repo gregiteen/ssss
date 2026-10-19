@@ -170,16 +170,24 @@ function parseFlow(src) {
   return value;
 }
 
+// Set by parseFrontmatter(fm, { strict: true }): malformed input throws instead of
+// being skipped or kept as raw text.
+let strictMode = false;
+
 function coerce(raw) {
   const v = raw.trim();
   if (v === '') return '';
   if (v[0] === '"' || v[0] === "'") {
     const end = findClosingQuote(v);
     if (end > 0 && /^\s*(#.*)?$/.test(v.slice(end + 1))) return unquote(v.slice(0, end + 1));
+    if (strictMode) throw new SyntaxError(`Malformed quoted value: ${v.slice(0, 60)}`);
     return v;
   }
   if (v[0] === '[' || v[0] === '{') {
-    try { return parseFlow(v); } catch { return v; }
+    try { return parseFlow(v); } catch (err) {
+      if (strictMode) throw new SyntaxError(`Malformed inline value: ${v.slice(0, 60)}`);
+      return v;
+    }
   }
   return coercePlain(stripComment(v));
 }
@@ -214,6 +222,7 @@ function readScalar(lines, i, keyIndent, rest) {
     if (!line.trim()) { blanks++; j++; continue; }
     if (countIndent(line) <= keyIndent) break;
     if (!inline && line.trim().startsWith('#')) break;
+    if (strictMode && !inline && splitKeyValue(line.trim())) throw new SyntaxError(`Unexpected key in a wrapped value: ${line.trim().slice(0, 60)}`);
     const piece = inline ? line.trim() : stripComment(line.trim());
     text += blanks ? '\n'.repeat(blanks) + piece : ` ${piece}`;
     blanks = 0;
@@ -278,9 +287,17 @@ function parseMap(lines, start, indent) {
     if (!line.trim() || line.trim().startsWith('#')) { i++; continue; }
     const currentIndent = countIndent(line);
     if (currentIndent < indent) break;
-    if (currentIndent > indent) { i++; continue; }
+    if (currentIndent > indent) {
+      if (strictMode) throw new SyntaxError(`Unexpected indentation: ${line.trim().slice(0, 60)}`);
+      i++;
+      continue;
+    }
     const kv = splitKeyValue(line.slice(indent));
-    if (!kv) { i++; continue; }
+    if (!kv) {
+      if (strictMode) throw new SyntaxError(`Not a "key: value" line: ${line.trim().slice(0, 60)}`);
+      i++;
+      continue;
+    }
     const block = kv.rest.match(BLOCK_SCALAR_RE);
     if (block) {
       const parsed = parseBlockScalar(lines, i + 1, indent, block[1], block[2]);
@@ -369,12 +386,21 @@ function parseList(lines, start, indent) {
 }
 
 /**
- * Parse a frontmatter block (the inner YAML, no fences) into an object.
+ * Parse a frontmatter block (the inner YAML, no fences) into an object. The
+ * default is lenient: unreadable lines are skipped. `{ strict: true }` throws a
+ * SyntaxError on lines that are not `key: value`, orphaned indentation, and
+ * malformed quoted or inline values, so callers can report unreadable files.
  */
-export function parseFrontmatter(fm) {
+export function parseFrontmatter(fm, { strict = false } = {}) {
   if (!fm) return {};
-  // Drop the newline before the closing fence so it is not read as a blank line.
-  return parseMap(fm.replace(/\n$/, '').split('\n'), 0, 0).value;
+  const previous = strictMode;
+  strictMode = strict;
+  try {
+    // Drop the newline before the closing fence so it is not read as a blank line.
+    return parseMap(fm.replace(/\n$/, '').split('\n'), 0, 0).value;
+  } finally {
+    strictMode = previous;
+  }
 }
 
 /** Parse a full document (with fences) into { data, body }. */
