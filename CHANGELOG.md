@@ -21,6 +21,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 - `scripts/check-frontmatter.mjs`, run by `npm test`.
+- Documents a broken writer flattened onto one line with literal `\n` text
+  (23 such vault files exist) are repaired automatically on read, and
+  `repairEscapedNewlines` is exported from `@gregiteen/ssss-cli/frontmatter`.
+  `scripts/autolink.mjs` now uses the shared frontmatter parser.
 
 ## [0.11.0] - 2026-10-13
 ### Added

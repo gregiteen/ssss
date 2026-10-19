@@ -80,6 +80,15 @@ check('unusual bare keys, nested sequences and keep-chomped blanks parse', () =>
   assert.deepEqual(parse('c: |+', '', 'next: 1'), { c: '\n', next: 1 });
 });
 
+check('single-line files with literal \\n are repaired on read', () => {
+  const flat = '---\\ntype: "memory"\\ntags: ["a","b"]\\n---\\nBody line\\nTwo';
+  const { data, body } = parseDocument(flat);
+  assert.deepEqual(data, { type: 'memory', tags: ['a', 'b'] });
+  assert.equal(body, 'Body line\nTwo\n');
+  // A real multi-line document that merely mentions \\n is untouched.
+  assert.equal(parseDocument('---\nk: a\\nb\n---\n').data.k, 'a\\nb');
+});
+
 check('serialize → parse round-trips tricky values', () => {
   const data = {
     'allowed-tools': ['Read', 'Bash'],

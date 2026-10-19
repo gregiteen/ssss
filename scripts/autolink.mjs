@@ -23,6 +23,7 @@
  *                 [--max-per-target N] [--min-len N] [--index]
  *                 [--include-headings] [--concurrency N]
  */
+import { parseFrontmatter } from '../src/frontmatter.mjs';
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -85,21 +86,15 @@ function splitFrontmatter(content) {
   };
 }
 
-/** Pull title / name / slug / aliases[] out of a YAML frontmatter block (no dep). */
+/** Pull title / name / slug / aliases[] out of a frontmatter block (fences included). */
 function readMeta(fm) {
-  const scalar = (k) => {
-    const m = fm.match(new RegExp(`^${k}:\\s*(.+)$`, 'm'));
-    return m ? m[1].trim().replace(/^["']|["']$/g, '') : null;
+  const data = parseFrontmatter(fm.replace(/^---[^\n]*\n/, '').replace(/\n---[^\n]*\n?$/, '\n'));
+  const text = (v) => (typeof v === 'string' && v ? v : null);
+  const aliases = Array.isArray(data.aliases) ? data.aliases : typeof data.aliases === 'string' ? [data.aliases] : [];
+  return {
+    title: text(data.title), name: text(data.name), slug: text(data.slug),
+    aliases: aliases.map((x) => String(x).trim()).filter(Boolean)
   };
-  const meta = { title: scalar('title'), name: scalar('name'), slug: scalar('slug'), aliases: [] };
-  // aliases: inline [a, b] or YAML block list
-  const inline = fm.match(/^aliases:\s*\[(.*)\]\s*$/m);
-  if (inline) meta.aliases = inline[1].split(',').map(s => s.trim().replace(/^["']|["']$/g, '')).filter(Boolean);
-  else {
-    const block = fm.match(/^aliases:\s*\n((?:\s*-\s*.+\n?)+)/m);
-    if (block) meta.aliases = block[1].split('\n').map(l => l.replace(/^\s*-\s*/, '').trim().replace(/^["']|["']$/g, '')).filter(Boolean);
-  }
-  return meta;
 }
 
 function buildGlossary(files, root) {
