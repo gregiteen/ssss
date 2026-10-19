@@ -10,8 +10,20 @@
  * operation patches without dropping nested frontmatter.
  */
 
+/**
+ * Repair a document a broken writer flattened onto one line with literal `\n`
+ * text in place of newlines (`---\ntype: "memory"\n...`). Real documents with
+ * any actual line break are returned unchanged.
+ */
+export function repairEscapedNewlines(content) {
+  if (typeof content !== 'string' || !content.startsWith('---\\n') || content.trim().includes('\n')) return content;
+  const fixed = content.replace(/\\n/g, '\n');
+  return fixed.endsWith('\n') ? fixed : `${fixed}\n`;
+}
+
 /** Split a document into its raw frontmatter block and body. */
 export function splitFrontmatter(content) {
+  content = repairEscapedNewlines(content);
   if (typeof content !== 'string' || !content.startsWith('---')) {
     return { fm: '', body: content || '', hasFm: false };
   }
