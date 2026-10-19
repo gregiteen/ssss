@@ -96,6 +96,12 @@ Every Total Recall release must be propagated everywhere before it counts as don
 
 ---
 
+### Hermes must only be used through Total Recall: invoke and orchestrate Hermes through Total... [invariants-27427531]
+
+Hermes must only be used through Total Recall: invoke and orchestrate Hermes through Total Recall's harness layer (total-recall harness dispatch hermes) or cli-agents, never as an unmanaged standalone entrypoint.
+
+---
+
 ## Installed Plugins & Capabilities
 
 Use Total Recall and plugins first. Discover operations with `total-recall plugin library --json`, inspect the owner CLI help, then use its CLI.
@@ -105,6 +111,7 @@ Namespaces below run as `total-recall <namespace> [command]`; declarations do no
 Composed commands: `total-recall composable-cli library --json`.
 
 - **auth** v1.0.1 · active · `auth` · 10 operations: Hardware WebAuthn biometric FI
+- **cli-agents** v0.1.1 · active · `cli-agents` · 5 operations: Discover installed CLI agents
 - **code-quality** v0.2.1 · active · `code-quality` · 6 operations: Fail-closed deterministic code
 - **composable-cli** v0.2.1 · active · `composable-cli` · 12 operations: Dynamic agent command composit
 - **creative-search** v2.1.1 · active · `csearch` · 8 operations: SearXNG-powered creative metas
@@ -116,6 +123,7 @@ Composed commands: `total-recall composable-cli library --json`.
 - **embeddings** v0.1.0 · active · `embeddings` · 5 operations: Local embedding model manageme
 - **git-sentinel** v1.2.1 · active · `git-sentinel` · 2 operations: Worktree hygiene, branch inspe
 - **helptest** v0.1.0 · active · `helptest` · 0 operations: Helptest extension for Total R
+- **hermes** v0.1.0 · active · `hermes` · 1 operations: Hermes Agent runtime: monitor
 - **image-generator** v0.2.1 · active · `image-generator` · 2 operations: Visual asset studio for brandi
 - **maps** v0.1.1 · active · `maps` · 7 operations: Location and mapping tools for
 - **mesh** v0.2.1 · active · `mesh` · 18 operations: Control-server mesh administra
