@@ -89,6 +89,16 @@ check('single-line files with literal \\n are repaired on read', () => {
   assert.equal(parseDocument('---\nk: a\\nb\n---\n').data.k, 'a\\nb');
 });
 
+check('strict mode throws on malformed YAML that lenient mode skips', () => {
+  const bad = ': : :\nnot: [valid\n';
+  assert.doesNotThrow(() => parseFrontmatter(bad));
+  assert.throws(() => parseFrontmatter(bad, { strict: true }), SyntaxError);
+  assert.throws(() => parseFrontmatter('k: "open\nj: 1\n', { strict: true }), SyntaxError);
+  assert.throws(() => parseFrontmatter('a: 1\n  b: 2\n', { strict: true }), SyntaxError);
+  assert.deepEqual(parseFrontmatter('a: [1, 2]\nb: {c: d}\n', { strict: true }), { a: [1, 2], b: { c: 'd' } });
+  assert.doesNotThrow(() => parseFrontmatter(bad)); // strict does not leak into later calls
+});
+
 check('serialize → parse round-trips tricky values', () => {
   const data = {
     'allowed-tools': ['Read', 'Bash'],
