@@ -1,6 +1,64 @@
-Read and follow .agent/skills/total-recall/SKILL.md on every turn.
-
 <!-- BEGIN INJECTED ACTIVE DIRECTIVES: do not edit by hand; rebuilt by total-recall surface -->
+## TOTAL RECALL CLI — USE IT FOR EVERYTHING (run `total-recall <command> --help` before guessing)
+- Built-in commands: `app` · `init` · `setup` · `start` · `startup` · `deploy` · `doctor` · `backup` · `dream` · `lint` · `daemon` · `restore` · `upgrade` · `update` · `friction` · `chat` · `status` · `remember` · `forget` · `edit` · `recall` · `context` · `rules` · `search` · `research` · `proposals` · `proposal` · `task` · `share` · `generate-pat` · `key` · `keys` · `pat` · `hash-password` · `reset-password` · `compile` · `rebuild` · `snapshot` · `migrate` · `backfill` · `ingest` · `import` · `connect` · `sync` · `relay` · `uninstall` · `map` · `brain` · `config` · `skill` · `project-id` · `api` · `brief` · `group` · `groups` · `help` · `collab` · `command` · `export` · `harness` · `watch` · `agent` · `agents` · `new` · `plugin` · `plugins` · `scaffold` · `scaffold-plugin`
+- Memory: `context "<task>" --action <a>` · `recall "<q>" --local` · `remember <category> "<text>" --global|--project` · `edit <slug>` · `compile` · `brief` · `status` / `doctor`
+- CREDENTIALS GO THROUGH THE AUTH PLUGIN ONLY (Total Recall has no native secrets store; never hand-roll curl/sed/ssh for keys): `auth secret list|get <K>|set <K> --stdin|rotate <K> --stdin|--from-clipboard [--remote <t>]|rotate-auto <K>|rotation-due|shared|meta|catalog|audit|diff-env|export-env`; remote targets: `auth secret remote add|list|deploy <t> [--keys a,b] [--dry-run]`. The store follows `TR_SECRETS_BRAIN`.
+- Auth: `auth status|audit|key list|issue|revoke|password set --stdin|passkey|google status`
+- Mesh nodes: `mesh nodes|status|ping|exec <node> <cmd>|ssh <node> [cmd]|access <node>|leader` — never ssh a machine into itself.
+- Agents and work: `agent spawn|list|logs|kill` · `harness dispatch|council` · `task <cmd>` · `plugin list|install|info|library` · `skill <cmd>` · `brain <cmd>` · `daemon <cmd>` · `update --all-brains --apply`
+- Every installed plugin namespace and its operations is listed next; run `total-recall <namespace> --help` for flags.
+
+## Installed Plugins & Capabilities
+
+Use Total Recall and plugins first. Discover operations with `total-recall plugin library --json`, inspect the owner CLI help, then use its CLI.
+
+Namespaces below run as `total-recall <namespace> [command]`; declarations do not prove provider readiness.
+
+Composed commands: `total-recall composable-cli library --json`.
+
+- **auth** v1.0.1 · active · `total-recall auth` [status | audit | rotate | passkey | google | probe | session | secret | password | key]: Hardware WebAuthn biometric FI
+- **cli-agents** v0.1.1 · active · `total-recall cli-agents` [status | catalog | nodes | inspect | run-command]: Discover installed CLI agents
+- **code-quality** v0.2.1 · active · `total-recall code-quality` [report | snapshot | gate | config | detect | init]: Fail-closed deterministic code
+- **composable-cli** v0.2.1 · active · `total-recall composable-cli` [status | create | read | update | remove | list | show | history | rollback | test | promote | library]: Dynamic agent command composit
+- **creative-search** v2.1.1 · active · `total-recall csearch` [config | query | health | engines | categories | deep | remember | stats]: SearXNG-powered creative metas
+- **decision** v0.2.1 · active · `total-recall decision` [status | run | sets | log | test]: Typed decisions (choice, binar
+- **deploy** v0.2.0 · active · `total-recall deploy` [status | stage | switch | release | rollback | retire | providers | probe | token | optimize | optimize-clean]: Zero-downtime multi-provider d
+- **design** v0.2.1 · active · `total-recall design` [status | tokens | css | tailwind]: Design system synthesis, token
+- **domains** v0.3.1 · active · `total-recall domains` [status | check | token | settings | view | set | list | info | add | update | remove | config | verification | claim | apex-projects | records | record | record-add | record-update | record-rm | search | availability | availability-bulk | price | price-bulk | buy | buy-many | renew | transfer-in | transfer-status | auth-code | auto-renew | nameservers | contact-schema | contact-status | order | tlds | tld | tld-price | project-list | project-get | project-add | project-update | project-remove | project-verify | project-move | certs | cert | cert-issue | cert-upload | cert-rm]: Unified Vercel DNS management,
+- **dsh** v1.1.1 · active · `total-recall dsh` [status | sessions | tools | models | model | plugins]: DeepSeek Harness (DSH) integra
+- **embeddings** v0.1.0 · active · `total-recall embeddings` [status | models | pull | benchmark | coverage]: Local embedding model manageme
+- **git-sentinel** v1.2.1 · active · `total-recall git-sentinel` [audit | diff]: Worktree hygiene, branch inspe
+- **hermes** v0.1.0 · active · `total-recall hermes` [status | dispatch | gateway | skills | plugins | auth]: Hermes Agent runtime: monitor
+- **image-generator** v0.2.1 · active · `total-recall image-generator` [generate | models]: Visual asset studio for brandi
+- **maps** v0.1.1 · active · `total-recall maps` [status | geocode | reverse | places | route | probe | token]: Location and mapping tools for
+- **mesh** v0.2.1 · active · `total-recall mesh` [status | view | nodes | doctor | ssh | exec | access | ping | leader | enroll | preauthkey | policy | probe | token | presence | dispatch | server | grants]: Control-server mesh administra
+- **okf** v0.1.1 · active · `total-recall okf` [status | validate | schemas | probe]: Open Knowledge Framework schem
+- **openwiki** v0.1.1 · active · `total-recall openwiki` [status | hubs | ingest | probe]: Multi-repo knowledge graph and
+- **operator-alerts** v1.1.1 · active · `total-recall alerts` [send | test | config | log]: Operator alert dispatcher acro
+- **phone** v0.1.1 · active · `total-recall phone` [session | numbers | status | jobs | health | run | call | message | contact | voicemail | agent | settings | compliance]: Telephony, direct line invento
+- **phone-companion** v0.3.1 · active · `total-recall phone-companion` [status | download | start | notify]: Gro CRM mobile companion (http
+- **security** v0.3.1 · active · `total-recall security` [platforms | device | android | machine | network | fleet | status | audit | scan | harden | plugins | secure-all | encrypt | decrypt | probe | token | challenge | bot-mitigate | site-audit | site-shield]: Machine and device security as
+- **signing** v0.3.1 · active · `total-recall signing` [status | admin-api | account | token]: Digital agreement signing engi
+- **skill-manager** v1.1.0 · active · `total-recall skill-manager` [configure | status | audit | optimize | route]: Conservative skill optimizatio
+- **sticker-generator** v1.0.1 · active · `total-recall sticker-generator` [status | catalog | generate | upscale | quote | submit | orders]: High-quality sticker generator
+- **stripe** v0.1.2 · active · `total-recall stripe` [status | checkout | payment-intent | webhook | refund | probe | token]: Payment processing, checkout s
+- **system-monitor** v1.2.1 · active · `total-recall system-monitor` [status | sample]: Host load and memory telemetry
+- **text** v0.1.1 · active · `total-recall text` [threads | get | cancel | numbers | ingest | status | send | history | verify]: Direct SMS/MMS messaging, numb
+- **tickets** v0.1.1 · active · `total-recall tickets` [status | tiers | list | issue | hold | scan | verify | summary | pass]: Tiered ticket types, holds, re
+- **tr-transcribe** v0.2.1 · active · `total-recall tr-transcribe` [status | transcribe]: Speech-to-text audio file tran
+- **translator** v0.1.1 · active · `total-recall translator` [status | locales | scan | translate | probe | token]: Automated multilingual transla
+- **user-automations** v1.0.1 · active · `total-recall user-automations` [list]: Shows installed scheduled plug
+
+
+
+## Composable Commands
+
+Verbs built on this CLI with `command create`. Use them instead of re-doing their steps by hand; run `npx total-recall <name> --help` first. Add a new one when you repeat a sequence (`command create <name> "<js>" --description "…" [--global]`); this list is rebuilt from the command files on every compile.
+
+- `npx total-recall code-quality-check` (global) — Run this repo's gates once and write reports/latest.json (--tier fast|full|remote, --only <id>).
+- `npx total-recall code-quality-report` (global) — Read the latest gate report and whether it is still current.
+- `npx total-recall m4-image-prune` (global) — Prune or clear all generated M4 ComfyUI images (--status, --weekly, --all, --dry-run)
+- `npx total-recall tr-first` (global) — MANDATORY FIRST STEP for every task: recall before deciding, then emit the context capsule.
 # 🔴 MANDATORY FIRST STEP: TOTAL RECALL CLI & TASK ROUTING
 
 1. RUN TOTAL RECALL CLI HELP FIRST:
@@ -32,7 +90,7 @@ Email only ARRIVES if BOTH directions exist: OUTBOUND = a SMTP2GO-VERIFIED sende
 
 ### NEVER ask the user for a credential before searching EVERY Total Recall secrets store. [never-ask-for-a-secret-before-searching-all-tr-stores]
 
-NEVER ask the user for a credential before searching EVERY Total Recall secrets store. The store is chosen by brain/cwd and DIFFERS per repo: global = ~/.agent/skills/total-recall/config/secrets.enc (list it with: TR_SECRETS_BRAIN=/Users/gregoryiteen/.agent/skills/total-recall total-recall secret list), workspace = /Users/gregoryiteen/github/.agent/skills/total-recall/config/secrets.enc, and per-repo <repo>/.agent/skills/total-recall/config/secrets.enc. Known provider keys: VERCEL_API_TOKEN, VERCEL_TEAM_ID, SMTP2GO_API_KEY, DEVELOPER_SMTP2GO_API_KEY, MAILCOW_API_KEY, DEVELOPER_MAILCOW_API_KEY, MAILCOW_URL. Keys carry a repos= binding. A key missing from one store is NOT missing everywhere - search them ALL (secret list + secret catalog) before telling the user it is gone.
+NEVER ask the user for a credential before searching EVERY Total Recall secrets store. The store is chosen by brain/cwd and DIFFERS per repo: global = ~/.agent/skills/total-recall/config/secrets.enc (list it with: TR_SECRETS_BRAIN=/Users/gregoryiteen/.agent/skills/total-recall total-recall auth secret list), workspace = /Users/gregoryiteen/github/.agent/skills/total-recall/config/secrets.enc, and per-repo <repo>/.agent/skills/total-recall/config/secrets.enc. Known provider keys: VERCEL_API_TOKEN, VERCEL_TEAM_ID, SMTP2GO_API_KEY, DEVELOPER_SMTP2GO_API_KEY, MAILCOW_API_KEY, DEVELOPER_MAILCOW_API_KEY, MAILCOW_URL. Keys carry a repos= binding. A key missing from one store is NOT missing everywhere - search them ALL (auth secret list + auth secret catalog) before telling the user it is gone.
 
 ---
 
@@ -50,7 +108,7 @@ When something is broken, say so immediately and fix it at the source in the sam
 
 ### Use Total Recall for everything, always [rule-total-recall-for-everything-always]
 
-Use Total Recall for everything, always: recall before every decision, and use its CLI (mesh, secret, plugin, agent, task, research, skill, remember) to do the work instead of hand-rolled grep/find/sed or ad-hoc scripts. If a TR plugin or subcommand owns a capability, that is the required path - a shell equivalent is a protocol violation. Run 'total-recall recall "<topic>" --local' before each decision and refresh 'total-recall context' when the task changes.
+Use Total Recall for everything, always: recall before every decision, and use its CLI (mesh, auth secret, plugin, agent, task, research, skill, remember) to do the work instead of hand-rolled grep/find/sed or ad-hoc scripts. If a TR plugin or subcommand owns a capability, that is the required path - a shell equivalent is a protocol violation. Run 'total-recall recall "<topic>" --local' before each decision and refresh 'total-recall context' when the task changes.
 
 ---
 
@@ -102,57 +160,9 @@ Hermes must only be used through Total Recall: invoke and orchestrate Hermes thr
 
 ---
 
-## Installed Plugins & Capabilities
+### No hand-rolled credential ops; Total Recall CLI only [no-hand-rolled-credential-ops-total-recall-only]
 
-Use Total Recall and plugins first. Discover operations with `total-recall plugin library --json`, inspect the owner CLI help, then use its CLI.
-
-Namespaces below run as `total-recall <namespace> [command]`; declarations do not prove provider readiness.
-
-Composed commands: `total-recall composable-cli library --json`.
-
-- **auth** v1.0.1 · active · `auth` · 10 operations: Hardware WebAuthn biometric FI
-- **cli-agents** v0.1.1 · active · `cli-agents` · 5 operations: Discover installed CLI agents
-- **code-quality** v0.2.1 · active · `code-quality` · 6 operations: Fail-closed deterministic code
-- **composable-cli** v0.2.1 · active · `composable-cli` · 12 operations: Dynamic agent command composit
-- **creative-search** v2.1.1 · active · `csearch` · 8 operations: SearXNG-powered creative metas
-- **decision** v0.2.1 · active · `decision` · 5 operations: Typed decisions (choice, binar
-- **deploy** v0.2.0 · active · `deploy` · 11 operations: Zero-downtime multi-provider d
-- **design** v0.2.1 · active · `design` · 4 operations: Design system synthesis, token
-- **domains** v0.3.1 · active · `domains` · 51 operations: Unified Vercel DNS management,
-- **dsh** v1.1.1 · active · `dsh` · 6 operations: DeepSeek Harness (DSH) integra
-- **embeddings** v0.1.0 · active · `embeddings` · 5 operations: Local embedding model manageme
-- **git-sentinel** v1.2.1 · active · `git-sentinel` · 2 operations: Worktree hygiene, branch inspe
-- **helptest** v0.1.0 · active · `helptest` · 0 operations: Helptest extension for Total R
-- **hermes** v0.1.0 · active · `hermes` · 1 operations: Hermes Agent runtime: monitor
-- **image-generator** v0.2.1 · active · `image-generator` · 2 operations: Visual asset studio for brandi
-- **maps** v0.1.1 · active · `maps` · 7 operations: Location and mapping tools for
-- **mesh** v0.2.1 · active · `mesh` · 18 operations: Control-server mesh administra
-- **okf** v0.1.1 · active · `okf` · 4 operations: Open Knowledge Framework schem
-- **openwiki** v0.1.1 · active · `openwiki` · 4 operations: Multi-repo knowledge graph and
-- **operator-alerts** v1.1.1 · active · `alerts` · 4 operations: Operator alert dispatcher acro
-- **phone** v0.1.1 · active · `phone` · 13 operations: Telephony, direct line invento
-- **phone-companion** v0.3.1 · active · `phone-companion` · 4 operations: Gro CRM mobile companion (http
-- **security** v0.3.1 · active · `security` · 20 operations: Machine and device security as
-- **signing** v0.3.1 · active · `signing` · 4 operations: Digital agreement signing engi
-- **skill-manager** v1.1.0 · active · `skill-manager` · 5 operations: Conservative skill optimizatio
-- **sticker-generator** v1.0.1 · active · `sticker-generator` · 7 operations: High-quality sticker generator
-- **stripe** v0.1.2 · active · `stripe` · 7 operations: Payment processing, checkout s
-- **system-monitor** v1.2.1 · active · `system-monitor` · 2 operations: Host load and memory telemetry
-- **text** v0.1.1 · active · `text` · 9 operations: Direct SMS/MMS messaging, numb
-- **tickets** v0.1.1 · active · `tickets` · 9 operations: Tiered ticket types, holds, re
-- **tmplcheck** v0.1.0 · active · `tmplcheck` · 0 operations: Tmplcheck extension for Total
-- **tr-transcribe** v0.2.1 · active · `tr-transcribe` · 2 operations: Speech-to-text audio file tran
-- **translator** v0.1.1 · active · `translator` · 6 operations: Automated multilingual transla
-- **user-automations** v1.0.1 · active · `user-automations` · 1 operations: Shows installed scheduled plug
-
----
-
-## Composable Commands
-
-Verbs built on this CLI with `command create`. Use them instead of re-doing their steps by hand; run `npx total-recall <name> --help` first. Add a new one when you repeat a sequence (`command create <name> "<js>" --description "…" [--global]`); this list is rebuilt from the command files on every compile.
-
-- `npx total-recall code-quality-check` (global) — Run this repo's gates once and write reports/latest.json (--tier fast|full|remote, --only <id>).
-- `npx total-recall code-quality-report` (global) — Read the latest gate report and whether it is still current.
-- `npx total-recall m4-image-prune` (global) — Prune or clear all generated M4 ComfyUI images (--status, --weekly, --all, --dry-run)
-- `npx total-recall tr-first` (global) — MANDATORY FIRST STEP for every task: recall before deciding, then emit the context capsule.
+Never hand-roll curl, sed or raw ssh for credentials, rotation or deploys. Read SKILL.md and operations.md first, then use total-recall auth secret (rotate --stdin --remote, remote deploy, diff-env) and mesh.
 <!-- END INJECTED ACTIVE DIRECTIVES -->
+
+Read and follow .agent/skills/total-recall/SKILL.md on every turn.
