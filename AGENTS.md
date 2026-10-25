@@ -1,6 +1,6 @@
 <!-- BEGIN INJECTED ACTIVE DIRECTIVES: do not edit by hand; rebuilt by total-recall surface -->
 ## TOTAL RECALL CLI — USE IT FOR EVERYTHING (run `total-recall <command> --help` before guessing)
-- Built-in commands: `app` · `init` · `setup` · `start` · `startup` · `deploy` · `doctor` · `backup` · `dream` · `lint` · `daemon` · `restore` · `upgrade` · `update` · `friction` · `chat` · `status` · `remember` · `forget` · `edit` · `recall` · `context` · `rules` · `search` · `research` · `proposals` · `proposal` · `task` · `share` · `generate-pat` · `key` · `keys` · `pat` · `hash-password` · `reset-password` · `compile` · `rebuild` · `snapshot` · `migrate` · `backfill` · `ingest` · `import` · `connect` · `sync` · `relay` · `uninstall` · `map` · `brain` · `config` · `skill` · `project-id` · `api` · `brief` · `group` · `groups` · `help` · `collab` · `command` · `export` · `harness` · `watch` · `agent` · `agents` · `new` · `plugin` · `plugins` · `scaffold` · `scaffold-plugin`
+- Built-in commands: `app` · `init` · `setup` · `start` · `startup` · `deploy` · `doctor` · `backup` · `dream` · `lint` · `daemon` · `restore` · `upgrade` · `update` · `friction` · `chat` · `status` · `remember` · `forget` · `edit` · `recall` · `context` · `context-stats` · `rules` · `search` · `research` · `proposals` · `proposal` · `task` · `share` · `generate-pat` · `key` · `keys` · `pat` · `hash-password` · `reset-password` · `compile` · `rebuild` · `snapshot` · `migrate` · `backfill` · `ingest` · `import` · `connect` · `sync` · `relay` · `uninstall` · `map` · `brain` · `config` · `skill` · `project-id` · `api` · `brief` · `group` · `groups` · `help` · `collab` · `command` · `export` · `harness` · `watch` · `agent` · `agents` · `new` · `plugin` · `plugins` · `scaffold` · `scaffold-plugin`
 - Memory: `context "<task>" --action <a>` · `recall "<q>" --local` · `remember <category> "<text>" --global|--project` · `edit <slug>` · `compile` · `brief` · `status` / `doctor`
 - CREDENTIALS GO THROUGH THE AUTH PLUGIN ONLY (Total Recall has no native secrets store; never hand-roll curl/sed/ssh for keys): `auth secret list|get <K>|set <K> --stdin|rotate <K> --stdin|--from-clipboard [--remote <t>]|rotate-auto <K>|rotation-due|shared|meta|catalog|audit|diff-env|export-env`; remote targets: `auth secret remote add|list|deploy <t> [--keys a,b] [--dry-run]`. The store follows `TR_SECRETS_BRAIN`.
 - Auth: `auth status|audit|key list|issue|revoke|password set --stdin|passkey|google status`
@@ -16,38 +16,40 @@ Namespaces below run as `total-recall <namespace> [command]`; declarations do no
 
 Composed commands: `total-recall composable-cli library --json`.
 
-- **auth** v1.0.1 · active · `total-recall auth` [status | audit | rotate | passkey | google | probe | session | secret | password | key]: Hardware WebAuthn biometric FI
-- **cli-agents** v0.1.1 · active · `total-recall cli-agents` [status | catalog | nodes | inspect | run-command]: Discover installed CLI agents
-- **code-quality** v0.2.1 · active · `total-recall code-quality` [report | snapshot | gate | config | detect | init]: Fail-closed deterministic code
-- **composable-cli** v0.2.1 · active · `total-recall composable-cli` [status | create | read | update | remove | list | show | history | rollback | test | promote | library]: Dynamic agent command composit
+- **auth** v1.2.1 · active · `total-recall auth` [status | audit | rotate | passkey | google | probe | session | agent | secret | password | key]: Hardware WebAuthn biometric FI
+- **cli-agents** v0.2.0 · active · `total-recall cli-agents` [status | catalog | nodes | inspect | run-command | runtime | dispatch | docs-status | docs-refresh | docs-ensure | maintenance | setup | docs-sources | docs-read | docs-search]: Discover, configure, document
+- **code-quality** v0.2.2 · active · `total-recall code-quality` [report | snapshot | gate | config | detect | init]: Fail-closed deterministic code
+- **composable-cli** v0.2.2 · active · `total-recall composable-cli` [status | create | read | update | remove | list | show | history | rollback | test | promote | library]: Dynamic agent command composit
+- **embeddings** v0.1.0 · active · `total-recall embeddings` [status | models | pull | benchmark | coverage]: Local embedding model manageme
+- **git-sentinel** v1.1.2 · active · `total-recall git-sentinel` [audit | diff]: Worktree hygiene, branch inspe
+- **mesh** v0.2.2 · active · `total-recall mesh` [file | status | view | nodes | doctor | ssh | exec | access | ping | leader | enroll | preauthkey | policy | probe | token | presence | dispatch | server | grants]: Control-server mesh administra
+- **openwiki** v0.1.1 · active · `total-recall openwiki` [status | hubs | ingest | probe]: Multi-repo knowledge graph and
+- **security** v0.3.2 · active · `total-recall security` [platforms | device | android | machine | network | fleet | status | audit | scan | harden | plugins | secure-all | encrypt | decrypt | probe | token | challenge | bot-mitigate | site-audit | site-shield]: Machine and device security as
 - **creative-search** v2.1.1 · active · `total-recall csearch` [config | query | health | engines | categories | deep | remember | stats]: SearXNG-powered creative metas
-- **decision** v0.2.1 · active · `total-recall decision` [status | run | sets | log | test]: Typed decisions (choice, binar
-- **deploy** v0.2.0 · active · `total-recall deploy` [status | stage | switch | release | rollback | retire | providers | probe | token | optimize | optimize-clean]: Zero-downtime multi-provider d
+- **decision** v0.1.2 · active · `total-recall decision` [status | run | sets | log | test]: Typed decisions (choice, binar
+- **deploy** v0.2.0 · active · `total-recall deploy` [status | stage | switch | release | rollback | retire | providers | hosts | probe | token | optimize | optimize-clean]: Zero-downtime multi-provider d
 - **design** v0.2.1 · active · `total-recall design` [status | tokens | css | tailwind]: Design system synthesis, token
 - **domains** v0.3.1 · active · `total-recall domains` [status | check | token | settings | view | set | list | info | add | update | remove | config | verification | claim | apex-projects | records | record | record-add | record-update | record-rm | search | availability | availability-bulk | price | price-bulk | buy | buy-many | renew | transfer-in | transfer-status | auth-code | auto-renew | nameservers | contact-schema | contact-status | order | tlds | tld | tld-price | project-list | project-get | project-add | project-update | project-remove | project-verify | project-move | certs | cert | cert-issue | cert-upload | cert-rm]: Unified Vercel DNS management,
-- **dsh** v1.1.1 · active · `total-recall dsh` [status | sessions | tools | models | model | plugins]: DeepSeek Harness (DSH) integra
-- **embeddings** v0.1.0 · active · `total-recall embeddings` [status | models | pull | benchmark | coverage]: Local embedding model manageme
-- **git-sentinel** v1.2.1 · active · `total-recall git-sentinel` [audit | diff]: Worktree hygiene, branch inspe
-- **hermes** v0.1.0 · active · `total-recall hermes` [status | dispatch | gateway | skills | plugins | auth]: Hermes Agent runtime: monitor
-- **image-generator** v0.2.1 · active · `total-recall image-generator` [generate | models]: Visual asset studio for brandi
-- **maps** v0.1.1 · active · `total-recall maps` [status | geocode | reverse | places | route | probe | token]: Location and mapping tools for
-- **mesh** v0.2.1 · active · `total-recall mesh` [status | view | nodes | doctor | ssh | exec | access | ping | leader | enroll | preauthkey | policy | probe | token | presence | dispatch | server | grants]: Control-server mesh administra
-- **okf** v0.1.1 · active · `total-recall okf` [status | validate | schemas | probe]: Open Knowledge Framework schem
-- **openwiki** v0.1.1 · active · `total-recall openwiki` [status | hubs | ingest | probe]: Multi-repo knowledge graph and
-- **operator-alerts** v1.1.1 · active · `total-recall alerts` [send | test | config | log]: Operator alert dispatcher acro
+- **dsh** v1.1.2 · active · `total-recall dsh` [status | sessions | tools | models | model | plugins]: DeepSeek Harness (DSH) integra
+- **hermes** v0.2.0 · active · `total-recall hermes` [status | dispatch | gateway | skills | plugins | tools | model | config | auth]: Hermes Agent runtime: monitor
+- **image-generator** v0.1.2 · active · `total-recall image-generator` [generate | models]: Visual asset studio for brandi
+- **maps** v0.1.2 · active · `total-recall maps` [status | geocode | reverse | places | route | probe | token]: Location and mapping tools for
+- **marketing** v0.1.0 · active · `total-recall marketing` [status | brand | lint | seo-audit | links | campaigns]: Brand vision, copy compliance
+- **okf** v0.1.1 · active · `total-recall okf` [status | validate | schemas | probe | export | import | lint | project]: Open Knowledge Framework schem
+- **openclaw** v0.1.0 · active · `total-recall openclaw` [status | sync | channels | skills | gateway]: OpenClaw agent runtime: gatewa
+- **operator-alerts** v1.0.2 · active · `total-recall alerts` [send | test | config | log]: Operator alert dispatcher acro
 - **phone** v0.1.1 · active · `total-recall phone` [session | numbers | status | jobs | health | run | call | message | contact | voicemail | agent | settings | compliance]: Telephony, direct line invento
 - **phone-companion** v0.3.1 · active · `total-recall phone-companion` [status | download | start | notify]: Gro CRM mobile companion (http
-- **security** v0.3.1 · active · `total-recall security` [platforms | device | android | machine | network | fleet | status | audit | scan | harden | plugins | secure-all | encrypt | decrypt | probe | token | challenge | bot-mitigate | site-audit | site-shield]: Machine and device security as
-- **signing** v0.3.1 · active · `total-recall signing` [status | admin-api | account | token]: Digital agreement signing engi
-- **skill-manager** v1.1.0 · active · `total-recall skill-manager` [configure | status | audit | optimize | route]: Conservative skill optimizatio
+- **signing** v0.2.2 · active · `total-recall signing` [status | admin-api | account | token]: Digital agreement signing engi
+- **skill-manager** v1.1.3 · active · `total-recall skill-manager` [configure | status | audit | optimize | route]: Conservative skill optimizatio
 - **sticker-generator** v1.0.1 · active · `total-recall sticker-generator` [status | catalog | generate | upscale | quote | submit | orders]: High-quality sticker generator
-- **stripe** v0.1.2 · active · `total-recall stripe` [status | checkout | payment-intent | webhook | refund | probe | token]: Payment processing, checkout s
-- **system-monitor** v1.2.1 · active · `total-recall system-monitor` [status | sample]: Host load and memory telemetry
+- **stripe** v0.1.3 · active · `total-recall stripe` [status | checkout | payment-intent | webhook | refund | probe | token]: Payment processing, checkout s
+- **system-monitor** v1.1.2 · active · `total-recall system-monitor` [status | sample | nodes | fleet]: Host load and memory telemetry
 - **text** v0.1.1 · active · `total-recall text` [threads | get | cancel | numbers | ingest | status | send | history | verify]: Direct SMS/MMS messaging, numb
 - **tickets** v0.1.1 · active · `total-recall tickets` [status | tiers | list | issue | hold | scan | verify | summary | pass]: Tiered ticket types, holds, re
-- **tr-transcribe** v0.2.1 · active · `total-recall tr-transcribe` [status | transcribe]: Speech-to-text audio file tran
-- **translator** v0.1.1 · active · `total-recall translator` [status | locales | scan | translate | probe | token]: Automated multilingual transla
-- **user-automations** v1.0.1 · active · `total-recall user-automations` [list]: Shows installed scheduled plug
+- **tr-transcribe** v0.1.2 · active · `total-recall tr-transcribe` [status | transcribe]: Speech-to-text audio file tran
+- **translator** v0.1.2 · active · `total-recall translator` [status | locales | scan | translate | probe | token]: Automated multilingual transla
+- **user-automations** v1.0.3 · active · `total-recall user-automations` [list]: Shows installed scheduled plug
 
 
 
@@ -55,9 +57,12 @@ Composed commands: `total-recall composable-cli library --json`.
 
 Verbs built on this CLI with `command create`. Use them instead of re-doing their steps by hand; run `npx total-recall <name> --help` first. Add a new one when you repeat a sequence (`command create <name> "<js>" --description "…" [--global]`); this list is rebuilt from the command files on every compile.
 
+- `npx total-recall brand-lint` (global) — Audit documentation and marketing copy for compliance and prohibited terms
 - `npx total-recall code-quality-check` (global) — Run this repo's gates once and write reports/latest.json (--tier fast|full|remote, --only <id>).
 - `npx total-recall code-quality-report` (global) — Read the latest gate report and whether it is still current.
 - `npx total-recall m4-image-prune` (global) — Prune or clear all generated M4 ComfyUI images (--status, --weekly, --all, --dry-run)
+- `npx total-recall openclaw-sync` (global) — Synchronize Total Recall memory vault, instruction surfaces and tools into OpenClaw workspace
+- `npx total-recall platform-fleet` (global) — Inspect the Platform of Platforms across all 9 connected agent runtimes, quotas, and versions
 - `npx total-recall tr-first` (global) — MANDATORY FIRST STEP for every task: recall before deciding, then emit the context capsule.
 # 🔴 MANDATORY FIRST STEP: TOTAL RECALL CLI & TASK ROUTING
 
@@ -76,21 +81,23 @@ DO NOT SKIP THIS. Run Total Recall CLI help and context first before doing anyth
 
 ---
 
-### Always push everything [always-push-everything]
-
-Always push everything, in every repository, without being asked and without filtering. 'Push' means the entire working tree, not only the commits I authored: stage all changes including generated files, config, lockfiles, agent surfaces and files created by other tools, commit them, and push to the remote. Never leave unpushed commits or a dirty working tree. Never ask whether to push something, and never leave pre-existing modifications behind on the reasoning that they were not mine.
-
----
-
 ### Email only ARRIVES if BOTH directions exist: OUTBOUND = a SMTP2GO-VERIFIED sender domain (SPF... [email-needs-both-outbound-sender-and-inbound-mx-mailbox]
 
 Email only ARRIVES if BOTH directions exist: OUTBOUND = a SMTP2GO-VERIFIED sender domain (SPF 'v=spf1 include:spf.smtp2go.com ~all', DKIM CNAME '<selector>._domainkey.<domain> -> dkim.smtp2go.net', return-path CNAME '<rpath>.<domain> -> return.smtp2go.net'); INBOUND = MX '<domain> -> mail.ultrachat.app' AND the domain+mailbox created in Mailcow. A verified sender alone bounces. Always 'dig MX <domain>' and check the Mailcow mailbox before declaring mail fixed. SMTP2GO free plan caps at 5 senders.
 
 ---
 
-### NEVER ask the user for a credential before searching EVERY Total Recall secrets store. [never-ask-for-a-secret-before-searching-all-tr-stores]
+### Production applications must have isolated dedicated credentials, phone numbers, and telephony... [invariants-c6a55341]
 
-NEVER ask the user for a credential before searching EVERY Total Recall secrets store. The store is chosen by brain/cwd and DIFFERS per repo: global = ~/.agent/skills/total-recall/config/secrets.enc (list it with: TR_SECRETS_BRAIN=/Users/gregoryiteen/.agent/skills/total-recall total-recall auth secret list), workspace = /Users/gregoryiteen/github/.agent/skills/total-recall/config/secrets.enc, and per-repo <repo>/.agent/skills/total-recall/config/secrets.enc. Known provider keys: VERCEL_API_TOKEN, VERCEL_TEAM_ID, SMTP2GO_API_KEY, DEVELOPER_SMTP2GO_API_KEY, MAILCOW_API_KEY, DEVELOPER_MAILCOW_API_KEY, MAILCOW_URL. Keys carry a repos= binding. A key missing from one store is NOT missing everywhere - search them ALL (auth secret list + auth secret catalog) before telling the user it is gone.
+Production applications must have isolated dedicated credentials, phone numbers, and telephony resources; never share credentials or numbers across production applications such as Festech, UltraChat, or Gro CRM.
+
+---
+
+### One secrets store per host; search it before asking for a credential [never-ask-for-a-secret-before-searching-all-tr-stores]
+
+There is exactly ONE secrets store per host: the global auth store (~/.agent/skills/total-recall/config/secrets.enc on the Mini, /root/.agent/skills/total-recall/config/secrets.enc on the cloud node). Per-repo stores were a defect: the auth CLI resolved its store from the cwd, so running it inside a repo created that repo's own secrets.enc. Fixed 2026-10-25 (tr-plugin-auth 508b938): the CLI always uses the global store, TR_SECRETS_BRAIN is the only override, and --project/--layer are refused. All stray stores were merged with 'auth secret merge-store' and archived encrypted under config/store-archive/2026-10-25/ on each host. If a per-repo secrets.enc ever appears again, it is breakage: merge it and find what created it.
+
+NEVER ask Greg for a credential before searching the one store: 'total-recall auth secret list' (or 'list --json' for bindings, tags and provides; never values) and 'auth secret catalog'. Repo usage lives in each key's metadata (repos binding, tags, provides), not in separate files.
 
 ---
 
@@ -100,13 +107,23 @@ Never use GitHub Actions, in any repository, for any purpose: no workflow files,
 
 ---
 
+### Push only when Greg tells you to [push-only-on-request]
+
+Never push without Greg explicitly telling you to. Pushing and deploying cost money and are gated on his word, not on your judgment: wait for an explicit instruction to push, and never push proactively, preemptively, or "to be helpful" at the end of a task. When the work is committed and ready, stop and ask.
+
+When Greg DOES tell you to push, push EVERYTHING in that repository — the entire working tree, every dirty file, not just the files you happened to touch. Stage all changes including generated files, config, lockfiles, agent surfaces, and files created by other tools or by other agents. Commit them and push to the remote. Never leave unpushed commits or a dirty working tree behind in a repo you were told to push, and never omit pre-existing modifications on the reasoning that they were not yours.
+
+Scope: only the repositories Greg names or that are part of the current task. Never sweep unrelated repositories on the machine. The same approval gate applies to deploys, releases and any action that spends money.
+
+---
+
 ### Report breakage immediately and fix it at the source, never work around it [report-breakage-then-fix-at-the-source]
 
 When something is broken, say so immediately and fix it at the source in the same pass. Do not work around a failure, do not silently skip it, do not quietly narrow scope to avoid it, do not defer it to the user or leave it because it is outside the current task: found broken means fixed now. Never idle or poll waiting on checkers, daemons or reports - read the raw status once and act.
 
 ---
 
-### Use Total Recall for everything, always [rule-total-recall-for-everything-always]
+### Rule #1: Use Total Recall for everything, always [rule-total-recall-for-everything-always]
 
 Use Total Recall for everything, always: recall before every decision, and use its CLI (mesh, auth secret, plugin, agent, task, research, skill, remember) to do the work instead of hand-rolled grep/find/sed or ad-hoc scripts. If a TR plugin or subcommand owns a capability, that is the required path - a shell equivalent is a protocol violation. Run 'total-recall recall "<topic>" --local' before each decision and refresh 'total-recall context' when the task changes.
 
@@ -130,9 +147,81 @@ Development now runs on the Mac mini. Verify host identity and run test gates di
 
 ---
 
+### No plugin templates ever: every plugin card is a bespoke hand-authored interface derived from... [invariants-297721bb]
+
+No plugin templates ever: every plugin card is a bespoke hand-authored interface derived from that plugin's own brand and function. Never declare or render card_layout templates or a shared widget vocabulary, and never use an automated script to generate plugin UI.
+
+---
+
+### Plugins may have multiple screens the operator flips through, and the plugin itself defines... [invariants-2d38fb37]
+
+Plugins may have multiple screens the operator flips through, and the plugin itself defines those screens. Never auto-generate one screen per CLI subcommand or impose any host-defined screen set.
+
+---
+
+### No shared fixtures for plugins: each plugin repository owns its own manifest, tests and card. [invariants-4de4aab1]
+
+No shared fixtures for plugins: each plugin repository owns its own manifest, tests and card. Never keep a second copy of a plugin definition in fixtures, and never share a fixture set between plugins.
+
+---
+
+### Never use an automated script or generator to build, scaffold or bulk-edit plugin UI or plugin... [invariants-b6e8fcac]
+
+Never use an automated script or generator to build, scaffold or bulk-edit plugin UI or plugin manifests. Every plugin card is authored by hand, individually, from that plugin's own function and brand.
+
+---
+
+### Plugins whose function is host or machine state must work across every machine on the mesh, not... [invariants-f1e68fca]
+
+Plugins whose function is host or machine state must work across every machine on the mesh, not just the local host. Fleet-wide scope is the point; a single-machine view is incomplete.
+
+---
+
 ### Mailcow (mail.ultrachat.app) API auth comes ONLY from its own DB api table. [mailcow-api-key-lives-in-its-own-db-table]
 
 Mailcow (mail.ultrachat.app) API auth comes ONLY from its own DB api table. If that table is empty, EVERY MAILCOW_API_KEY/DEVELOPER_MAILCOW_API_KEY in Total Recall is rejected with 'authentication failed'. Mint a key by inserting into the mailcow api table (api_key, allow_from='', skip_ip_check=1, access='rw', active=1) on the droplet, then store it in Total Recall. Manage domains/mailboxes with POST /api/v1/add/domain and /api/v1/add/mailbox using the X-API-Key header.
+
+---
+
+### One shared plugin folder, per-repository on/off [all-plugins-every-repo-default]
+
+One shared plugin folder per machine. The nine defaults (auth, mesh, openwiki, composable-cli, cli-agents, code-quality, security, embeddings, git-sentinel) are installed once, in the global brain, and every repository resolves them from there. A repository never receives its own copy: it switches a shared plugin on or off with its own `plugin_record` overlay (`total-recall plugin on|off <id>` in that repository, `--all-repos` for the whole machine, `--clear` to follow the shared setting again). Copies left inside repositories by earlier releases are audited and removed with `total-recall plugin copies [--apply]` -- that command removes only copies that are byte-identical to the bundled source. This is about CAPABILITY copies only and never licenses touching a repository's own brain: every repository, including every tr-plugin-* owner repo, keeps its own registered project brain, its own memory and its own compiled instructions, and its own memory is never merged into the global vault (see invariants-6382d135). Recursion is fixed at its source in detectProjectBrain, never by unregistering a repo or deleting its brain. Other plugins remain optional and may still be installed per repository.
+
+---
+
+### Automatic TR and SSSS updates everywhere [automatic-tr-ssss-updates-everywhere]
+
+The Total Recall daemon must automatically propagate published Total Recall and SSSS updates to all registered consumers and configured mesh nodes, including plugin and nested installs, then rebuild inventories/surfaces and verify actual versions. Failed or stale consumers must be reported.
+
+---
+
+### Automatic CLI-agent integration and documentation maintenance [cli-agents-automatic-maintenance]
+
+CLI-agent integration must run automatically: installation/update configures integrations, every dispatch refreshes Total Recall context and complete command inventories, and verified scheduled maintenance fetches official documentation and reports failures. Links and timestamps alone do not satisfy this.
+
+---
+
+### CLI agent maintenance runs in Total Recall daemon [cli-agents-maintenance-tr-daemon]
+
+Run automatic CLI-agent documentation refresh and integration maintenance through the existing Total Recall daemon on the cloud node as CLI-agents plugin tasks. Do not introduce a separate scheduler.
+
+---
+
+### Keep every CLI agent documentation complete and current [cli-agents-official-docs-current]
+
+CLI-agents must maintain official documentation for every supported agent, including agent-specific features, with source URLs, retrieval dates, freshness checks and verified recurring updates. Report missing or failed documentation refreshes explicitly.
+
+---
+
+### Comprehensive Total Recall bootstrap for every CLI agent [cli-agents-total-recall-bootstrap]
+
+Every CLI-agents dispatch must require ready Total Recall task context and supply the complete CLI, installed-plugin and composed-command inventories. Verify each supported agent instruction setup, documentation freshness and actual execution/auth state; never claim unavailable agents are integrated.
+
+---
+
+### Default agent access across enrolled machines [default-agent-access-across-machines]
+
+Agents must access every enrolled machine from any enrolled machine through Total Recall auth and mesh by default, unless an explicit operator limit restricts access. Enforce limits consistently across CLI, API and dispatch.
 
 ---
 
@@ -148,6 +237,12 @@ DSH full access is the DSH_PERMISSION_MODE env var: danger-full-access gives san
 
 ---
 
+### Every CLI addition auto-compiles surfaces [every-cli-addition-auto-compiles]
+
+Every CLI addition must automatically refresh command inventories and affected instruction surfaces, including plugin manifest/source changes. Compilation failures must be explicit; no manual compile step may be required from Greg.
+
+---
+
 ### Every release propagates everywhere [every-release-propagates-everywhere]
 
 Every Total Recall release must be propagated everywhere before it counts as done: publish to npm, then run 'total-recall update --all-brains --apply' to pin total-recall-brain AND @gregiteen/ssss-cli across every registered consumer (project-registry.json plus TR_SYNC_REPOS), then update the cloud droplet's global install and each cloud repo install, then verify every resolved version independently rather than trusting the command's own report. A release that is only on npm is not released.
@@ -157,6 +252,24 @@ Every Total Recall release must be propagated everywhere before it counts as don
 ### Hermes must only be used through Total Recall: invoke and orchestrate Hermes through Total... [invariants-27427531]
 
 Hermes must only be used through Total Recall: invoke and orchestrate Hermes through Total Recall's harness layer (total-recall harness dispatch hermes) or cli-agents, never as an unmanaged standalone entrypoint.
+
+---
+
+### Every repository, including every tr-plugin-* owner repo, is a separate project with its own... [invariants-6382d135]
+
+Every repository, including every tr-plugin-* owner repo, is a separate project with its own brain, its own compiled instructions and skills, and its own plugins. Never unregister plugin repos or delete their brains to stop nested-brain recursion; fix recursion at its source (detectProjectBrain guard) and keep brain private state gitignored. Never merge a repo's memory into the global vault. Greg, 2026-10-25.
+
+---
+
+### Production keys per app, developer keys for private and open-source work, tagged for monitoring [invariants-d6d813b2]
+
+Each production service owns distinct, app-named credentials bound to its repo; DEVELOPER_ and unbound keys serve private, testing and open-source work only. Tag every key's repos and usage for monitoring.
+
+---
+
+### Rule #2: Add missing capabilities to Total Recall CLI [missing-capabilities-belong-in-cli]
+
+If a task needs a missing capability, add it to the owning Total Recall CLI or plugin CLI and test it. Do not bypass Total Recall with an ad-hoc operational workaround.
 
 ---
 
