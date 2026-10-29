@@ -298,9 +298,21 @@ Hermes must only be used through Total Recall: invoke and orchestrate Hermes thr
 
 ---
 
+### Never shell out to the total-recall CLI from an HTTP request path: resolve credentials once at... [invariants-5ee1424d]
+
+Never shell out to the total-recall CLI from an HTTP request path: resolve credentials once at startup and read them from an in-process cache, because a subprocess from the PM2 environment cannot satisfy the auth plugin's native-host contract and its failure is silent.
+
+---
+
 ### Every repository, including every tr-plugin-* owner repo, is a separate project with its own... [invariants-6382d135]
 
 Every repository, including every tr-plugin-* owner repo, is a separate project with its own brain, its own compiled instructions and skills, and its own plugins. Never unregister plugin repos or delete their brains to stop nested-brain recursion; fix recursion at its source (detectProjectBrain guard) and keep brain private state gitignored. Never merge a repo's memory into the global vault. Greg, 2026-10-25.
+
+---
+
+### ALWAYS FIX EVERYTHING PROPERLY — NEVER WORKAROUNDS. [invariants-63f17ef5]
+
+ALWAYS FIX EVERYTHING PROPERLY — NEVER WORKAROUNDS. When something is broken, repair it at its true source and prove it fixed. Never propose or apply a workaround, band-aid, bypass, env-var seed, or 'fastest path that makes the symptom go away'. A fix that leaves the underlying defect in place (e.g. seeding a credential so a per-request subprocess can unlock a store, instead of removing the per-request subprocess) is NOT a fix and must never be offered as an option. Report the defect and fix the defect.
 
 ---
 
