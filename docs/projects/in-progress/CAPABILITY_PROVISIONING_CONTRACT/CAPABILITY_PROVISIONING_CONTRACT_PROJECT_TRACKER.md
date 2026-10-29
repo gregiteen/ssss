@@ -41,6 +41,8 @@ Goal: Settle the contract before code.
 
 ## ⏳ Phase 3: Provisioning
 
+- [/] Fix in-plan reference resolution during bundle preflight; verify valid forward references and atomic rejection when a required file is absent (Gro launch recovery regression, 2026-10-28).
+
 Goal: A bundle becomes a self-consistent, parameterized instance.
 
 - [ ] D2 `src/bundle.mjs`: apply `x_bind` values; type-check; strip `x_bind` (M)
@@ -83,3 +85,9 @@ Goal: Ship a contract Total Recall can depend on.
 
 - 2026-09-25: Reproduced D1 with the installed CLI 0.9.6 (`ssss registry compose` → `undefined is not iterable`). `ssss new` scaffold succeeded in a temp dir. Read `src/bundle.mjs` `provisionBundle` (D2–D5), `scripts/cmd-new.mjs:124` + Total Recall `src/cli/init.mjs` (D7), `src/authorization.mjs` (G5), `src/http.mjs` (G3). `ssss adapter conformance`: 6/6 suites pass (vfs/lease/idempotency × memory/filesystem); no projection suite (G4). No code changed.
 - 2026-09-26: Fixed D1 and D7. CLI smoke checks now compose a generated extension and scaffold with stubbed install commands, proving `total-recall init --project` runs in the new directory. Full code-quality tier on the Mac mini passed both conformance checks with zero findings.
+
+## Action Log
+
+| Timestamp (UTC) | Agent | Action | Outcome/evidence |
+| --- | --- | --- | --- |
+| 2026-10-28T08:21:37.976812+00:00 | Codex | GRO_LAUNCH owner fix; read local instructions/context, five-file project and source; full baseline through TR code-quality; new core asset/resource forward-reference regression | Baseline 0 findings, 9.4s. Added regression fails before repair: 15/16 bundle checks, missing-reference rejection passes. Changed bundle context option to resolveReference and updated owning SSSS skill; replacement full owner gate running. No publish/push. |

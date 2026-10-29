@@ -7,6 +7,8 @@ timestamp: 2026-09-26T00:00:00Z
 
 # CAPABILITY_PROVISIONING_CONTRACT — PRD
 
+Recovery requirement (2026-10-28): complete valid in-bundle references resolve during two-phase preflight before any document exists in the destination. A genuinely absent reference rejects the entire import without partial writes. Re-import preserves idempotency. This applies to private file assets and any registered reference-bearing primitive.
+
 > **Project Prefix**: `CAPABILITY_PROVISIONING_CONTRACT`
 > **Kanban State**: 🏗️ In Progress
 > **Author**: Claude (Opus 5.5) with Greg Iteen

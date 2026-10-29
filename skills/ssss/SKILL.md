@@ -42,6 +42,11 @@ When an SSSS engine processes a write, it receives an **Envelope**:
 ### 4. Bundles (.ucw)
 An SSSS vault can be packaged into a `.ucw` (Universal Containerized Workspace) bundle. A bundle is a portable snapshot containing a manifest, deterministic file paths, and content hashes for cryptographic integrity.
 
+Bundle import validates the complete plan before committing. Hosts pass planned
+document lookup through the kernel context's `resolveReference` option so valid
+forward references resolve in an empty destination. Missing referenced documents
+must reject the whole import; never weaken constraints to bypass ordering.
+
 ## Validation 
 
 If you are writing tests or schemas in a host repository, ensure that:

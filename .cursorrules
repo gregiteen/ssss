@@ -29,7 +29,7 @@ Composed commands: `total-recall composable-cli library --json`.
 - **decision** v0.1.2 · active · `total-recall decision` [status | run | sets | log | test]: Typed decisions (choice, binar
 - **deploy** v0.2.0 · active · `total-recall deploy` [status | stage | switch | release | rollback | retire | providers | hosts | probe | token | optimize | optimize-clean]: Zero-downtime multi-provider d
 - **design** v0.2.1 · active · `total-recall design` [status | tokens | css | tailwind]: Design system synthesis, token
-- **domains** v0.3.1 · active · `total-recall domains` [status | check | token | settings | view | set | list | info | add | update | remove | config | verification | claim | apex-projects | records | record | record-add | record-update | record-rm | search | availability | availability-bulk | price | price-bulk | buy | buy-many | renew | transfer-in | transfer-status | auth-code | auto-renew | nameservers | contact-schema | contact-status | order | tlds | tld | tld-price | project-list | project-get | project-add | project-update | project-remove | project-verify | project-move | certs | cert | cert-issue | cert-upload | cert-rm]: Unified Vercel DNS management,
+- **domains** v0.3.1 · active · `total-recall domains` [status | setup | mail | agent | billing | check | token | settings | view | set | list | info | add | update | remove | config | verification | claim | apex-projects | records | record | record-add | record-update | record-rm | search | availability | availability-bulk | price | price-bulk | buy | buy-many | renew | transfer-in | transfer-status | auth-code | auto-renew | nameservers | contact-schema | contact-status | order | tlds | tld | tld-price | project-list | project-get | project-add | project-update | project-remove | project-verify | project-move | certs | cert | cert-issue | cert-upload | cert-rm]: Unified DNS management, domain
 - **dsh** v1.1.2 · active · `total-recall dsh` [status | sessions | tools | models | model | plugins]: DeepSeek Harness (DSH) integra
 - **hermes** v0.2.0 · active · `total-recall hermes` [status | dispatch | gateway | skills | plugins | tools | model | config | auth]: Hermes Agent runtime: monitor
 - **image-generator** v0.1.2 · active · `total-recall image-generator` [generate | models]: Visual asset studio for brandi
@@ -64,6 +64,7 @@ Verbs built on this CLI with `command create`. Use them instead of re-doing thei
 - `npx total-recall openclaw-sync` (global) — Synchronize Total Recall memory vault, instruction surfaces and tools into OpenClaw workspace
 - `npx total-recall platform-fleet` (global) — Inspect the Platform of Platforms across all 9 connected agent runtimes, quotas, and versions
 - `npx total-recall tr-first` (global) — MANDATORY FIRST STEP for every task: recall before deciding, then emit the context capsule.
+- `npx total-recall tr-preflight` (global; risk: read) — Fail-closed gate: proves the mandatory Total Recall and SSSS skills were read and the context capsule is ready:true before any task work.
 # 🔴 MANDATORY FIRST STEP: TOTAL RECALL CLI & TASK ROUTING
 
 1. RUN TOTAL RECALL CLI HELP FIRST:
@@ -87,9 +88,45 @@ Email only ARRIVES if BOTH directions exist: OUTBOUND = a SMTP2GO-VERIFIED sende
 
 ---
 
+### When consolidating project trackers, first transfer all unfinished work and evidence links into... [invariants-02dd9223]
+
+When consolidating project trackers, first transfer all unfinished work and evidence links into the surviving tracker, then archive superseded folders immediately with successor pointers. Archival as superseded never means unfinished work is complete.
+
+---
+
+### Always web search current documentation before planning or implementation [invariants-23eff2fb]
+
+Always search the web for current official documentation before beginning any planning, architecture, project documentation, or implementation task. Never create project documents or plan integrations without verifying the latest documentation first.
+
+---
+
+### The skill manager plugin (tr-plugin-skill-manager) manages skills and is an autonomous plugin... [invariants-720ec67b]
+
+The skill manager plugin (tr-plugin-skill-manager) manages skills and is an autonomous plugin just like every other plugin in the fleet; no skills reside within repositories.
+
+---
+
+### Use project specification documents for everything: document every finding, requirement,... [invariants-b4576bf8]
+
+Use project specification documents for everything: document every finding, requirement, architectural decision, development task, and verification entry inside the active five-file project documents before making source code modifications.
+
+---
+
 ### Production applications must have isolated dedicated credentials, phone numbers, and telephony... [invariants-c6a55341]
 
 Production applications must have isolated dedicated credentials, phone numbers, and telephony resources; never share credentials or numbers across production applications such as Festech, UltraChat, or Gro CRM.
+
+---
+
+### Never perform code modifications or updates outside of documented project plans; follow the... [invariants-d7ce0394]
+
+Never perform code modifications or updates outside of documented project plans; follow the strict five-file project specification order (AUDIT, PRD, ARCHITECTURE, DEVELOPMENT_PLAN, PROJECT_TRACKER) with rigorous methodology.
+
+---
+
+### Save all operator directives, rules, and architectural decisions directly into Total Recall... [invariants-fae0ada5]
+
+Save all operator directives, rules, and architectural decisions directly into Total Recall canonical memory; use Total Recall for everything without exception.
 
 ---
 
@@ -162,6 +199,12 @@ Plugins may have multiple screens the operator flips through, and the plugin its
 ### No shared fixtures for plugins: each plugin repository owns its own manifest, tests and card. [invariants-4de4aab1]
 
 No shared fixtures for plugins: each plugin repository owns its own manifest, tests and card. Never keep a second copy of a plugin definition in fixtures, and never share a fixture set between plugins.
+
+---
+
+### Treat existing code as evidence of current behavior, not intended design. [invariants-8c5067c9]
+
+Treat existing code as evidence of current behavior, not intended design. Work toward the best solution for the user’s outcome; replace inferior legacy approaches instead of preserving them merely because they exist.
 
 ---
 
@@ -261,9 +304,27 @@ Every repository, including every tr-plugin-* owner repo, is a separate project 
 
 ---
 
+### pm2 keeps the environment a process was first started with and lets it override the app's env... [invariants-679249f9]
+
+pm2 keeps the environment a process was first started with and lets it override the app's env file, so an exported secret in a shell (or /etc/environment) ends up captured in every pm2 app started from it. Never export TR_SECRETS_PASSWORD ambiently: keep it in an owner-only carrier (~/.agent/tr.env, Keychain, launchd plist) and check with 'total-recall auth secret carriers'. Restart pm2 apps with a clean environment after moving their keys into the auth projection (auth secret remote import-pm2, then a clean-env restart command).
+
+---
+
+### Reading the mandatory Total Recall and SSSS skills is enforced by the fail-closed command... [invariants-71985461]
+
+Reading the mandatory Total Recall and SSSS skills is enforced by the fail-closed command 'total-recall tr-preflight', never by the advisory 'tr-first'. Run 'tr-preflight --check' before task work; it exits 1 until 'tr-preflight --ack' records a fresh receipt matching both skill hashes.
+
+---
+
 ### Production keys per app, developer keys for private and open-source work, tagged for monitoring [invariants-d6d813b2]
 
 Each production service owns distinct, app-named credentials bound to its repo; DEVELOPER_ and unbound keys serve private, testing and open-source work only. Tag every key's repos and usage for monitoring.
+
+---
+
+### Plugin replacements: install --replace keeps the replaced copy with its node_modules. [invariants-ebf00403]
+
+Plugin replacements: install --replace keeps the replaced copy with its node_modules. Before 3.41.3 nothing pruned them and 73 copies filled the MacBook (58 GB). Check with 'total-recall plugin replacements' and prune with --prune; never clone plugins with full dev dependencies into the shared plugin folder.
 
 ---
 

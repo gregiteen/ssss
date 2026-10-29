@@ -7,6 +7,8 @@ timestamp: 2026-09-26T00:00:00Z
 
 # CAPABILITY_PROVISIONING_CONTRACT — Audit
 
+2026-10-28 Gro recovery regression: `importBundle` builds a complete in-plan document map but passes it as `referenceResolver`; `kernel.execute` reads `context.resolveReference`. Consequently an asset/catalogue reference to another file in the same fresh import is rejected before commit, even though export validates it. Fix the owning bundle adapter and add positive forward-reference and missing-reference atomic rejection checks. Gro host acceptance exposed this using private base64 file assets. No production mutation or publication is authorized by this repair.
+
 > **Project Prefix**: `CAPABILITY_PROVISIONING_CONTRACT`
 > **Kanban State**: 🏗️ In Progress
 > **Author**: Claude (Opus 5.5) with Greg Iteen

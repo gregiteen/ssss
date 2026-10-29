@@ -7,6 +7,8 @@ timestamp: 2026-09-26T00:00:00Z
 
 # CAPABILITY_PROVISIONING_CONTRACT — Development Plan
 
+Current repair (2026-10-28): baseline full owner gates; add a core asset→resource forward-reference import regression and missing-reference no-partial-write case; correct the bundle/kernel context option; update owning skill guidance; rerun full conformance through Total Recall code-quality. Propagate the tested package to Gro through the owner packaging path, without publishing or pushing absent authorization.
+
 > **Project Prefix**: `CAPABILITY_PROVISIONING_CONTRACT`
 > **Kanban State**: 🏗️ In Progress
 > **Author**: Claude (Opus 5.5) with Greg Iteen

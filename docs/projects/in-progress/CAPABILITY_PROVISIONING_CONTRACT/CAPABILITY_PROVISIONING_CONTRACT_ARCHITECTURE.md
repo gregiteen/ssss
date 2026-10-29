@@ -7,6 +7,8 @@ timestamp: 2026-09-26T00:00:00Z
 
 # CAPABILITY_PROVISIONING_CONTRACT — Architecture
 
+Bundle preflight passes the planned-document resolver through the kernel's existing `resolveReference` context contract. It resolves the complete import inventory, independent of file order; it does not relax reference constraints or use an unvalidated side store. The same resolver accompanies committed operations after successful preflight.
+
 > **Project Prefix**: `CAPABILITY_PROVISIONING_CONTRACT`
 > **Kanban State**: 🏗️ In Progress
 > **Author**: Claude (Opus 5.5) with Greg Iteen

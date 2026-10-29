@@ -346,6 +346,35 @@ async function runBundleConformance() {
     fs.rmSync(atomicVault, { recursive: true, force: true });
   }
 
+  const referenceVault = fs.mkdtempSync(path.join(os.tmpdir(), 'ssss-bundle-refs-'));
+  const missingVault = fs.mkdtempSync(path.join(os.tmpdir(), 'ssss-bundle-missing-'));
+  try {
+    const engine = createEngine({ registryDir: REGISTRY_DIR });
+    const envelope = (id, target, fields) => ({
+      type: 'operation', workspace_id: 'ws-refs', idempotency_key: id,
+      path: target, actor: { role: 'system' },
+      content: ['---', 'title: Reference test', 'description: Complete planned references.',
+        'timestamp: 2026-10-28T00:00:00Z', ...fields, '---', '', 'Exact payload.', ''].join('\n'),
+    });
+    const asset = envelope('ref-asset', 'assets/source.md', [
+      'type: asset', 'name: source', 'mime_type: text/plain', 'encoding: utf-8',
+      'resource_ref: resources/store.md',
+    ]);
+    const resource = envelope('ref-resource', 'resources/store.md', [
+      'type: resource', 'name: store', 'kind: storage', 'status: bound',
+    ]);
+    const imported = await importBundle([asset, resource], referenceVault, engine);
+    check('fresh import resolves a forward reference from the complete plan',
+      imported.ok && imported.committed === 2,
+      JSON.stringify(imported.results.map(item => item.validation?.errors || [])));
+    const missing = await importBundle([asset], missingVault, engine);
+    check('missing planned reference rejects import without partial writes',
+      !missing.ok && missing.committed === 0 && !fs.existsSync(path.join(missingVault, 'assets/source.md')));
+  } finally {
+    fs.rmSync(referenceVault, { recursive: true, force: true });
+    fs.rmSync(missingVault, { recursive: true, force: true });
+  }
+
   let pass = 0;
   for (const c of checks) {
     if (c.cond) { pass++; console.log(`  ✅ ${c.name}`); }
