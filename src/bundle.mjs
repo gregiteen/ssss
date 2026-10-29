@@ -508,7 +508,7 @@ export async function importBundle(plan, vaultRoot, engine) {
     });
   }
   const operationOptions = {
-    referenceResolver: (referencePath) => plannedDocuments.get(referencePath),
+    resolveReference: (referencePath) => plannedDocuments.get(referencePath),
   };
   // Two-phase import: validate the complete plan with in-plan references first.
   // A single invalid document prevents every commit, eliminating partial bundle

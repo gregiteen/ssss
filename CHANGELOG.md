@@ -7,6 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.12.0] - 2026-10-29
+### Added
+- `FileIdempotencyStore` now expires entries. It accepts `retentionMs` (default
+  24 hours, `0` disables) and `pruneEvery` (default every 500 puts), and exposes
+  `prune()`, which removes entries older than the window and returns the count.
+  Retention runs opportunistically inside `put` and never rejects a committed
+  operation. Previously entries were written and never removed, so a directory
+  only grew: one frequently rewritten document produced 14,438 records from a
+  single path, and a live vault reached 283k files / 1.2 GB, which slowed every
+  traversal of it. A retry arrives within minutes, so a bounded window loses
+  nothing that mattered. Lock and temp files are never treated as entries.
+
 ## [0.11.2] - 2026-10-19
 ### Added
 - `parseFrontmatter(fm, { strict: true })` throws a `SyntaxError` on lines that

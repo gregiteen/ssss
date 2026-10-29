@@ -1,4 +1,5 @@
 import fs from 'node:fs';
+import crypto from 'node:crypto';
 import { execFileSync, spawn, spawnSync } from 'node:child_process';
 import os from 'node:os';
 import path from 'node:path';
@@ -122,6 +123,32 @@ async function checkFileAdapterRaces(root, principal, check) {
   const stored = await new FileIdempotencyStore(idempotencyRoot).get('acme', 'race');
   check('filesystem idempotency store accepts one of several processes putting the same key',
     winners(puts).length === 1 && stored?.request_hash === `racer-${winners(puts)[0]?.racer}`, describe(puts));
+
+  // Retention: an entry exists to reject a retry, which arrives within minutes,
+  // so entries expire rather than living forever. Without this a single
+  // frequently rewritten document produced 14,438 records and a live vault
+  // reached 283k files / 1.2 GB, slowing every traversal of the vault.
+  const retentionRoot = path.join(root, 'idempotency-retention');
+  const retention = new FileIdempotencyStore(retentionRoot, { retentionMs: 60_000, pruneEvery: 1 });
+  await retention.put('acme', 'fresh', { request_hash: 'sha256:fresh' });
+  const entryName = (workspaceId, idempotencyKey) =>
+    `${crypto.createHash('sha256').update(JSON.stringify([workspaceId, idempotencyKey])).digest('hex')}.json`;
+  const staleFile = path.join(retentionRoot, entryName('acme', 'stale'));
+  fs.writeFileSync(staleFile, '{"request_hash":"sha256:stale"}\n', { mode: 0o600 });
+  const aged = new Date(Date.now() - 10 * 60 * 1000);
+  fs.utimesSync(staleFile, aged, aged);
+  const removed = retention.prune();
+  check('filesystem idempotency store expires entries past the retention window',
+    removed === 1 && !fs.existsSync(staleFile), `removed ${removed}`);
+  check('filesystem idempotency store keeps entries inside the retention window',
+    (await retention.get('acme', 'fresh'))?.request_hash === 'sha256:fresh');
+  check('filesystem idempotency store skips retention when the window is disabled',
+    new FileIdempotencyStore(retentionRoot, { retentionMs: 0 }).prune() === 0);
+  const lockName = path.join(retentionRoot, `${entryName('acme', 'locked')}.lock`);
+  fs.writeFileSync(lockName, '');
+  const lockSurvived = retention.prune() === 0 && fs.existsSync(lockName);
+  fs.rmSync(lockName, { force: true });
+  check('filesystem idempotency store never treats a lock file as an entry', lockSurvived);
 
   const kernelRoot = path.join(root, 'kernel');
   const kernelPrincipal = { ...principal, capabilities: ['*:*'] };
