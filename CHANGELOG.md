@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.12.1] - 2026-10-29
+### Fixed
+- Republish under a new version: npm rejected 0.12.0 as a previously staged
+  version, so the retention change ships as 0.12.1 with no other difference.
+
 ## [0.12.0] - 2026-10-29
 ### Added
 - `FileIdempotencyStore` now expires entries. It accepts `retentionMs` (default
