@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.13.1] - 2026-11-02
+### Changed
+- No change to the package's code, registry, spec or bundled skill. This
+  release brings the tag and npm in line with `main`, which gained the
+  closed `KERNEL_COMMIT_DURABILITY` project records and regenerated agent
+  instruction files; none of those ship in the package.
+
+### Behavior changes hosts should check
+- None. The bundled skill core still describes protocol 0.13.0, which is
+  what this version implements.
+
 ## [0.13.0] - 2026-11-02
 ### Fixed
 - A committed operation is no longer executed twice. Stage 2 now falls back to
