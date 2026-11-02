@@ -2,8 +2,8 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import crypto from 'node:crypto';
-import { StringDecoder } from 'node:string_decoder';
 import { withFileLock } from './file-lock.mjs';
+import { fsyncDirectory } from './durable-fs.mjs';
 
 // UUIDv5 namespace for event ids derived from idempotency keys.
 const IDEMPOTENT_EVENT_NAMESPACE = Buffer.from('6f1c2d9e4b7a4e0c9f35a1d8c3b2e7f4', 'hex');
@@ -49,15 +49,25 @@ export function createCanonicalEvent(input, options = {}) {
   };
 }
 
+const keyId = (workspaceId, idempotencyKey) => JSON.stringify([workspaceId, idempotencyKey]);
+
 export class MemoryEventStore {
   #events = [];
   #ids = new Set();
+  #keys = new Map();
   async append(event) {
     if (this.#ids.has(event.event_id)) throw new Error(`Duplicate event_id '${event.event_id}'.`);
     const frozen = structuredClone(event);
     this.#events.push(frozen);
     this.#ids.add(frozen.event_id);
+    const id = keyId(frozen.workspace_id, frozen.idempotency_key);
+    if (!this.#keys.has(id)) this.#keys.set(id, frozen);
     return structuredClone(frozen);
+  }
+  /** The first event committed under (workspace, key), or null (spec §6.4). */
+  async findByIdempotencyKey(workspaceId, idempotencyKey) {
+    const event = this.#keys.get(keyId(workspaceId, idempotencyKey));
+    return event ? structuredClone(event) : null;
   }
   async *replay(options = {}) {
     for (let index = options.cursor || 0; index < this.#events.length; index++) {
@@ -84,34 +94,77 @@ function sameStat(a, b) {
   return a.dev === b.dev && a.ino === b.ino && a.size === b.size && a.mtimeMs === b.mtimeMs && a.ctimeMs === b.ctimeMs;
 }
 
-/** Decode one line at a time, never materializing the complete log as a string. */
-function* logLines(fd, size) {
+/**
+ * Split a log into lines on raw bytes, one line at a time, never materializing
+ * the complete log. Each record carries the byte offset of its line, and
+ * `complete: false` for a final line with no newline yet (an append in flight).
+ */
+function* logRecords(fd, size) {
   const buffer = Buffer.alloc(64 * 1024);
-  const decoder = new StringDecoder('utf8');
-  let offset = 0, pending = '';
-  while (offset < size) {
-    const read = fs.readSync(fd, buffer, 0, Math.min(buffer.length, size - offset), offset);
+  let position = 0, start = 0, pending = [];
+  while (position < size) {
+    const read = fs.readSync(fd, buffer, 0, Math.min(buffer.length, size - position), position);
     if (read === 0) break;
-    offset += read;
-    const text = pending + decoder.write(buffer.subarray(0, read));
-    let start = 0, newline;
-    while ((newline = text.indexOf('\n', start)) !== -1) {
-      yield text.slice(start, newline);
-      start = newline + 1;
+    let from = 0, newline;
+    while ((newline = buffer.indexOf(0x0a, from)) !== -1 && newline < read) {
+      pending.push(buffer.subarray(from, newline));
+      yield { offset: start, text: Buffer.concat(pending).toString('utf8'), complete: true };
+      pending = [];
+      start = position + newline + 1;
+      from = newline + 1;
     }
-    pending = text.slice(start);
+    // Copy: the read buffer is reused by the next iteration.
+    if (from < read) pending.push(Buffer.from(buffer.subarray(from, read)));
+    position += read;
   }
-  pending += decoder.end();
-  if (pending) yield pending;
+  if (pending.length) yield { offset: start, text: Buffer.concat(pending).toString('utf8'), complete: false };
 }
 
-/** Read every event_id, bounded to the bytes covered by the returned stat. */
-function loadIndex(file) {
+function* logLines(fd, size) {
+  for (const record of logRecords(fd, size)) yield record.text;
+}
+
+/**
+ * Read every event_id and the first offset of every idempotency key, bounded
+ * to the bytes covered by the returned stat. A reader outside the append lock
+ * passes `partialTail` so another writer's in-flight line is skipped instead
+ * of failing to parse; the index then records that it is partial.
+ */
+function loadIndex(file, { partialTail = false } = {}) {
   const fd = openLog(file, fs.constants.O_RDONLY | NOFOLLOW);
   try {
-    const stat = fs.fstatSync(fd), ids = new Set();
-    for (const line of logLines(fd, stat.size)) if (line.trim()) ids.add(JSON.parse(line).event_id);
-    return { ids, stat };
+    const stat = fs.fstatSync(fd), ids = new Set(), keys = new Map();
+    let partial = false;
+    for (const { offset, text, complete } of logRecords(fd, stat.size)) {
+      if (!text.trim()) continue;
+      if (!complete && partialTail) { partial = true; continue; }
+      const event = JSON.parse(text);
+      ids.add(event.event_id);
+      if (typeof event.idempotency_key === 'string' && !keys.has(event.idempotency_key)) {
+        keys.set(event.idempotency_key, { file, offset });
+      }
+    }
+    return { ids, keys, stat, partial };
+  } finally { fs.closeSync(fd); }
+}
+
+/** Parse the single log line that starts at `offset`, or null if it is gone. */
+function readEventAt(file, offset) {
+  let fd;
+  try { fd = openLog(file, fs.constants.O_RDONLY | NOFOLLOW); }
+  catch (error) { if (error.code === 'ENOENT') return null; throw error; }
+  try {
+    const size = fs.fstatSync(fd).size;
+    const buffer = Buffer.alloc(16 * 1024), chunks = [];
+    for (let position = offset; position < size;) {
+      const read = fs.readSync(fd, buffer, 0, Math.min(buffer.length, size - position), position);
+      if (read === 0) break;
+      const newline = buffer.indexOf(0x0a);
+      if (newline !== -1 && newline < read) { chunks.push(Buffer.from(buffer.subarray(0, newline))); break; }
+      chunks.push(Buffer.from(buffer.subarray(0, read)));
+      position += read;
+    }
+    try { return JSON.parse(Buffer.concat(chunks).toString('utf8')); } catch { return null; }
   } finally { fs.closeSync(fd); }
 }
 
@@ -194,34 +247,59 @@ export class JsonlEventStore {
       return 0;
     }
   }
-  #index(file) {
+  // `partialTail` is for readers outside the append lock (see loadIndex). An
+  // index built that way is cached, but the append path never trusts it.
+  #index(file, { partialTail = false } = {}) {
+    const workspaceId = path.basename(file, '.jsonl');
     let stat;
     try { stat = fs.lstatSync(file); }
     catch (error) {
       if (error.code !== 'ENOENT') throw error;
       this.#indexes.delete(file);
-      return { ids: new Set(), stat: null };
+      stat = null;
     }
-    if (stat.isSymbolicLink()) throw new Error('Symlinked event logs are forbidden.');
+    if (stat?.isSymbolicLink()) throw new Error('Symlinked event logs are forbidden.');
     const cached = this.#indexes.get(file);
-    if (cached && sameStat(cached.stat, stat)) return cached;
+    if (cached && cached.stat && stat && sameStat(cached.stat, stat) && (partialTail || !cached.partial)) return cached;
     // Duplicate detection spans the live log AND every archive segment:
     // rotating a log must never let an already-recorded event_id be appended
     // again. Archives are immutable, so their ids are collected once per
     // rebuild; only the live file's stat decides when a rebuild is needed.
-    const ids = new Set();
-    const workspaceId = path.basename(file, '.jsonl');
+    // Keys keep their first occurrence, oldest segment first.
+    const ids = new Set(), keys = new Map();
+    const merge = (part) => {
+      for (const id of part.ids) ids.add(id);
+      for (const [key, entry] of part.keys) if (!keys.has(key)) keys.set(key, entry);
+    };
     for (const archive of this.#archives(workspaceId)) {
       let archiveStat;
       try { archiveStat = fs.lstatSync(archive); } catch { continue; }
       if (archiveStat.isSymbolicLink()) throw new Error('Symlinked event logs are forbidden.');
-      for (const id of loadIndex(archive).ids) ids.add(id);
+      merge(loadIndex(archive));
     }
-    const live = loadIndex(file);
-    for (const id of live.ids) ids.add(id);
-    const index = { ids, stat };
+    if (!stat) return { ids, keys, stat: null, partial: false };
+    const live = loadIndex(file, { partialTail });
+    merge(live);
+    const index = { ids, keys, stat, partial: live.partial };
     this.#indexes.set(file, index);
     return index;
+  }
+  /**
+   * The first event committed under (workspace, key), or null (spec §6.4).
+   * The index holds only offsets; the event itself is read on a hit, which
+   * only a retry causes. A segment rotated between the index read and the
+   * line read is detected by the key check and retried once on a fresh index.
+   */
+  async findByIdempotencyKey(workspaceId, idempotencyKey) {
+    const file = this.#file(workspaceId);
+    for (let attempt = 0; attempt < 2; attempt++) {
+      const entry = this.#index(file, { partialTail: true }).keys.get(idempotencyKey);
+      if (!entry) return null;
+      const event = readEventAt(entry.file, entry.offset);
+      if (event?.idempotency_key === idempotencyKey && event.workspace_id === workspaceId) return event;
+      this.#indexes.delete(file);
+    }
+    return null;
   }
   async append(event) {
     const file = this.#file(event.workspace_id);
@@ -240,15 +318,23 @@ export class JsonlEventStore {
     let after;
     try {
       fs.writeFileSync(fd, line);
+      // The append is the commit point (spec §6.3): it is on disk before the
+      // kernel reports success, and so is a log this append created.
+      fs.fsyncSync(fd);
       after = fs.fstatSync(fd);
     } finally { fs.closeSync(fd); }
+    if (!before) fsyncDirectory(this.root);
     // Cache the index only when the log grew by exactly this line on the same
     // file. After a rotation the live file is brand new, so the previous stat
     // is meaningless and the next append rebuilds from the archives instead.
-    const expectedSize = (before?.size || 0) + Buffer.byteLength(line);
+    const offset = before?.size || 0;
+    const expectedSize = offset + Buffer.byteLength(line);
     if (!rotated && after.size === expectedSize && (!before || (before.dev === after.dev && before.ino === after.ino))) {
       index.ids.add(event.event_id);
-      this.#indexes.set(file, { ids: index.ids, stat: after });
+      if (typeof event.idempotency_key === 'string' && !index.keys.has(event.idempotency_key)) {
+        index.keys.set(event.idempotency_key, { file, offset });
+      }
+      this.#indexes.set(file, { ids: index.ids, keys: index.keys, stat: after, partial: false });
     }
     return structuredClone(event);
   }

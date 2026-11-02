@@ -1022,7 +1022,7 @@ Kernels MUST NOT reorder or skip stages. Adapters (§6.7) implement mechanics on
 | 6 | **Lease** — if the primitive is `lease_required` or the host requires a lease for this path, verify it (§7). | `lease_conflict` |
 | 7 | **Resource prepare** — if the host coordinates an external resource (a domain, a phone number), reserve it. | `internal_error` |
 | 8 | **Dry-run exit** — if `dry_run`, release anything prepared in stage 7 and return success with `committed_at: null`. | — |
-| 9 | **Commit** — write the document with a compare-and-swap on the version read in stage 3 (create-if-absent for a new document), or remove it for `delete`. `event` envelopes write nothing here. | `version_conflict`, `internal_error` |
+| 9 | **Commit** — under the path's commit intent (below), write the document with a compare-and-swap on the version read in stage 3 (create-if-absent for a new document), or remove it for `delete`. `event` envelopes write nothing here. | `version_conflict`, `internal_error` |
 | 10 | **Event append — the commit point.** Append the canonical event (§8.2). If the append fails, undo stage 9 and release stage 7. | `internal_error` |
 | 11 | **Resource finalize** — complete the external effect. A failure here MUST NOT undo the commit. The host reconciles and the response carries a warning. | warning only |
 | 12 | **Projections** — dispatch the event to projections (§10). A failure is a warning, never a rollback. | warning only |
@@ -1032,6 +1032,30 @@ Kernels MUST NOT reorder or skip stages. Adapters (§6.7) implement mechanics on
 durably appended. Before that, every failure leaves no trace in the vault. After
 it, nothing may undo the mutation, because the append-only log (§8) already says it
 happened. Work after the commit point is compensated forward, never rolled back.
+
+**Commit intents.** A process can die between stage 9 and stage 10, leaving the
+vault ahead of the log. A host whose vault outlives the process MUST therefore,
+before stage 9, durably record a *commit intent* for the path and hold the path's
+commit lock until stage 10 ends. The intent names the `event_id` the commit will
+append, the prior content (or its absence), and a digest of the intended content.
+Durably means the intent, then the stage-9 write, then the stage-10 append each
+reach stable storage before the next begins.
+
+An intent whose lock is free belongs to a writer that died. Before the next commit
+on that path, and before a kernel's first operation, the host resolves it:
+
+| The log holds the intent's `event_id` | The document now | Outcome |
+|---|---|---|
+| yes | anything | `committed` — the commit stands |
+| no | has the intended digest (absent, for `delete`) | `rolled_back` — the prior content is restored |
+| no | has the prior digest (absent, if it had none) | `discarded` — stage 9 never landed |
+| no | anything else | `conflict` — written outside the kernel; the intent is kept aside and reported |
+
+An intent whose writer is alive is never resolved. A writer that read uncommitted
+state fails its stage-9 compare-and-swap after the rollback and retries on the real
+state, so nothing is ever committed on top of a write that did not commit. The
+reference `FileSystemVfs` supplies a journal under the reserved `.ssss-intents/`
+directory; `kernel.recover()` runs resolution on demand.
 
 **Resource lifecycle.** If a host coordinates external resources, every successful
 `prepare` MUST be followed by exactly one `finalize` or `reconcile`. `reconcile`
@@ -1060,12 +1084,27 @@ Every envelope carries an `idempotency_key`, scoped to its `workspace_id`.
   fails with `idempotency_conflict`.
 - Because the principal is part of the hash, a key replayed by a *different*
   principal is a conflict, never a disclosure of another principal's result.
-- A host MUST retain records for at least 24 hours and MAY retain them
-  indefinitely. The reference stores never expire.
+- **The event log is the durable record.** Every committed envelope's event
+  carries its `idempotency_key` and `request_hash` (§8.2), written at the commit
+  point, so it survives anything the commit survives. The idempotency store is a
+  cache of full responses in front of it. When the store has no record, a kernel
+  MUST look the key up in the log if its event store supports that lookup
+  (§6.7): the first event under the key decides. A matching hash replays a
+  response rebuilt from the event, identical to the original except that
+  post-commit warnings (stages 11–13) are absent; any other hash, including a
+  missing one, is `idempotency_conflict`.
+- **Retention.** A host whose event store answers key lookups MAY expire store
+  records; the reference `FileIdempotencyStore` keeps them 24 hours by default.
+  A host whose event store cannot answer them MUST retain records indefinitely.
+- An `unchanged` response (an `operation` identical to the stored document)
+  commits nothing and appends no event, so only the store holds it.
 
 Keys are opaque strings. Use a random UUID for ad-hoc requests. Use a
 deterministic derivation where retries must converge, as with runtime-created work
-(§11.8) and bundle import (§17).
+(§11.8) and bundle import (§17). A committed key is never reusable for a different
+request, so a derivation MUST cover everything that distinguishes one intended
+request from another: the reference bundle import derives its key from the
+workspace, the target path, and the file's content digest.
 
 ### 6.5 The Response & Error Codes
 
@@ -1164,8 +1203,9 @@ each with a shared contract test in the conformance suite (§12):
 
 | Adapter | Contract |
 |---------|----------|
-| **VFS** | `read(path) → {bytes, version, hash} \| null`; `writeAtomic(path, bytes, {version \| ifAbsent})` and `remove(path, {version})`, both compare-and-swap, failing with a version conflict and never a partial write. Rejects unsafe paths and symlink traversal. |
-| **Event store** | `append(event)` durably and in order, rejecting a duplicate `event_id` across every writer; `replay({cursor, workspaceId})` in append order. |
+| **VFS** | `read(path) → {bytes, version, hash} \| null`; `writeAtomic(path, bytes, {version \| ifAbsent})` and `remove(path, {version})`, both compare-and-swap, failing with a version conflict and never a partial write. Rejects unsafe paths and symlink traversal. A VFS whose state outlives the process SHOULD provide `intentJournal()`, its co-located intent journal. |
+| **Event store** | `append(event)` durably and in order, rejecting a duplicate `event_id` across every writer; `replay({cursor, workspaceId})` in append order. SHOULD provide `findByIdempotencyKey(workspaceId, key) → event \| null`, the first event recorded under the key, across every writer and every rotated segment (§6.4). |
+| **Intent journal** | `run(path, intent, commit, {resolve})` holds the path's commit lock across `commit`, first passing any leftover intent for the path to `resolve`, and removes the intent afterward unless `commit` asks to keep it; `recover(resolve)` resolves every intent whose writer is gone and reports live ones as `in_flight` (§6.3). |
 | **Idempotency store** | `get(workspace, key)`; `put(workspace, key, record)`, which rejects a second `put` for the same key across every writer. |
 | **Lease store** | `acquire`, `verify`, `renew`, `release` per §7, with at most one live lease per target across every writer. |
 | **Authorizer** | `authorize({principal, workspaceId, definition, action}) → {allowed, reason}`, per §6.6. Fails closed. |
@@ -1218,7 +1258,10 @@ flat physical *log*, and a relational *event graph* layered on top of it.
   a kernel SHOULD derive `event_id` deterministically from (`workspace_id`,
   `idempotency_key`). The reference uses UUIDv5 over their JSON array. That way,
   concurrent duplicates of one event collide on the uniqueness check instead of
-  both landing.
+  both landing. Other envelopes get their `event_id` before stage 9, so a commit
+  intent (§6.3) can name the event that decides it.
+- The log is also the durable idempotency record (§6.4): the first event recorded
+  under an `idempotency_key` decides every later request with that key.
 - Order is append order within a log.
 - The event log is the canonical history of *what happened*; the vault is the
   canonical state of *what is true now*. Both are source-of-truth; projections are

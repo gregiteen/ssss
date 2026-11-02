@@ -9,8 +9,10 @@ import { isAppendType, isSafeDocumentPath, resolvePrimitiveDefinition } from './
 import { createCapabilityAuthorizer, validateVerifiedPrincipal } from './authorization.mjs';
 import { createCanonicalEvent, idempotentEventId } from './events.mjs';
 import { MemoryIdempotencyStore } from './idempotency.mjs';
+import { MemoryIntentJournal } from './intents.mjs';
 
 export { MemoryIdempotencyStore } from './idempotency.mjs';
+export { FileIntentJournal, MemoryIntentJournal } from './intents.mjs';
 
 const COMMAND_TYPES = new Set(['operation', 'patch', 'event', 'delete']);
 
@@ -24,6 +26,8 @@ export const ERROR_CODES = Object.freeze([
 ]);
 
 function isVfsError(error, name, code) { return error?.name === name || error?.code === code; }
+
+function digestBytes(bytes) { return `sha256:${crypto.createHash('sha256').update(bytes).digest('hex')}`; }
 
 function stable(value) {
   if (Array.isArray(value)) return value.map(stable);
@@ -59,6 +63,20 @@ function failure(code, envelope, operationId, errors, fieldErrors = []) {
   };
 }
 
+/**
+ * The success response of a committed envelope, rebuilt from its event. The
+ * request hash covers `type` and `path`, so those come from the envelope.
+ * Post-commit warnings are not in the log and are therefore absent.
+ */
+function responseFromEvent(envelope, event) {
+  return {
+    success: true, type: envelope.type, operation_id: event.operation_id, path: envelope.path,
+    committed_at: event.timestamp, dry_run: false,
+    event_id: event.event_id,
+    validation: { valid: true, type: event.primitive_id, errors: [], warnings: [] },
+  };
+}
+
 function actionFor(envelope, exists, appendOnly) {
   if (envelope.type === 'operation') return exists ? 'replace' : 'create';
   if (envelope.type === 'patch') return appendOnly && envelope.patches?.__body__ !== undefined ? 'append' : 'patch';
@@ -81,6 +99,60 @@ export function createKernel(options = {}) {
   if (!eventStore) throw new Error('createKernel requires an event store.');
   const validator = options.validator || createValidator(options);
   const registrySet = validator.registry;
+  // A VFS whose state outlives the process supplies its own journal, so hosts
+  // get crash recovery without wiring one (spec §6.7).
+  const intentJournal = options.intentJournal || vfs.intentJournal?.() || new MemoryIntentJournal();
+
+  async function eventCommitted(intent) {
+    if (typeof eventStore.findByIdempotencyKey === 'function') {
+      const first = await eventStore.findByIdempotencyKey(intent.workspace_id, intent.idempotency_key);
+      if (!first) return false;
+      if (first.event_id === intent.event_id) return true;
+    }
+    // A store without key lookup, or a key first used by another request:
+    // scan. This runs only after a crash.
+    for await (const { event } of eventStore.replay({ workspaceId: intent.workspace_id })) {
+      if (event.event_id === intent.event_id) return true;
+    }
+    return false;
+  }
+
+  /**
+   * Decide a commit intent whose writer is gone (spec §6.3). The event is the
+   * commit point: if it is in the log the commit stands; if not, the vault is
+   * returned to the prior content. Digests are the kernel's own, over raw
+   * bytes, so the decision does not depend on a VFS's version scheme.
+   */
+  async function resolveIntent(intent) {
+    try {
+      if (await eventCommitted(intent)) return { outcome: 'committed' };
+      const now = await vfs.read(intent.path);
+      const nowDigest = now ? digestBytes(now.bytes) : null;
+      const beforeDigest = intent.before?.exists ? intent.before.digest : null;
+      if (nowDigest === beforeDigest) return { outcome: 'discarded' };
+      if (nowDigest === (intent.after_digest ?? null)) {
+        if (intent.before?.exists) {
+          await vfs.writeAtomic(intent.path, Buffer.from(intent.before.bytes, 'base64'), now ? { version: now.version } : { ifAbsent: true });
+        } else {
+          await vfs.remove(intent.path, { version: now.version });
+        }
+        return { outcome: 'rolled_back' };
+      }
+      return { outcome: 'conflict', reason: 'The document changed outside the kernel after an uncommitted write.' };
+    } catch (error) {
+      return { outcome: 'failed', reason: error.message };
+    }
+  }
+
+  /** Resolve every commit intent whose writer is gone; report the rest. */
+  async function recover() {
+    return intentJournal.recover(resolveIntent);
+  }
+
+  // Once per kernel, before its first operation, so state a crashed writer
+  // left behind is rolled back even on paths nobody writes again.
+  let recovery = null;
+  const recoverOnce = () => (recovery ||= recover().catch((error) => { recovery = null; throw error; }));
 
   // Registry `references` are enforced on every write (spec §9). A host may
   // supply its own resolver; otherwise targets are read through the VFS.
@@ -132,15 +204,28 @@ export function createKernel(options = {}) {
       return failure('unauthorized', envelope, operationId, ['Access denied: Verified principal is required.'], [{ field: 'principal', issue: 'Verified principal is required.' }]);
     }
 
+    try { await recoverOnce(); }
+    catch (error) { return failure('internal_error', envelope, operationId, [`Commit recovery failed: ${error.message}`]); }
+
     const requestHash = canonicalRequestHash(envelope, principal);
-    // A stored result for this key: replay it, or refuse a different request.
+    const keyConflict = () => failure('idempotency_conflict', envelope, operationId, ['Idempotency key was already used for a different request.'], [{ field: 'idempotency_key', issue: 'Request hash conflict.' }]);
+    // A recorded result for this key: replay it, or refuse a different request.
+    // The idempotency store is a cache of full responses; the event log is the
+    // durable record of every committed key (spec §6.4), so a cache miss after
+    // retention, a lost record, or a new process still finds the commit.
     const settled = async () => {
       const stored = await idempotencyStore.get(envelope.workspace_id, envelope.idempotency_key);
-      if (!stored) return null;
-      if (stored.request_hash !== requestHash) {
-        return failure('idempotency_conflict', envelope, operationId, ['Idempotency key was already used for a different request.'], [{ field: 'idempotency_key', issue: 'Request hash conflict.' }]);
-      }
-      return { ...stored.response, replay: true };
+      if (stored) return stored.request_hash === requestHash ? { ...stored.response, replay: true } : keyConflict();
+      if (typeof eventStore.findByIdempotencyKey !== 'function') return null;
+      let committed;
+      try { committed = await eventStore.findByIdempotencyKey(envelope.workspace_id, envelope.idempotency_key); }
+      catch (error) { return failure('internal_error', envelope, operationId, [`Event log is unreadable: ${error.message}`]); }
+      if (!committed) return null;
+      // An event without a request hash cannot prove it was this request.
+      if (committed.request_hash !== requestHash) return keyConflict();
+      const response = responseFromEvent(envelope, committed);
+      try { await idempotencyStore.put(envelope.workspace_id, envelope.idempotency_key, { request_hash: requestHash, response }); } catch {}
+      return { ...response, replay: true };
     };
     const replay = await settled();
     if (replay) return replay;
@@ -295,61 +380,97 @@ export function createKernel(options = {}) {
       };
     }
 
-    let commit = null;
-    let event;
-    try {
-      if (envelope.type === 'operation') {
-        commit = await vfs.writeAtomic(envelope.path, nextContent, current ? { version: current.version } : { ifAbsent: true });
-      } else if (envelope.type === 'patch') {
-        commit = await vfs.writeAtomic(envelope.path, nextContent, { version: current.version });
-      } else if (envelope.type === 'delete') {
-        commit = await vfs.remove(envelope.path, { version: current.version });
-      }
+    // `event` envelopes have no VFS compare-and-swap, so a key-derived id lets
+    // the event store reject a concurrent request with the same key. Other ids
+    // are assigned now so the commit intent can name the event it expects.
+    const eventId = envelope.type === 'event' ? idempotentEventId(envelope.workspace_id, envelope.idempotency_key) : crypto.randomUUID();
+    let committedEvent = null;
 
-      event = createCanonicalEvent({
-        // `event` envelopes have no VFS compare-and-swap, so a key-derived id
-        // lets the event store reject a concurrent request with the same key.
-        event_id: envelope.type === 'event' ? idempotentEventId(envelope.workspace_id, envelope.idempotency_key) : undefined,
-        workspace_id: envelope.workspace_id,
-        primitive_id: definition.qualified_type,
-        primitive_version: definition.primitive_version || 1,
-        action,
-        subject: envelope.path,
-        principal,
-        operation_id: operationId,
-        idempotency_key: envelope.idempotency_key,
-        request_hash: requestHash,
-        before_hash: current?.hash || null,
-        after_hash: commit?.hash || null,
-        changed_fields: envelope.type === 'patch' ? Object.keys(envelope.patches).sort() : [],
-        resource_status: prepared ? 'prepared' : null,
-        payload: envelope.type === 'event' && envelope.content ? JSON.parse(envelope.content) : null,
-      }, { clock });
-      await eventStore.append(event);
-    } catch (error) {
-      if (prepared) await reconcile('commit', error);
-      // Roll back a VFS commit when event persistence fails. Event envelopes have no VFS commit.
-      if (commit && envelope.type !== 'event') {
-        try {
-          if (!current) await vfs.remove(envelope.path, { version: commit.version });
-          else await vfs.writeAtomic(envelope.path, current.bytes, commit.version ? { version: commit.version } : {});
-        } catch (rollbackError) {
-          return failure('internal_error', envelope, operationId, [`Commit failed: ${error.message}; rollback failed: ${rollbackError.message}`]);
-        }
-      }
-      // A concurrent request with the same key may have won the commit (VFS
-      // compare-and-swap or duplicate event_id); answer with its result.
+    // Stages 9 and 10. Returns { event } on commit, or { response, keepIntent }.
+    const commitAndAppend = async () => {
+      let commit = null;
+      let event;
       try {
-        const winner = await settled();
-        if (winner) return winner;
-      } catch {}
-      const code = isVfsError(error, 'VfsConflictError', 'SSSS_VFS_CONFLICT') ? 'version_conflict' : 'internal_error';
-      return failure(code, envelope, operationId, [`Commit failed: ${error.message}`]);
+        if (envelope.type === 'operation') {
+          commit = await vfs.writeAtomic(envelope.path, nextContent, current ? { version: current.version } : { ifAbsent: true });
+        } else if (envelope.type === 'patch') {
+          commit = await vfs.writeAtomic(envelope.path, nextContent, { version: current.version });
+        } else if (envelope.type === 'delete') {
+          commit = await vfs.remove(envelope.path, { version: current.version });
+        }
+
+        event = createCanonicalEvent({
+          event_id: eventId,
+          workspace_id: envelope.workspace_id,
+          primitive_id: definition.qualified_type,
+          primitive_version: definition.primitive_version || 1,
+          action,
+          subject: envelope.path,
+          principal,
+          operation_id: operationId,
+          idempotency_key: envelope.idempotency_key,
+          request_hash: requestHash,
+          before_hash: current?.hash || null,
+          after_hash: commit?.hash || null,
+          changed_fields: envelope.type === 'patch' ? Object.keys(envelope.patches).sort() : [],
+          resource_status: prepared ? 'prepared' : null,
+          payload: envelope.type === 'event' && envelope.content ? JSON.parse(envelope.content) : null,
+        }, { clock });
+        await eventStore.append(event);
+        committedEvent = event;
+        return { event };
+      } catch (error) {
+        if (prepared) await reconcile('commit', error);
+        // Roll back a VFS commit when event persistence fails. Event envelopes have no VFS commit.
+        if (commit && envelope.type !== 'event') {
+          try {
+            if (!current) await vfs.remove(envelope.path, { version: commit.version });
+            else await vfs.writeAtomic(envelope.path, current.bytes, commit.version ? { version: commit.version } : {});
+          } catch (rollbackError) {
+            // The intent stays, so the next commit on this path or recover()
+            // finishes the rollback.
+            return { keepIntent: true, response: failure('internal_error', envelope, operationId, [`Commit failed: ${error.message}; rollback failed: ${rollbackError.message}`]) };
+          }
+        }
+        // A concurrent request with the same key may have won the commit (VFS
+        // compare-and-swap or duplicate event_id); answer with its result.
+        try {
+          const winner = await settled();
+          if (winner) return { response: winner };
+        } catch {}
+        const code = isVfsError(error, 'VfsConflictError', 'SSSS_VFS_CONFLICT') ? 'version_conflict' : 'internal_error';
+        return { response: failure(code, envelope, operationId, [`Commit failed: ${error.message}`]) };
+      }
+    };
+
+    // Everything but an `event` envelope writes the VFS, so it commits under a
+    // durable intent holding the prior content (spec §6.3).
+    const intent = envelope.type === 'event' ? null : {
+      version: 1, operation_id: operationId, event_id: eventId, workspace_id: envelope.workspace_id,
+      path: envelope.path, action, idempotency_key: envelope.idempotency_key, request_hash: requestHash,
+      before: current ? { exists: true, digest: digestBytes(current.bytes), bytes: current.bytes.toString('base64') } : { exists: false, digest: null },
+      after_digest: envelope.type === 'delete' ? null : digestBytes(Buffer.from(nextContent, 'utf8')),
+      started_at: clock(),
+    };
+    const warnings = [];
+    let outcome;
+    try {
+      outcome = intent ? await intentJournal.run(envelope.path, intent, commitAndAppend, { resolve: resolveIntent }) : await commitAndAppend();
+    } catch (error) {
+      // Before the commit (lock, intent write, an earlier writer's recovery):
+      // nothing happened. After it, the event already says it happened.
+      if (!committedEvent) {
+        if (prepared) await reconcile('commit', error);
+        return failure('internal_error', envelope, operationId, [`Commit failed: ${error.message}`]);
+      }
+      outcome = { event: committedEvent };
+      warnings.push(`Commit intent cleanup failed: ${error.message}`);
     }
+    if (outcome.response) return outcome.response;
+    const { event } = outcome;
 
     // The appended event is the commit point (spec §6.3): nothing after it may
     // roll the mutation back. Post-commit failures become warnings.
-    const warnings = [];
     if (resourceCoordinator?.finalize) {
       try { await resourceCoordinator.finalize({ resourceState, event }); }
       catch (error) {
@@ -375,5 +496,5 @@ export function createKernel(options = {}) {
     return response;
   }
 
-  return { execute, registry: registrySet, validator };
+  return { execute, recover, registry: registrySet, validator };
 }

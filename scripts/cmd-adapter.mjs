@@ -5,6 +5,7 @@ import path from 'node:path';
 import { MemoryVfs, FileSystemVfs, runVfsContract } from '../src/vfs.mjs';
 import { MemoryLeaseStore, FileLeaseStore, runLeaseContract } from '../src/leases.mjs';
 import { MemoryIdempotencyStore, FileIdempotencyStore, runIdempotencyContract } from '../src/idempotency.mjs';
+import { MemoryIntentJournal, FileIntentJournal, runIntentJournalContract } from '../src/intents.mjs';
 import { parseArgs, die, wantsHelp } from './lib/cli.mjs';
 
 export async function run(argv) {
@@ -20,6 +21,8 @@ export async function run(argv) {
       lease_filesystem: await runLeaseContract(new FileLeaseStore(path.join(root, 'leases'))),
       idempotency_memory: await runIdempotencyContract(new MemoryIdempotencyStore()),
       idempotency_filesystem: await runIdempotencyContract(new FileIdempotencyStore(path.join(root, 'idempotency'))),
+      intent_journal_memory: await runIntentJournalContract(new MemoryIntentJournal()),
+      intent_journal_filesystem: await runIntentJournalContract(new FileIntentJournal(path.join(root, 'intents'))),
     };
     const report = { version: 1, passed: Object.values(suites).every((suite) => suite.passed), suites };
     const text = `${JSON.stringify(report, null, 2)}\n`;

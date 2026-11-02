@@ -139,6 +139,10 @@ export function createEngine(options = {}) {
       }
       return response;
     },
+    /** Resolve commit intents a crashed writer left in this vault (spec §6.3). */
+    async recover(vaultRoot, callOptions = {}) {
+      return bound(vaultRoot, callOptions.eventLogDir).recover();
+    },
     resolveContainedPath,
     _types: registrySet.types,
     _registry: registrySet,

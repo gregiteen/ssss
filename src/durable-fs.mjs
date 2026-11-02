@@ -1,0 +1,32 @@
+/**
+ * Flush helpers for the reference file adapters (spec §6.3 commit point).
+ *
+ * A rename is atomic but not durable: after an OS crash the new name can
+ * survive while its bytes do not, unless the file is flushed before the
+ * rename and the directory after it. Platforms that cannot open a directory
+ * for flushing (Windows) skip the directory step.
+ */
+import fs from 'node:fs';
+
+const NOFOLLOW = fs.constants.O_NOFOLLOW || 0;
+const CREATE_EXCLUSIVE = fs.constants.O_WRONLY | fs.constants.O_CREAT | fs.constants.O_EXCL | NOFOLLOW;
+const UNSUPPORTED_DIRECTORY_SYNC = new Set(['EISDIR', 'EINVAL', 'EPERM', 'EACCES', 'ENOTSUP', 'EBADF']);
+
+/** Create `file` exclusively, write `bytes`, and flush them before returning. */
+export function writeFileSyncDurable(file, bytes, mode = 0o600) {
+  const fd = fs.openSync(file, CREATE_EXCLUSIVE, mode);
+  try {
+    fs.writeFileSync(fd, bytes);
+    fs.fsyncSync(fd);
+  } finally { fs.closeSync(fd); }
+}
+
+/** Flush a directory's entries (a rename, create or unlink inside it). */
+export function fsyncDirectory(dir) {
+  let fd;
+  try { fd = fs.openSync(dir, fs.constants.O_RDONLY); }
+  catch (error) { if (UNSUPPORTED_DIRECTORY_SYNC.has(error.code)) return; throw error; }
+  try { fs.fsyncSync(fd); }
+  catch (error) { if (!UNSUPPORTED_DIRECTORY_SYNC.has(error.code)) throw error; }
+  finally { fs.closeSync(fd); }
+}

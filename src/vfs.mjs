@@ -4,9 +4,16 @@ import path from 'node:path';
 import crypto from 'node:crypto';
 import { isSafeDocumentPath } from './registry.mjs';
 import { withFileLock } from './file-lock.mjs';
+import { fsyncDirectory, writeFileSyncDurable } from './durable-fs.mjs';
+import { FileIntentJournal } from './intents.mjs';
 
 /** Reserved FileSystemVfs directory for per-path write locks; never a document path. */
 export const VFS_LOCK_DIR = '.ssss-locks';
+
+/** Reserved FileSystemVfs directory for commit intents (spec §6.3); never a document path. */
+export const VFS_INTENT_DIR = '.ssss-intents';
+
+const RESERVED_DIRS = new Set([VFS_LOCK_DIR, VFS_INTENT_DIR]);
 
 export class VfsConflictError extends Error {
   constructor(message) { super(message); this.name = 'VfsConflictError'; this.code = 'SSSS_VFS_CONFLICT'; }
@@ -86,6 +93,14 @@ export class FileSystemVfs {
     fs.mkdirSync(root, { recursive: true });
     this.root = fs.realpathSync(root);
     this.lockOptions = options.lock || {};
+    this.intentLockOptions = options.intentLock || {};
+  }
+
+  #journal = null;
+
+  /** The commit intent journal co-located with this vault (spec §6.3, §6.7). */
+  intentJournal() {
+    return (this.#journal ||= new FileIntentJournal(path.join(this.root, VFS_INTENT_DIR), { lock: this.intentLockOptions }));
   }
 
   // Writers to one path serialize on a lock so precondition checks and commits
@@ -102,7 +117,7 @@ export class FileSystemVfs {
   #resolve(vfsPath, { allowMissing = true } = {}) {
     if (!isSafeDocumentPath(vfsPath)) throw new VfsPathError(`Unsafe VFS path '${vfsPath}'.`);
     // Case-insensitive: on APFS/NTFS any casing reaches the same directory.
-    if (vfsPath.split('/')[0].toLowerCase() === VFS_LOCK_DIR) throw new VfsPathError(`VFS path '${vfsPath}' is reserved.`);
+    if (RESERVED_DIRS.has(vfsPath.split('/')[0].toLowerCase())) throw new VfsPathError(`VFS path '${vfsPath}' is reserved.`);
     const target = path.resolve(this.root, ...vfsPath.split('/'));
     if (target === this.root || !target.startsWith(`${this.root}${path.sep}`)) {
       throw new VfsPathError(`VFS path '${vfsPath}' escapes the root.`);
@@ -149,7 +164,7 @@ export class FileSystemVfs {
     while (stack.length) {
       const dir = stack.pop();
       for (const entry of fs.readdirSync(dir, { withFileTypes: true }).sort((a, b) => a.name.localeCompare(b.name))) {
-        if (dir === this.root && entry.name === VFS_LOCK_DIR) continue;
+        if (dir === this.root && RESERVED_DIRS.has(entry.name)) continue;
         const absolute = path.join(dir, entry.name);
         const relative = path.relative(this.root, absolute).split(path.sep).join('/');
         if (entry.isSymbolicLink()) throw new VfsPathError(`Symlinked VFS entry is forbidden: '${relative}'.`);
@@ -177,8 +192,11 @@ export class FileSystemVfs {
     const nextBytes = asBuffer(bytes);
     const temp = path.join(path.dirname(target), `.${path.basename(target)}.${crypto.randomUUID()}.tmp`);
     try {
-      fs.writeFileSync(temp, nextBytes, { flag: 'wx', mode: 0o600 });
+      // Flushed before the rename and the directory after it, so the commit is
+      // on disk before the kernel appends its event (spec §6.3).
+      writeFileSyncDurable(temp, nextBytes);
       fs.renameSync(temp, target);
+      fsyncDirectory(path.dirname(target));
     } finally {
       fs.rmSync(temp, { force: true });
     }
@@ -201,6 +219,7 @@ export class FileSystemVfs {
       checkPrecondition(current, precondition);
       if (!target || !current) return { path: vfsPath, removed: false };
       fs.rmSync(target);
+      fsyncDirectory(path.dirname(target));
       return { path: vfsPath, removed: true, previous_hash: current.hash };
     });
   }

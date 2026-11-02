@@ -1,6 +1,6 @@
 {
   "name": "@gregiteen/ssss-cli",
-  "version": "0.12.1",
+  "version": "0.13.0",
   "description": "CLI tools and the reference engine for the Structured Semantic Syntax System",
   "main": "src/engine.mjs",
   "exports": {
@@ -23,6 +23,7 @@
     "./authorization": "./src/authorization.mjs",
     "./leases": "./src/leases.mjs",
     "./idempotency": "./src/idempotency.mjs",
+    "./intents": "./src/intents.mjs",
     "./events": "./src/events.mjs",
     "./projections": "./src/projections.mjs",
     "./ui": "./src/ui.mjs",
@@ -56,7 +57,7 @@
   ],
   "scripts": {
     "conformance": "node ./scripts/conformance.mjs conformance",
-    "test": "node ./scripts/conformance.mjs conformance --engine && node ./scripts/check-events-streaming.mjs && node ./scripts/check-frontmatter.mjs"
+    "test": "node ./scripts/conformance.mjs conformance --engine && node ./scripts/check-events-streaming.mjs && node ./scripts/check-frontmatter.mjs && node ./scripts/check-commit-durability.mjs"
   },
   "keywords": [
     "ssss",

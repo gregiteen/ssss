@@ -7,6 +7,61 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.13.0] - 2026-11-02
+### Fixed
+- A committed operation is no longer executed twice. Stage 2 now falls back to
+  the event log when the idempotency store has no record, because every event
+  already carries its `idempotency_key` and `request_hash`. Previously a retry
+  re-executed after a lost or expired record, or from any new process using the
+  engine façade (each process had its own memory store); an append-type patch
+  landed twice with two events. Replays rebuilt from the log omit post-commit
+  warnings and are otherwise identical.
+- A crash between the VFS write and the event append no longer leaves the vault
+  ahead of the log. The kernel records a commit intent (prior content, intended
+  digest, pre-assigned `event_id`) and holds a per-path commit lock until the
+  append ends. A leftover intent is resolved before the next commit on its path
+  and before a kernel's first operation: committed if its event is in the log,
+  rolled back otherwise, and reported as a conflict if the document was changed
+  outside the kernel. A live writer's intent is never touched. Verified with
+  child processes killed by `SIGKILL`.
+- `FileSystemVfs` and `JsonlEventStore` now `fsync` files and directories so
+  the intent, the document and the event reach disk in that order.
+- Bundle import keys include the file's content digest, so re-importing a
+  changed bundle commits the change instead of failing `idempotency_conflict`.
+- Spec §6.4 no longer claims the reference idempotency stores never expire.
+
+### Added
+- Event stores: `findByIdempotencyKey(workspaceId, key)` (memory and JSONL,
+  including rotated archives).
+- `@gregiteen/ssss-cli/intents`: `MemoryIntentJournal`, `FileIntentJournal`,
+  `runIntentJournalContract`. `FileSystemVfs#intentJournal()` keeps intents in
+  the reserved `.ssss-intents/` directory, so hosts that already pass a
+  `FileSystemVfs` get recovery without code changes.
+- `kernel.recover()` and `engine.recover(vaultRoot)`.
+- `ssss adapter conformance` reports intent journal suites.
+
+### Behavior changes hosts should check
+- `FileSystemVfs` reserves `.ssss-intents/` beside `.ssss-locks/`: document
+  paths under it are rejected and `list` skips it.
+- A kernel's first operation resolves leftover intents. If recovery itself
+  fails, operations return `internal_error` ("Commit recovery failed") rather
+  than writing over an unresolved commit. Intents that cannot be resolved are
+  moved to `.ssss-intents/unresolved/` and reported by `recover()`.
+- Commits now wait on `fsync`. The conformance suite went from about 9 s to
+  13 s on the Mac mini; per-commit cost depends on the disk.
+- Bundle import keys change format. Keys are opaque per §6.4; a host that
+  stored them should not compare old and new keys.
+- Custom event stores without `findByIdempotencyKey` keep the previous
+  behavior; §6.4 then requires their idempotency stores to retain records
+  indefinitely.
+- Custom VFS adapters without `intentJournal()` get an in-process journal and no
+  crash recovery; pass `intentJournal` to `createKernel` to add one.
+
+### Known issue
+- Delivering bundle content that this host never imported, and that is older
+  than a local edit, still overwrites the edit. It needs an expected-base
+  precondition on import and is tracked in `CAPABILITY_PROVISIONING_CONTRACT`.
+
 ## [0.12.1] - 2026-10-29
 ### Fixed
 - Republish under a new version: npm rejected 0.12.0 as a previously staged

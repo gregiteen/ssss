@@ -471,9 +471,12 @@ export function provisionBundle(bundle, opts = {}) {
   }
 
   // Build the envelope plan. Deterministic idempotency keys make import a no-op on re-run.
+  // The key covers the content: committed keys are durable (spec §6.4), so a key
+  // derived from the path alone would make every changed re-import a conflict.
   const plan = bundle.files.map((f) => {
     const targetPath = remap(f.path);
-    const key = 'prov-' + crypto.createHash('sha256').update(workspaceId + ':' + targetPath).digest('hex').slice(0, 24);
+    const contentDigest = crypto.createHash('sha256').update(f.content).digest('hex');
+    const key = 'prov-' + crypto.createHash('sha256').update(workspaceId + ':' + targetPath + ':' + contentDigest).digest('hex').slice(0, 24);
     return { type: 'operation', idempotency_key: key, path: targetPath, workspace_id: workspaceId, content: f.content, intent: 'provision', dry_run: dryRun, actor: { role: 'system' } };
   });
 
