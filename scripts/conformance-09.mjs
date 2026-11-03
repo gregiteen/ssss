@@ -463,6 +463,19 @@ function checkJsonSchemas(check) {
   const badBundle = { files: [] };
   const badBundleResult = validateJsonSchema(badBundle, bundleSchema);
   check('schema: bundle schema rejects missing manifest', !badBundleResult.valid && badBundleResult.errors.some((e) => e.path.includes('manifest')));
+
+  // Extension registries need no spec_version/description (those are core-only, A-009).
+  const extDef = definePrimitive({ namespace: 'acme', name: 'Widget', fields: [{ id: 'title', name: 'Title', kind: 'string', required: true }] });
+  const extResult = validateJsonSchema(definitionsToExtensionRegistry('acme', [extDef]), coreSchema);
+  check('schema: definitionsToExtensionRegistry() output validates against the registry schema', extResult.valid, extResult.errors?.[0] && `${extResult.errors[0].path}: ${extResult.errors[0].message}`);
+
+  const strayKey = validateJsonSchema({ ...coreRegistry, unexpected_root_key: true }, coreSchema);
+  check('schema: registry schema rejects unknown root keys (fail-closed)', !strayKey.valid && strayKey.errors.some((e) => e.path === 'unexpected_root_key'));
+
+  const dupFields = JSON.parse(JSON.stringify(coreRegistry));
+  dupFields.document_primitives.rule.required_fields = ['type', 'type'];
+  const dupResult = validateJsonSchema(dupFields, coreSchema);
+  check('schema: registry schema rejects duplicate required_fields (uniqueItems)', !dupResult.valid && dupResult.errors.some((e) => e.message.includes('uniqueItems')));
 }
 
 // Resource hooks (spec §6.3): every prepare ends in exactly one finalize or

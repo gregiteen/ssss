@@ -1,0 +1,471 @@
+{
+  "schemaVersion": 1,
+  "runId": "fe5c5bd7-a2e8-4e71-bbef-f7dc53761a00",
+  "mode": "update",
+  "phase": "generating",
+  "startedAt": "2026-11-03T07:15:54.702Z",
+  "language": "en",
+  "languageChanged": false,
+  "requiredRewritePages": [],
+  "initialPages": [
+    "/openwiki/architecture.md",
+    "/openwiki/ide.md",
+    "/openwiki/memory.md",
+    "/openwiki/README.md",
+    "/openwiki/secrets.md",
+    "/openwiki/skills.md"
+  ],
+  "sourceFingerprint": "sha256:46b2ef9ae74ea4293f59dedbcca8368ff9c323fa881b1cdfb35017a5e98cf2be",
+  "targetGitHead": "25d2fa6f80c9e893e3ddd3793d58723e9a5df49e",
+  "actor": {
+    "producerActor": "openwiki/0.7.2",
+    "metadataModel": "z-ai/glm-5.2"
+  },
+  "previousLastUpdate": null,
+  "beforeContentSnapshot": "8258a8760969e58b76a29b7ff4ad1747f57f82074e1c1894451612da0bc26b24",
+  "preparedWiki": {
+    "generatedProvenance": [
+      {
+        "page": "/openwiki/README.md",
+        "bodyHash": "eaf5e8b689222df112ac2b6f2a3d0666ad88558f696b23976db27932b2862f53"
+      },
+      {
+        "page": "/openwiki/architecture.md",
+        "bodyHash": "cee283aa62f6726e430f91c7c8626356d9993086ec6f52d551c0146ed224013d"
+      },
+      {
+        "page": "/openwiki/ide.md",
+        "bodyHash": "4bcbd0506c9350e9b149ad43ceb26821b645a38b60190dde96b1a46464c7506c"
+      },
+      {
+        "page": "/openwiki/memory.md",
+        "bodyHash": "24036de2f62b10cd71403cc1c88116f0453213023fc6946bb6b11973a7d1733b"
+      },
+      {
+        "page": "/openwiki/secrets.md",
+        "bodyHash": "7a7032d4412f95ce65f0fe55b841489f1c5f0214b66a3952db8b0183c3b4e221"
+      },
+      {
+        "page": "/openwiki/skills.md",
+        "bodyHash": "373f9646917ae5d728b07274e113b0525679ff039b1b7caaed471c1b42754fe2"
+      }
+    ]
+  },
+  "plan": {
+    "pages": [
+      {
+        "id": "13de0e54-99d1-41e6-b49d-8aa1918d1f5b",
+        "path": "/openwiki/README.md",
+        "title": "OpenWiki — SSSS",
+        "purpose": "Root index for this SSSS repo's OpenWiki. Distinguishes the two layers present in the repo — the SSSS reference implementation (spec/registry/kernel/bundle/runtime/semantic) and the Total Recall brain/IDE operational layer — and routes into the concept/workflow/operations/integrations pages.",
+        "seedPaths": [
+          "AGENTS.md",
+          "README.md",
+          "docs/help/overview.md",
+          "openwiki/.run.json"
+        ],
+        "relatedPages": [
+          "/openwiki/architecture.md",
+          "/openwiki/concepts/bundle-and-provisioning.md",
+          "/openwiki/concepts/operation-contract.md",
+          "/openwiki/concepts/registry-and-portability.md",
+          "/openwiki/integrations/total-recall-and-ide.md",
+          "/openwiki/quickstart.md"
+        ],
+        "instructions": [
+          "Do not put secrets here; note that credentials go through the Total Recall auth plugin (see integrations page).",
+          "Regenerate the existing generic brain-boilerplate README into a repo-specific index for the SSSS codebase."
+        ],
+        "status": "complete",
+        "completedBy": "openwiki/0.7.2"
+      },
+      {
+        "id": "d1665cc6-24ab-405e-9a33-c9cabdd769a4",
+        "path": "/openwiki/architecture.md",
+        "title": "SSSS system architecture",
+        "purpose": "System architecture overview: the layers of the dependency-free reference implementation (spec → registry/schemas → frontmatter → validator → kernel → adapters → runtime/semantic/bundle → CLI/transports), how data flows from a Markdown vault through the Operation Contract to an immutable event log, and the vault→bundle→tenant lifecycle. Includes a Mermaid diagram of the layered architecture and the commit/lifecycle flow.",
+        "seedPaths": [
+          "README.md",
+          "docs/help/overview.md",
+          "package.json",
+          "src/bundle.mjs",
+          "src/engine.mjs",
+          "src/kernel.mjs",
+          "src/registry.mjs"
+        ],
+        "relatedPages": [
+          "/openwiki/concepts/bundle-and-provisioning.md",
+          "/openwiki/concepts/operation-contract.md",
+          "/openwiki/concepts/registry-and-portability.md",
+          "/openwiki/integrations/host-adapters.md",
+          "/openwiki/workflows/mutation-commit.md",
+          "/openwiki/workflows/vault-lifecycle.md"
+        ],
+        "instructions": [
+          "Call out that the engine.mjs is a thin façade over kernel.mjs and that the kernel owns all mutation semantics.",
+          "Regenerate the existing generic 'this brain' placeholder into the real SSSS system architecture.",
+          "Use the mermaid-diagrams skill to render the layered architecture and the vault→bundle→tenant lifecycle diagram."
+        ],
+        "status": "complete",
+        "completedBy": "openwiki/0.7.2"
+      },
+      {
+        "id": "bc5696d9-9ee8-4cd8-940c-66faeca8d447",
+        "path": "/openwiki/concepts/bundle-and-provisioning.md",
+        "title": "Bundle format & provisioning contract",
+        "purpose": "The .ucw bundle format (spec §16) and provisioning contract (spec §17): manifest/files/provenance shape, content-hash integrity, parameters and provisioning steps/binding vocabulary, the three pure-ish verbs (export/provision/import), determinism (frozen timestamp, path-sorted canonical serialization), idempotency keys (sha256(workspace:path)), id-remap/prefix, link integrity, and upgrade via structural patches.",
+        "seedPaths": [
+          "conformance/reference-bundle.ucw.json",
+          "docs/help/bundle.md",
+          "docs/help/export.md",
+          "docs/help/import.md",
+          "docs/help/provision.md",
+          "docs/help/provisioning.md",
+          "schemas/bundle.schema.json",
+          "src/bundle.mjs"
+        ],
+        "relatedPages": [
+          "/openwiki/concepts/operation-contract.md",
+          "/openwiki/concepts/registry-and-portability.md",
+          "/openwiki/operations/conformance-and-testing.md",
+          "/openwiki/workflows/vault-lifecycle.md"
+        ],
+        "instructions": [
+          "Cover the PROFILE_INCLUDES filter (backup/template/sale) and the portability-driven requirement declaration generation for resource_bound primitives.",
+          "Explain that import preflights every envelope before the first commit so a late schema/reference/authorization failure cannot leave a partial import, and that re-import commits zero (idempotent).",
+          "Reference upgradeBundle structural patches (§17.4)."
+        ],
+        "status": "complete",
+        "completedBy": "openwiki/0.7.2"
+      },
+      {
+        "id": "51458588-7e5f-49fc-8342-992747d5435c",
+        "path": "/openwiki/concepts/operation-contract.md",
+        "title": "Operation Contract & mutation kernel",
+        "purpose": "The spec §6 Operation Contract: the four envelope types (operation/patch/event/delete), the kernel.execute stages (auth → idempotency replay → validation → lease → VFS compare-and-swap commit → event append → intent journal → projection), idempotency replay vs. conflict, the symbolic ERROR_CODES and how transports map them to HTTP status, and the index.md special case.",
+        "seedPaths": [
+          "docs/help/roles.md",
+          "src/authorization.mjs",
+          "src/engine.mjs",
+          "src/http.mjs",
+          "src/idempotency.mjs",
+          "src/intents.mjs",
+          "src/kernel.mjs",
+          "src/leases.mjs"
+        ],
+        "relatedPages": [
+          "/openwiki/architecture.md",
+          "/openwiki/concepts/registry-and-portability.md",
+          "/openwiki/integrations/host-adapters.md",
+          "/openwiki/operations/cli-and-transports.md",
+          "/openwiki/workflows/mutation-commit.md"
+        ],
+        "instructions": [
+          "Cover fail-closed authorization: missing actor.role is denied, system/admin bypass semantics, event envelopes gated on write:event.",
+          "Explain the 0.9 capability authorization model (verified principal, requiredCapabilities, capabilityCovers with path glob @ scoping, policyFloors) and the legacy role→capability translation in engine.mjs.",
+          "Reference symbolic failure codes and ERROR_STATUS mapping."
+        ],
+        "status": "complete",
+        "completedBy": "openwiki/0.7.2"
+      },
+      {
+        "id": "93110491-280f-474d-ab02-3eb46774faaa",
+        "path": "/openwiki/concepts/registry-and-portability.md",
+        "title": "Registry, portability & schemas",
+        "purpose": "Registry-driven type resolution and the portability keystone: core.json document/contract primitives, extension registry composition, aliases, required/optional/immutable/required_when/patterns/references/enums/resource fields, the three portability classes (structural/tenant_private/resource_bound) and export profiles (backup/template/sale), the zero-dependency YAML frontmatter parser, the Draft 2020-12 JSON Schemas and the zero-dependency schema-validator.",
+        "seedPaths": [
+          "docs/help/portability.md",
+          "docs/help/schema.md",
+          "registry/core.json",
+          "schemas/bundle.schema.json",
+          "schemas/core-registry.schema.json",
+          "src/frontmatter.mjs",
+          "src/primitive.mjs",
+          "src/registry.mjs",
+          "src/schema-validator.mjs",
+          "src/validator.mjs"
+        ],
+        "relatedPages": [
+          "/openwiki/architecture.md",
+          "/openwiki/concepts/bundle-and-provisioning.md",
+          "/openwiki/concepts/operation-contract.md",
+          "/openwiki/operations/cli-and-transports.md",
+          "/openwiki/workflows/vault-lifecycle.md"
+        ],
+        "instructions": [
+          "Cover x_portability override (most restrictive wins) and how resource_bound fields become REQUIREMENT placeholders in template/sale exports.",
+          "Explain that the engine has no per-type code: required_fields, append_only, portability, and reference constraints all come from the registry.",
+          "Note validateData/validateDocument/createValidator in validator.mjs and the primitive-definition API in primitive.mjs."
+        ],
+        "status": "complete",
+        "completedBy": "openwiki/0.7.2"
+      },
+      {
+        "id": "fef2f18b-c5ff-4a79-bd05-e72f5533732e",
+        "path": "/openwiki/integrations/host-adapters.md",
+        "title": "Host adapter contracts",
+        "purpose": "The host-injectable adapter contracts and their file-based reference implementations: VFS (MemoryVfs/FileSystemVfs, preconditions, VFS_LOCK_DIR/VFS_INTENT_DIR reserved dirs), event store (JsonlEventStore rotation/cursor replay, idempotentEventId), lease store, idempotency store (retention/pruning), intent journal, projection coordinator (sql/search adapters, cursor-aware replay), the guard, UI projection registry, and cross-process file-lock concurrency semantics.",
+        "seedPaths": [
+          "docs/help/concurrency.md",
+          "docs/help/leases.md",
+          "src/durable-fs.mjs",
+          "src/events.mjs",
+          "src/file-lock.mjs",
+          "src/guard.mjs",
+          "src/idempotency.mjs",
+          "src/intents.mjs",
+          "src/leases.mjs",
+          "src/projections.mjs",
+          "src/ui.mjs",
+          "src/vfs.mjs"
+        ],
+        "relatedPages": [
+          "/openwiki/architecture.md",
+          "/openwiki/concepts/operation-contract.md",
+          "/openwiki/operations/conformance-and-testing.md",
+          "/openwiki/workflows/mutation-commit.md"
+        ],
+        "instructions": [
+          "Cover durable-fs fsyncDirectory/writeFileSyncDurable and the symlinked-lock refusal.",
+          "Document the concurrency guarantees table (event append, VFS write/remove, lease acquire/renew/release, idempotency put) with their lock files and stale/timeout behavior.",
+          "Note that hosts own durable destination writes for projections; the reference adapters only prove the apply/reset/snapshot contract."
+        ],
+        "status": "pending"
+      },
+      {
+        "id": "74be1a49-a875-479a-951a-5b998905c9a0",
+        "path": "/openwiki/integrations/total-recall-and-ide.md",
+        "title": "Total Recall brain, IDE & secrets",
+        "purpose": "The operational/brain layer of this repo: it is operated as a Total Recall brain. Covers IDE personalization connectors (CLAUDE.md/AGENTS.md/.cursor/rules/GEMINI.md managed inject markers), the Total Recall memory CLI (remember/recall/compile/context), secrets handled exclusively through the auth plugin (never in OpenWiki or IDE instruction files), the skills system (.agent/skills and /skills SKILL.md libraries, SSSS-related skills like rbac-fail-open-auditor and ssss-registry-parity-auditor), and how AGENTS.md documents the installed plugin namespace surface.",
+        "seedPaths": [
+          ".agent/skills/total-recall/SKILL.md",
+          ".cursorrules",
+          ".env.example",
+          "AGENTS.md",
+          "CLAUDE.md",
+          "openwiki/ide.md",
+          "openwiki/memory.md",
+          "openwiki/secrets.md",
+          "openwiki/skills.md",
+          "skills/rbac-fail-open-auditor/SKILL.md",
+          "skills/ssss/SKILL.md"
+        ],
+        "relatedPages": [
+          "/openwiki/README.md",
+          "/openwiki/concepts/operation-contract.md",
+          "/openwiki/operations/conformance-and-testing.md",
+          "/openwiki/quickstart.md"
+        ],
+        "instructions": [
+          "Consolidate the four existing thin brain pages (ide.md, memory.md, secrets.md, skills.md) into this single integrations page; those pages are being deleted in this plan.",
+          "Cover the SSSS-specific agent skills that audit this repo's own invariants (rbac-fail-open-auditor, ssss-registry-parity-auditor, ssss, ssss-project-management) and where their SKILL.md files live.",
+          "Emphasize the hard rule: never put API keys or secrets in OpenWiki pages or compiled IDE instruction files — credentials go through the Total Recall auth plugin (auth secret set/get/rotate) following TR_SECRETS_BRAIN."
+        ],
+        "status": "pending"
+      },
+      {
+        "id": "0074cc0a-379e-440a-b760-1c9d5ef80f1e",
+        "path": "/openwiki/operations/cli-and-transports.md",
+        "title": "CLI & transports",
+        "purpose": "The `ssss` CLI dispatcher (scripts/ssss.mjs → cmd-*.mjs modules), the reference HTTP server (cmd-serve.mjs + http.mjs: POST /v1/operations, bearer token, /health), the stdin/stdout JSON bridge (cmd-bridge.mjs for non-JS hosts), and the authoring/schema commands: primitive, registry, schema, migrate, adapter conformance. Includes the scripts/lib/cli.mjs arg parsing and the package exports map.",
+        "seedPaths": [
+          "package.json",
+          "scripts/cmd-adapter.mjs",
+          "scripts/cmd-bridge.mjs",
+          "scripts/cmd-migrate.mjs",
+          "scripts/cmd-primitive.mjs",
+          "scripts/cmd-registry.mjs",
+          "scripts/cmd-schema.mjs",
+          "scripts/cmd-serve.mjs",
+          "scripts/lib/cli.mjs",
+          "scripts/ssss.mjs",
+          "src/http.mjs"
+        ],
+        "relatedPages": [
+          "/openwiki/architecture.md",
+          "/openwiki/concepts/operation-contract.md",
+          "/openwiki/concepts/registry-and-portability.md",
+          "/openwiki/operations/conformance-and-testing.md",
+          "/openwiki/workflows/vault-lifecycle.md"
+        ],
+        "instructions": [
+          "Cover the serve/bridge shared engine construction and that HTTP is a façade over kernel.execute, never a writer.",
+          "Document the package `exports` subpaths (kernel, engine, runtime, bundle, semantic, vfs, identity, leases, idempotency, intents, events, projections, ui, http, guard, schema-validator, schemas/*) since these are the public library surface."
+        ],
+        "status": "pending"
+      },
+      {
+        "id": "2cbcf091-203a-4d59-bb55-de87a7b52881",
+        "path": "/openwiki/operations/conformance-and-testing.md",
+        "title": "Conformance & test suites",
+        "purpose": "How the repo proves correctness: `ssss conformance` (structural) / `--engine` (replay fixtures + reference bundle round-trip + workflow runtime checks) / `--endpoint` (diff against a live host), the npm test composite (conformance --engine + check-events-streaming + check-frontmatter + check-commit-durability), conformance-09.mjs kernel suites, the guard.mjs direct-write detector, and the audit/validate-skills helper scripts.",
+        "seedPaths": [
+          "conformance/README.md",
+          "conformance/fixtures.json",
+          "conformance/reference-bundle.ucw.json",
+          "docs/help/conformance.md",
+          "scripts/audit-registry-field-usage.mjs",
+          "scripts/check-commit-durability.mjs",
+          "scripts/check-events-streaming.mjs",
+          "scripts/check-frontmatter.mjs",
+          "scripts/conformance-09.mjs",
+          "scripts/conformance.mjs",
+          "scripts/validate-skills.mjs",
+          "src/guard.mjs"
+        ],
+        "relatedPages": [
+          "/openwiki/integrations/host-adapters.md",
+          "/openwiki/operations/cli-and-transports.md",
+          "/openwiki/workflows/mutation-commit.md",
+          "/openwiki/workflows/vault-lifecycle.md",
+          "/openwiki/workflows/workflow-runtime.md"
+        ],
+        "instructions": [
+          "Cover the durability tests that kill real child processes (not simulated) to prove a committed key is never executed twice and the vault/event log agree after a crash.",
+          "Cover the reference bundle round-trip assertions (no tenant_private on disk, second import commits zero).",
+          "Note the guard.mjs WRITE_PATTERNS and the `ssss-direct-write-approved` escape hatch."
+        ],
+        "status": "pending"
+      },
+      {
+        "id": "bc92181f-63c9-4801-89a3-7f9dd7c6c044",
+        "path": "/openwiki/workflows/mutation-commit.md",
+        "title": "Mutation & commit workflow",
+        "purpose": "End-to-end control/data flow for a single Operation Contract request through the kernel: envelope validation → verified-principal auth → idempotency replay (store + event log) → expected_before_hash optimistic concurrency → registry validation + reference resolution → lease check → intent journal → VFS compare-and-swap write → event append → idempotency record → projection apply, plus crashed-holder intent recovery and the dry-run/no-op paths. Render as a Mermaid sequence/flowchart.",
+        "seedPaths": [
+          "docs/help/concurrency.md",
+          "docs/help/leases.md",
+          "src/events.mjs",
+          "src/idempotency.mjs",
+          "src/intents.mjs",
+          "src/kernel.mjs",
+          "src/leases.mjs",
+          "src/vfs.mjs"
+        ],
+        "relatedPages": [
+          "/openwiki/architecture.md",
+          "/openwiki/concepts/operation-contract.md",
+          "/openwiki/integrations/host-adapters.md",
+          "/openwiki/operations/conformance-and-testing.md"
+        ],
+        "instructions": [
+          "Cover the recovery-once behavior and FileIntentJournal vs. MemoryIntentJournal, plus INTENT_OUTCOMES.",
+          "Cover the two-winner concurrency resolution: VFS CAS for operation/patch/delete vs. idempotentEventId (UUIDv5) for event envelopes, and the loser re-read/replay path.",
+          "Use the mermaid-diagrams skill to render the kernel commit sequence and the intent-recovery decision flow."
+        ],
+        "status": "pending"
+      },
+      {
+        "id": "da420414-797a-4652-abfb-a1d51d238900",
+        "path": "/openwiki/workflows/semantic-index.md",
+        "title": "Semantic projection & search",
+        "purpose": "The §11.9 semantic system: buildSemanticIndex walks validated Markdown, extracts lexical tokens (NFKC, Unicode-aware), graph edges (relations, [[wiki]] links, Markdown links), deterministic weighted ranking, privacy filters (only structural indexed by default; --include-private requires authorization), multilingual normalizeLanguage, injected embedding adapters, runtime rendering with symbolic controls fixed, and the CLI `ssss semantic`.",
+        "seedPaths": [
+          "docs/help/autolink.md",
+          "docs/help/semantic.md",
+          "scripts/autolink.mjs",
+          "scripts/cmd-semantic.mjs",
+          "src/semantic.mjs"
+        ],
+        "relatedPages": [
+          "/openwiki/architecture.md",
+          "/openwiki/concepts/registry-and-portability.md",
+          "/openwiki/operations/cli-and-transports.md",
+          "/openwiki/operations/conformance-and-testing.md"
+        ],
+        "instructions": [
+          "Cover the privacy/output-safety invariants: symlinked vault entries and unsafe paths fail closed, --out must be a regular file outside the source vault with atomic writes.",
+          "Note that the projection is disposable — the vault is the only source of truth — and that presentation may change language but never symbolic controls or authorization."
+        ],
+        "status": "pending"
+      },
+      {
+        "id": "abd14700-c509-4d15-bc86-66cba2fdf47d",
+        "path": "/openwiki/workflows/vault-lifecycle.md",
+        "title": "Vault → bundle → tenant lifecycle",
+        "purpose": "The export → validate → inspect → provision → import → upgrade lifecycle as a runnable workflow, including the `ssss new` scaffold (starter vault, dependency-free conformance test, optional --with-total-recall), how params/links are resolved, and the in-one-step import path. Render the lifecycle as a Mermaid diagram.",
+        "seedPaths": [
+          "docs/help/provisioning.md",
+          "docs/help/scaffold.md",
+          "scripts/cmd-export.mjs",
+          "scripts/cmd-import.mjs",
+          "scripts/cmd-inspect.mjs",
+          "scripts/cmd-new.mjs",
+          "scripts/cmd-provision.mjs",
+          "scripts/cmd-upgrade.mjs",
+          "scripts/cmd-validate.mjs",
+          "src/bundle.mjs"
+        ],
+        "relatedPages": [
+          "/openwiki/concepts/bundle-and-provisioning.md",
+          "/openwiki/concepts/registry-and-portability.md",
+          "/openwiki/operations/cli-and-transports.md",
+          "/openwiki/operations/conformance-and-testing.md",
+          "/openwiki/workflows/mutation-commit.md"
+        ],
+        "instructions": [
+          "Cover the scaffolded project layout and that `ssss new` shells out via execFileSync (no shell, no interpolation) to avoid command injection.",
+          "Explain the import summary counts (committed / unchanged-idempotent / failed) and --dry-run.",
+          "Use the mermaid-diagrams skill to render the vault→bundle→provision→import→upgrade lifecycle."
+        ],
+        "status": "pending"
+      },
+      {
+        "id": "53d495b1-9077-4cb5-b879-6ec444767266",
+        "path": "/openwiki/workflows/workflow-runtime.md",
+        "title": "Workflow runtime planning",
+        "purpose": "The §11.8 workflow runtime: workflows define triggers in frontmatter (manual/cron/interval/event/webhook/file_change/condition), runtime.mjs is a deterministic planning layer (not a daemon) that turns a trigger into event/task/run Operation Contract envelopes, the canonical loop (workflow_triggered → task → lease/claim → run → task patch → projection), idempotency basis (workspace_id+workflow_id+trigger_id+scheduled_for), and run statuses.",
+        "seedPaths": [
+          "docs/help/concurrency.md",
+          "docs/help/runtime.md",
+          "src/runtime.mjs"
+        ],
+        "relatedPages": [
+          "/openwiki/architecture.md",
+          "/openwiki/concepts/operation-contract.md",
+          "/openwiki/operations/conformance-and-testing.md",
+          "/openwiki/workflows/mutation-commit.md"
+        ],
+        "instructions": [
+          "Cover planWorkflowTrigger, createRunEnvelope, subjectMatches/triggerMatchesEvent glob semantics, and misfire/concurrency policies.",
+          "Emphasize that a daemon MUST NOT write vault files directly — every mutation goes through the Operation Contract.",
+          "Use the mermaid-diagrams skill to render the workflow trigger→envelopes planning loop."
+        ],
+        "status": "pending"
+      },
+      {
+        "id": "5fd0c7e6-cd79-4603-9270-5b6345ef4bed",
+        "path": "/openwiki/quickstart.md",
+        "title": "Quickstart — SSSS repo",
+        "purpose": "Init page that routes a coding agent through the OpenWiki hierarchy for this SSSS reference implementation: which page to read first for the spec/kernel, bundle lifecycle, workflow runtime, semantic index, CLI/transports, conformance, and the Total Recall brain layer. Includes the one-command entrypoints (`ssss new`, `ssss conformance --engine`, `npm test`, `ssss serve`/`bridge`) and a task→page routing map.",
+        "seedPaths": [
+          "README.md",
+          "docs/help/conformance.md",
+          "docs/help/overview.md",
+          "docs/help/scaffold.md",
+          "package.json",
+          "scripts/ssss.mjs"
+        ],
+        "relatedPages": [
+          "/openwiki/README.md",
+          "/openwiki/architecture.md",
+          "/openwiki/integrations/total-recall-and-ide.md",
+          "/openwiki/operations/cli-and-transports.md",
+          "/openwiki/operations/conformance-and-testing.md"
+        ],
+        "instructions": [
+          "Keep it concise and link-heavy, not a re-explanation of systems.",
+          "Map common agent tasks (add a primitive, change the kernel, fix a bundle bug, add a CLI command, run tests, wire a host adapter, manage memory/secrets) to the right OpenWiki page.",
+          "This page is required for every plan and must route readers through the hierarchy; generated index pages provide folder navigation and must not be duplicated here."
+        ],
+        "status": "pending"
+      }
+    ],
+    "deletePages": [
+      "/openwiki/ide.md",
+      "/openwiki/memory.md",
+      "/openwiki/secrets.md",
+      "/openwiki/skills.md"
+    ]
+  }
+}

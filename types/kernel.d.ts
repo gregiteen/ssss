@@ -18,6 +18,7 @@ export interface SsssCommand {
   content?: string;
   patches?: Record<string, unknown> & { __body__?: string };
   lease_id?: string;
+  expected_before_hash?: string;
   dry_run?: boolean;
 }
 

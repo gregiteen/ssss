@@ -7,6 +7,28 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.14.3] - 2026-11-03
+### Added
+- **Fail-Closed JSON Schema Validation & Validator Hardening (`SCHEMA_VALIDATION_HARDENING`)**:
+  - `src/schema-validator.mjs`: Upgraded to Draft 2020-12 specification with sibling `$ref` evaluation alongside keywords, cycle detection, `propertyNames`, `uniqueItems`, `minItems`, `maxItems`, `minLength`, `maxLength`, `minimum`, `maximum`, `const`, `allOf`, `anyOf`, `oneOf`, and `if`/`then`/`else` conditional branches.
+  - Exported convenience schema validation utilities: `getCoreRegistrySchema()`, `getBundleSchema()`, `validateRegistryAgainstSchema()`, and `validateBundleAgainstSchema()`.
+  - `schemas/core-registry.schema.json` & `schemas/bundle.schema.json`: Enforced `"additionalProperties": false` across all objects with strict `propertyNames` pattern matching, SHA-256 digest patterns, and integer minimum constraints. Conditional requirements enforce `spec_version` and `description` only for core registries.
+- **CLI `ssss schema validate`**:
+  - `scripts/cmd-schema.mjs`: Added `ssss schema validate <file> [--type core|bundle] [--schema <path>] [--json] [--quiet]` with automatic format detection.
+- **App-Local Extension Scaffolding & Isolation**:
+  - `scripts/cmd-new.mjs`: Added `--extension <name>` option to scaffold app-specific primitive extensions directly into `registry/extensions/<name>.json`, with isolated generated tests and strict name validation.
+  - `src/registry.mjs`: `loadRegistries()` supports app repositories carrying only `registry/extensions/`, automatically composing with the package core registry.
+  - Decoupled proprietary app extensions (`festech.json`, `field-crm.json`, `defaults.json`) from `registry/extensions/` to maintain a 100% vendor-neutral standard.
+  - Updated canonical reference bundle ([`conformance/reference-bundle.ucw.json`](file:///Users/gregoryiteen/github/ssss/conformance/reference-bundle.ucw.json)) to use standard core `resource` primitive.
+- **Documentation Parity & OpenWiki Sync in Release Pipeline**:
+  - `scripts/sync-docs.mjs` and `scripts/check-docs-parity.mjs`: Automatically synchronize CLI command lists, help topics, and primitive counts into `docs/help/overview.md` and enforce 100% doc parity.
+  - Initialized and ingested canonical knowledge graph hubs into `openwiki/`.
+  - `skills/push/scripts/preflight-release.mjs`: Two-phase preflight release pipeline running quality gates first, followed by OpenWiki refresh and doc parity checks.
+
+### Behavior changes hosts should check
+- Custom application extensions should reside in the application repository's own `registry/extensions/` directory rather than being contributed to core SSSS.
+- Running `ssss schema validate <file>` allows CI pipelines and hosts to validate registries and `.ucw` bundles against the standard fail-closed JSON Schemas.
+
 ## [0.14.2] - 2026-11-02
 ### Added
 - **Canonical JSON Schema Draft 2020-12 Definitions (`JSON_SCHEMA_EXPORT`)**:

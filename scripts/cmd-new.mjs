@@ -28,6 +28,7 @@ const HELP = usage({
   usage: 'ssss new <dir> [options]',
   options: [
     ['--name <s>', 'Package name (default: the target directory name).'],
+    ['--extension <s>', 'Scaffold a custom app extension registry under registry/extensions/<name>.json.'],
     ['--with-total-recall', 'Also wire the Total Recall memory OS (total-recall-brain).'],
     ['--install', 'Run `npm install` after scaffolding (and Total Recall init if requested).'],
     ['--no-git', 'Do not run `git init`.'],
@@ -36,6 +37,7 @@ const HELP = usage({
   ],
   examples: [
     'ssss new my-app',
+    'ssss new my-app --extension myapp',
     'ssss new my-app --with-total-recall --install',
   ],
   seeAlso: ['ssss help scaffold', 'ssss export', 'ssss conformance'],
@@ -65,6 +67,15 @@ export async function run(argv) {
   const name = flags.name || path.basename(root);
   const ref = flags.ref || `v${VERSION}`;
   const withTR = !!flags['with-total-recall'];
+  const extensionName = flags.extension === undefined ? null : String(flags.extension);
+  if (extensionName !== null) {
+    if (!/^[a-z][a-z0-9_-]{0,63}$/.test(extensionName)) {
+      die(`--extension '${extensionName}' is not a valid registry name (lowercase letter first, then a-z, 0-9, _ or -; max 64).`);
+    }
+    if (extensionName === 'core' || extensionName === 'ssss') {
+      die(`--extension '${extensionName}' is reserved for the SSSS core registry.`);
+    }
+  }
 
   if (fs.existsSync(root) && fs.readdirSync(root).length && !flags.force) {
     die(`${root} is not empty. Use --force to scaffold anyway.`);
@@ -79,7 +90,9 @@ export async function run(argv) {
       ssss: 'ssss',
       test: 'node --test',
       export: 'ssss export vault --profile sale --out dist/bundle.ucw.json',
-      validate: 'ssss conformance --engine',
+      validate: extensionName
+        ? `ssss schema validate registry/extensions/${extensionName}.json && ssss conformance --engine`
+        : 'ssss conformance --engine',
     },
     dependencies: { '@gregiteen/ssss-cli': `github:gregiteen/ssss#${ref}` },
     ...(withTR ? { devDependencies: { 'total-recall-brain': 'latest' } } : {}),
@@ -96,14 +109,42 @@ export async function run(argv) {
   W(root, 'vault/tasks/first-task.md',
     '---\ntype: task\ntitle: First Task\ndescription: Starter private setup task that demonstrates tenant_private filtering.\ntimestamp: 2026-07-02T00:00:00Z\npriority: normal\ncategory: setup\nstatus: pending\n---\n\n# First task\n\nThis is `tenant_private` (§5.5) — it is **dropped** from `template`/`sale` exports.\n');
 
+  // ── optional app extension registry ─────────────────────────────────────
+  if (extensionName) {
+    const extRegistry = {
+      $schema: 'https://ssss.dev/schemas/core-registry.schema.json',
+      registry: extensionName,
+      extends: 'core',
+      version: '0.1.0',
+      description: `Custom SSSS primitive extensions for ${name}.`,
+      document_primitives: {
+        [`${extensionName}_item`]: {
+          family: 'content',
+          canonical_filename: null,
+          append_only: false,
+          portability: 'structural',
+          required_fields: ['type', 'name', 'title'],
+          optional_fields: ['description', 'status'],
+          enums: {
+            status: ['active', 'archived', 'draft'],
+          },
+          notes: `Custom primitive for ${name} application.`,
+        },
+      },
+    };
+    W(root, `registry/extensions/${extensionName}.json`, JSON.stringify(extRegistry, null, 2) + '\n');
+    W(root, `vault/${extensionName}_items/first-${extensionName}-item.md`,
+      `---\ntype: ${extensionName}_item\ntitle: Starter Item\ndescription: Starter ${extensionName} item.\ntimestamp: 2026-07-02T00:00:00Z\nname: Starter Item\nstatus: active\n---\n\n# Starter Item\n\nCustom primitive defined in \`registry/extensions/${extensionName}.json\`.\n`);
+  }
+
   // ── conformance test (zero-dependency: node --test) ─────────────────────
-  W(root, 'test/ssss-conformance.test.mjs', CONFORMANCE_TEST);
+  W(root, 'test/ssss-conformance.test.mjs', conformanceTest(extensionName));
 
   // ── repo meta ───────────────────────────────────────────────────────────
   W(root, '.gitignore', 'node_modules/\ndist/\n*.ucw.json\n.DS_Store\n');
-  W(root, 'README.md', readme(name, withTR));
-  W(root, 'CLAUDE.md', claudeMd(name, withTR));
-  W(root, 'docs/design.md', designMd(name));
+  W(root, 'README.md', readme(name, withTR, extensionName));
+  W(root, 'CLAUDE.md', claudeMd(name, withTR, extensionName));
+  W(root, 'docs/design.md', designMd(name, extensionName));
 
   // ── git + install (best-effort, flag-gated, no shell) ───────────────────
   const log = (m) => console.error(m);
@@ -145,7 +186,8 @@ export async function run(argv) {
   console.log('  npx ssss help                  # explore the standard');
 }
 
-const CONFORMANCE_TEST = `/**
+function conformanceTest(extensionName) {
+  return `/**
  * SSSS conformance — proves this repo's toolchain matches the published standard.
  * Zero test dependencies: run with \`node --test\` (Node 18+).
  */
@@ -161,7 +203,18 @@ import { exportBundle, validateBundle, provisionBundle, importBundle } from '@gr
 
 const require = createRequire(import.meta.url);
 const { fixtures } = require('@gregiteen/ssss-cli/conformance/fixtures.json');
-const VAULT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', 'vault');
+const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
+const VAULT = path.join(ROOT, 'vault');
+${extensionName
+    ? `// App-specific primitives live in this repo's registry/extensions/; the core comes from the package.
+const REGISTRY = path.join(ROOT, 'registry');
+const EXTENSIONS = [${JSON.stringify(extensionName)}];
+const EXPORT_OPTIONS = { registryDir: REGISTRY, requiredExtensions: EXTENSIONS };
+const REGISTRY_OPTIONS = { registryDir: REGISTRY };
+const ENGINE_OPTIONS = { registryDir: REGISTRY, registryNames: EXTENSIONS };`
+    : `const EXPORT_OPTIONS = {};
+const REGISTRY_OPTIONS = {};
+const ENGINE_OPTIONS = {};`}
 
 test('engine implements the canonical Operation Contract (spec §6)', async () => {
   const vault = fs.mkdtempSync(path.join(os.tmpdir(), 'ssss-conf-'));
@@ -179,17 +232,17 @@ test('engine implements the canonical Operation Contract (spec §6)', async () =
 });
 
 test('this vault exports, validates, and round-trips as a sale bundle (spec §16/§17)', async () => {
-  const bundle = exportBundle(VAULT, { profile: 'sale', name: 'starter' });
-  const { valid, errors } = validateBundle(bundle);
+  const bundle = exportBundle(VAULT, { profile: 'sale', name: 'starter', ...EXPORT_OPTIONS });
+  const { valid, errors } = validateBundle(bundle, REGISTRY_OPTIONS);
   assert.ok(valid, 'bundle invalid: ' + errors.join('; '));
   assert.ok(!bundle.files.some((f) => f.path.startsWith('tasks/')), 'tenant_private leaked into sale export');
 
-  const plan = provisionBundle(bundle, { workspaceId: 'ws-test' });
-  assert.ok(plan.ok, 'provision failed: ' + JSON.stringify(plan.unresolved) + ' ' + JSON.stringify(plan.danglingLinks));
+  const plan = provisionBundle(bundle, { workspaceId: 'ws-test', ...REGISTRY_OPTIONS });
+  assert.ok(plan.ok, 'provision failed: ' + JSON.stringify(plan.errors) + ' ' + JSON.stringify(plan.unresolved) + ' ' + JSON.stringify(plan.danglingLinks));
 
   const target = fs.mkdtempSync(path.join(os.tmpdir(), 'ssss-import-'));
   try {
-    const engine = createEngine();
+    const engine = createEngine(ENGINE_OPTIONS);
     const r1 = await importBundle(plan.plan, target, engine);
     assert.ok(r1.ok && r1.committed === bundle.files.length, 'import did not commit every file');
     const r2 = await importBundle(plan.plan, target, engine);
@@ -197,8 +250,9 @@ test('this vault exports, validates, and round-trips as a sale bundle (spec §16
   } finally { fs.rmSync(target, { recursive: true, force: true }); }
 });
 `;
+}
 
-function readme(name, withTR) {
+function readme(name, withTR, extensionName) {
   return `# ${name}
 
 An [SSSS](https://github.com/gregiteen/ssss)-native project: a Markdown **vault** is
@@ -208,7 +262,7 @@ the source of truth, validated and packaged by the dependency-free \`@gregiteen/
 
 \`\`\`
 vault/         Your SSSS documents (structural + tenant_private primitives).
-test/          Conformance test — replays the canonical fixtures + round-trips the vault.
+${extensionName ? `registry/      Custom primitive extension schema (registry/extensions/${extensionName}.json).\n` : ''}test/          Conformance test — replays the canonical fixtures + round-trips the vault.
 \`\`\`
 
 ## Use
@@ -236,17 +290,22 @@ npx total-recall recall "..."                    # semantic recall
 ` : ''}`;
 }
 
-function claudeMd(name, withTR) {
+function claudeMd(name, withTR, extensionName) {
   return `# ${name} — agent guide
 
 This repo uses **SSSS** (Structured Semantic Syntax System) as its state contract.
 
 ## Source of truth
 - \`vault/\` is the only source of truth — typed Markdown documents with YAML
-  frontmatter. Every file declares a \`type\` defined in the \`@gregiteen/ssss-cli\` core registry.
+  frontmatter. Every file declares a \`type\` defined in the \`@gregiteen/ssss-cli\` core registry${extensionName ? ` or local \`registry/extensions/${extensionName}.json\`` : ''}.
 - Mutate the vault through the standard, not by hand-writing files in bulk:
   \`npx ssss\` for bundle/tenant tooling, or the \`@gregiteen/ssss-cli/engine\` Operation Contract
   in code.
+
+## Extension & Registry Isolation Invariant
+- App-specific primitives belong exclusively in \`registry/extensions/\` inside this application repository.
+- Never modify or fork \`@gregiteen/ssss-cli\` to add app-specific schemas.
+- Validate local extension schemas with: \`npx ssss schema validate registry/extensions/<name>.json\`.
 
 ## Portability (§5.5) — the rule that matters
 - \`structural\` documents (rules, workflows, pages, assistants) are the sellable model.
@@ -264,7 +323,7 @@ ${withTR ? `
 ` : ''}`;
 }
 
-function designMd(name) {
+function designMd(name, extensionName) {
   return `# ${name} — System Architecture & Design
 
 > Technical design and architecture specification for ${name}.
@@ -278,7 +337,7 @@ function designMd(name) {
 - **Vault Structure**: Typed Markdown documents under \`vault/\` serving as the source of truth.
 - **Workflows & Execution**: Automated procedures defined in \`vault/workflows/\` triggered by operational events.
 - **Capabilities & Resources**: Tools and external service integrations required for execution.
-
+${extensionName ? `- **Extension Registry**: Custom primitive definitions located in \`registry/extensions/${extensionName}.json\` extending core SSSS.\n` : ''}
 ## Data & Schema Contracts
 
 <Core entities, external dependencies, and integration interfaces.>
@@ -287,5 +346,7 @@ function designMd(name) {
 
 - SSSS VFS is the single source of truth for application state.
 - Structural business logic is strictly decoupled from private tenant operational data.
+- App-specific primitives reside in \`registry/extensions/\` within this repository and extend \`core\`.
+- Core SSSS library (\`@gregiteen/ssss-cli\`) remains vendor-neutral and dependency-free.
 `;
 }

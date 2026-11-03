@@ -1,0 +1,438 @@
+{
+  "schemaVersion": 1,
+  "pageVersion": "sha256:0e059f2e0d77cf05635676f708a33ff5ef7cd9cf683a90ba05e9a1ce46602c45",
+  "claims": [
+    {
+      "id": "claim_df93d64611e447d78d7081c1f47d3caf",
+      "statement": "The kernel supports exactly four envelope types — operation, patch, event, and delete — defined by the COMMAND_TYPES set in kernel.mjs, with operation performing a full writeAtomic create/replace, patch performing a version-preconditioned writeAtomic merge, event appending to the event store with no VFS write, and delete performing a version-preconditioned vfs.remove.",
+      "evidence": [
+        {
+          "resource": "repo://registry/core.json#L252-L258",
+          "version": "repo-lines-v1:sha256:57833717ccc682555607b0e52961b1180ed4a661750052c9cf8cc992fd6b026b:eyJzZWxlY3RlZExpbmVDb3VudCI6NywiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiOTEzNTViNjJhOTljMWQ2ZWEwYjczZGI5OTM5ZjM5MjA2MzZmYWU2ZjcxZGJkZTM3NTY0YzUwMGZiMGFiNjdiZSIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiNGQ1Y2QyZmI0ZjNkZjg4NDUxNTI1NWIzOTUyM2YyZjhiNTQ3MmJlZWE5ZjU2NmZmY2EyMDRkYjgwMjU2MTA0MSIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiNmI4OWFkMDlkNDBjM2RlNDAxZjdiODdkY2Y2OTQ4NDc2NzQ5YTkyYzNiMjE2ZGEwMDY5NDAwMmZlY2Y0YTBkMCIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiYTVhNzJjYzg5MGUxMzY4Y2MzZDVlZWI3OTNjNjk5ZDg5MzcxNmNlNjc0NTE3MDU0YTRjMGI4MjJiNWMwNTFhMiJ9"
+        },
+        {
+          "resource": "repo://src/kernel.mjs#L17-L17",
+          "version": "repo-lines-v1:sha256:f079f645ec8eca35b77481c2a232c95a3bc470b8ea831d0bb8be5fb68e07d3f2:eyJzZWxlY3RlZExpbmVDb3VudCI6MSwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiZjA3OWY2NDVlYzhlY2EzNWI3NzQ4MWMyYTIzMmM5NWEzYmM0NzBiOGVhODMxZDBiYjhiZTVmYjY4ZTA3ZDNmMiIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiZjA3OWY2NDVlYzhlY2EzNWI3NzQ4MWMyYTIzMmM5NWEzYmM0NzBiOGVhODMxZDBiYjhiZTVmYjY4ZTA3ZDNmMiIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiMmI0NmVhYTYyMjAxYjQ2YmE2MTliNTM0YjgyYmJlNDlkZjYzMWMwOTNhNGQzM2QyMDhiOTJhNThiN2I4YmYwMiIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiODQ3MDMwNWI3ZjU5ZDhjYWYzZDJlNzk5MGUyNGIxOGViNGM2MGQ3ZDk0ZjQ0ODcwMDQ4ZGEwY2Q4ZDg5ODYwZSJ9"
+        },
+        {
+          "resource": "repo://src/kernel.mjs#L419-L425",
+          "version": "repo-lines-v1:sha256:b356c8424fce7e8a563f568e75d488007252238d358328ffac5aae598ebd9e7f:eyJzZWxlY3RlZExpbmVDb3VudCI6NywiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiNTZkZTU0MWM5YWJiOTc4ZTk1ZTA0NjQxMzNjZGRmNTM0NTJmNjg1Y2RjM2Y1NDE5ZTFhZWUyNTc3NTE1MDYzYyIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiZTZiMDQ0OTE0Njk3MjJlODM2M2E5NGU0MDQ0NTM4ZTAxM2EyYTIxN2UzNmIxZTU2OGJhNjBhY2I3YjRjOGYyZSIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiZTI3ZGVlMzYyODY5Y2U5NDM3Mjg0YmVlNTUzOGYzOTFlNjRlMWQ2YTVmNDlhN2QxZjkzM2NiMDU3OGI3ZWUyZSIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiM2ZjNzA5YTNjMzE0MDAzMmZjOGRhM2U5ZWQyMDgzZGFkNWYyYTQ1NWYzNDdkN2U3NjYzMzdmNTg0YzhhZWQxZSJ9"
+        },
+        {
+          "resource": "repo://src/kernel.mjs#L81-L85",
+          "version": "repo-lines-v1:sha256:04d6a12c4e3018641764129ea798c966c5fc662c9367906289bb52612eee4f69:eyJzZWxlY3RlZExpbmVDb3VudCI6NSwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiM2I2NmViZmMzZDgwZTg5ZTZlMTAxMDI3MjVlYTA5ZDAwZDE5OTE3ZGU4NDA1NGM4YTYxNDZhZTEzMGFkNjFjNSIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiNDEyY2EzNDVjY2Y3NWJmOWMwODA2YmNlNjk1YmU4ZGU4MDhiNzk5ODQyNTFhN2E1NGQyMDJjZjYxMDFkZDQ1MSIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiOTIwNDBlMDk1YTk0ZTJhZGE3NGU0MjFmMzcxODc1MWE5MWE4MTBiZmQ2NmY0OGY0ZTkzOWM3Yjc0ODBlYjY3MCIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiMjcyZWQ1ODNkNjhmMjUzMjhkMDEyNGI4ZmJjY2UxYTc4ZGUyNjc1MThkZTgzZThlZDYzYjcxZTEwOTU1MzIwNSJ9"
+        }
+      ]
+    },
+    {
+      "id": "claim_2691c022a4db43acb8c098ffddc4076d",
+      "statement": "Every envelope requires workspace_id, idempotency_key, and path as non-empty strings; operation requires a string content, patch requires a patches object, and event content must be valid JSON — all enforced at the top of execute before any storage is touched, returning invalid_request with field-level repair hints.",
+      "evidence": [
+        {
+          "resource": "repo://src/kernel.mjs#L187-L201",
+          "version": "repo-lines-v1:sha256:033d841fe3b05d8987f82bf8626ec18620fda027b3aa13477536c7fc068726d4:eyJzZWxlY3RlZExpbmVDb3VudCI6MTUsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImYxODg5NzA3M2Q1NzVlMWM2YWNiYjE1ZjdkZjdiY2Y2NzA5MjM2NDE3OWFlNmU2NDMzZWYxYzY2NzFjNDA0Y2MiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjdhMTExOGY5NTE4NjkwN2IzNDk4NTFkMjQ3OTY4MmFkY2U3ZjJkYTNjMzE4ZDY0MjdiOGVhOTNjYjI1OGJkMzQiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImYzNmNjM2QzNmI5NTc0NmRiM2U1Mjk4NWY1NTgzYTVjY2UwMjhlOTkyNGI1Nzk2Y2EzNzU1ZmIxMjU4NGFiOWIifQ"
+        },
+        {
+          "resource": "repo://src/kernel.mjs#L344-L348",
+          "version": "repo-lines-v1:sha256:a173f9055a4636bbc4b50d1fbbc2c5aaa330d9acb88271876cd8e981bf432192:eyJzZWxlY3RlZExpbmVDb3VudCI6NSwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiNTZiNDA5YzFhMTZhZjdkNTQ1ZDMzN2ZjMmQyZDdmYWZlOGVlZjQxYjMzMjA1ZWU1NWQ4ZWU4Njk0YjhmNjk4NSIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiNDg5M2Y0MGUzNzgxZWI4OTZjODJkMDQ2YTA4MDY3YTExZTM1Y2RmMmYxZGZhZjI2ZmVhOTBiOGRiNjY3NjQxMyIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiODE4NmRhMTJmMjQzYzg3M2IzNjk3MDVhYWE5MTkxZGMyYzRkYTgyNzdiZDRiYjA0OTVlNmM1MmFkOTJiMzQzYiIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiZTQ1MzM0N2Q0YTEzYmFhNjExZmZjYWIzNTI0MDM3OGM3MzM5NDdkMTM2MzgxNzEwMzUwYzY5YzkwY2UwNzZlYSJ9"
+        }
+      ]
+    },
+    {
+      "id": "claim_640e81f742ff48a1a479e88b71b72f27",
+      "statement": "An operation whose path ends with /index.md is a special case: the kernel resolves it to a synthetic index definition (ssss:index, no registry entry) and writes content verbatim without frontmatter validation.",
+      "evidence": [
+        {
+          "resource": "repo://src/kernel.mjs#L269-L275",
+          "version": "repo-lines-v1:sha256:ffb45f7ce6fd737e1a4737a90acda9912ff225977a06b8d366617e3a5a79d516:eyJzZWxlY3RlZExpbmVDb3VudCI6NywiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiZWRhNTFkOWFiNGI4ZjY3NWNmMTg3MjA5Nzg2ZDczNzEzYzAxM2M2NjUxNjc5YTk2OWMzZWZmOTNjNzA4M2UyNyIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiOGYwOWIyNjE0OWE3MjRjYTlkZDQ4MmQ4ZmExNzhhOGI4ZmEwMDQ3MDMyMGE4ZWVjZjRjNGVkNTg2OTllMTE1MCIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiZmRkMDEzYWRjYzBmODZhYjNjNjFhZDIzNjQ4MGZlZWE0YWU5YjA5ZjI1NDk1YWQ4YWFjZWQ1MjJmNzRkMmM5NyIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiMjhkNmNmNmMxNTgxN2M5Mjg0YmI2NDdmYTYwYjgwYWM1MGE2NzdhODQ5NmU0YWJkYzA4MDNmZGFhOTU4ZTcxYyJ9"
+        }
+      ]
+    },
+    {
+      "id": "claim_4ea0e02cbb704a7eb106a911423dc914",
+      "statement": "Authentication runs before any storage read: execute verifies a principal with a string id and kind (human/agent/service/system) and authentication provenance, returning unauthorized (never forbidden) when the principal is missing or malformed, so an anonymous caller learns nothing about the vault.",
+      "evidence": [
+        {
+          "resource": "repo://src/authorization.mjs#L6-L18",
+          "version": "repo-lines-v1:sha256:c25618a13067ca87a780fba77c12d0dbc012e8eb05ac233c39aa79677f75f1c7:eyJzZWxlY3RlZExpbmVDb3VudCI6MTMsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImI1MWMxNTRkMjVkYzRhY2IwZWM4NDE5MmU3NGM0YzRiODYxOGM1MDc2NzczZWY5MmU1YmM2YjBiYWNlMWJlZmYiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjQwMGQ5NTViMDMwMTI4MzNhZGUyZWExNjNiMGFiOWI4ZGE1NjNiNDBkYjMyMjg4MmViYjBlNTJlNzM4N2NjYWEiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImFkYjYyNTU2ZjYyOGJhNTgwMTU0OGY3YzE5NjgxYTc1MWUwY2Y4MzUwZjBmOWEwZmRiYmRhMDRiZjNmNTZhNmQifQ"
+        },
+        {
+          "resource": "repo://src/authorization.mjs#L62-L67",
+          "version": "repo-lines-v1:sha256:cbc6bb7e30f5aaa85d9167c7a6dbf9d5bc02cf51ec00392529bb216dd49cf7d8:eyJzZWxlY3RlZExpbmVDb3VudCI6NiwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiMzNhYmFiMWNiMDZhNzhmMjgzNWVmNzAxZWRkZjYzMjI0NmRhNWY0MGVhZjFkYzQwMjU4NWQyNzdjNzJiNmRkMCIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiNDg5M2Y0MGUzNzgxZWI4OTZjODJkMDQ2YTA4MDY3YTExZTM1Y2RmMmYxZGZhZjI2ZmVhOTBiOGRiNjY3NjQxMyIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiMWRkOGE3ODAwNjU2M2VkNWY2MjIwYmM1MTFiNzBjMTY1YzQ4ZmFhMjdjZTU0MDI1ZTdjM2UwZTU3NmMxYTJhYyIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiYjNiMjQxODkzMjc0OGEwMmFjMDVkZmE3MjQ2MTcyZmEzNTBjNDM4ZmQ5YzA5ODAxMTViOWQwZTY2ODhkN2VhZSJ9"
+        },
+        {
+          "resource": "repo://src/kernel.mjs#L202-L206",
+          "version": "repo-lines-v1:sha256:d9a067a3e83b4ae89023a4e943062238e18ca56a6000afb865a3b86748c14350:eyJzZWxlY3RlZExpbmVDb3VudCI6NSwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiNDA4YzRiM2Q4MGEzMmFkMGIwNDk4YmIyYzMzMDk0M2Y4ZGI1ZTk1MWI1OTA5MGU3ZmQ4NjVhNGQxYTg2MWEyNCIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiNDg5M2Y0MGUzNzgxZWI4OTZjODJkMDQ2YTA4MDY3YTExZTM1Y2RmMmYxZGZhZjI2ZmVhOTBiOGRiNjY3NjQxMyIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiZWFmZWY1NmU2ODA0YTkxMGUzZGUwNDkxMTE0MmU4ZjY3Y2Q2MTI2MDYzY2NlNDFlMWU0NjVkYWRiZDRlZmZmMSIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiOGM3YWMyNjU0YTFkMmYxZDE1NmE4M2I4Y2YwYWYxNTYxOGNmMGQ5MDZlOTkyYzU0NDY1ZTI4MDI1YzE5ZTFkYyJ9"
+        }
+      ]
+    },
+    {
+      "id": "claim_4d882b0b80c747f19094a3b40a324e71",
+      "statement": "The principal's verified_principal_id is part of the canonicalRequestHash, so the same idempotency key replayed by a different principal (or with a different request) produces an idempotency_conflict rather than a disclosure or silent replay.",
+      "evidence": [
+        {
+          "resource": "repo://src/kernel.mjs#L211-L212",
+          "version": "repo-lines-v1:sha256:bc3376ed8390d78080d45367ca406bd2106d6c14f483a909be7b15967f43bf27:eyJzZWxlY3RlZExpbmVDb3VudCI6MiwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiNTZmNTJmZDFhOTRiYTIxYzVmNDEzMmUxZDdkZTVhZWQxMzU1ZDQ3YmRmNzYxYjczYjk3MDllNGFlNjU1MTZhYiIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiMWFhODkzMzEyMGJjMzcwYjk5NjJkNzk4YTlhNjhhMzE0ZTFmMmIwNjdjNDRhODVlMmQ4YjUyNmQwYjZlNmI1NSIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiODUzMjYzZjE0NGU0OTU3M2Y3NWU1ODFmYWYyOTgxZGViYmJkNDRjYjljOThlNmVlZGU5MTIxYzE5ZGMzNjMwNiIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiZDU4YWFlMTVmOTExODVlMDEyOGZmMWFlYzAzMGNmMWVlMjI0YzBhNDAwNzk1M2U2NjJkZTI3YmI3NjQ4MTc1YiJ9"
+        },
+        {
+          "resource": "repo://src/kernel.mjs#L38-L51",
+          "version": "repo-lines-v1:sha256:587feebc55c0b2e4bb99d6cc78bd12597ecbcc5396cf684fb5fef06b55245cca:eyJzZWxlY3RlZExpbmVDb3VudCI6MTQsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjRiYjFlY2M5MzI3OTg0NDAxMjhjZjc4OTBiMGIzYTc2YzdjNWM4MDIwOGZlMTY3YThiZjljNzcxOGFjYzFlZGUiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjcxODg3MGE4MDQwOWY4YzRjOTk0ODA3YWY4MjU5Y2MwNGJkMGM1Y2EyZTlmMWMzYjEzZGVmMTBiMTYyNzg2ZDYiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjNiN2FhYmIwOTA0NWFhZDUzMmNlZDg4YTk0ZDAzMmZhY2IyMWU2NTEwNzIwZmQ1MDBlODdlNzQ0MjU1OThlZTUifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_6dc905337c57434f80fbffa666f17cb5",
+      "statement": "Idempotency is replay-vs-conflict: a stored or logged result with a matching request_hash is replayed; the same key with a different request_hash returns idempotency_conflict; a cache miss falls through to the event log (findByIdempotencyKey) which is the durable record, so a cache miss after retention, a lost record, or a new process still finds and replays the commit.",
+      "evidence": [
+        {
+          "resource": "repo://src/idempotency.mjs#L1-L28",
+          "version": "repo-lines-v1:sha256:10a22b20028bb6123598282a2be12a53afac8c5125f762a350095e880649c8ac:eyJzZWxlY3RlZExpbmVDb3VudCI6MjgsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjA2OTAxNjk4MzBhZjM2MjBjYTY3NmU3OTEwMTNhZGE0OTIwNjhjNWMxMzYxNGE1ZjQwMjA4OWQ1YjkyODhlNGYiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjowLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjVhMWMwMDc5ZmFiNjUwOWVlNjFmMThhOWJhMGM4OTkwOGU5YmNiMzUxNmFhMWMwMTgxYjZlZmFiZjFlY2Q1NmMifQ"
+        },
+        {
+          "resource": "repo://src/kernel.mjs#L211-L232",
+          "version": "repo-lines-v1:sha256:db4fb9d8fd6fc07ceb44420f9f4248465cb75aef48b8eec9ddf64e673247adc8:eyJzZWxlY3RlZExpbmVDb3VudCI6MjIsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjU2ZjUyZmQxYTk0YmEyMWM1ZjQxMzJlMWQ3ZGU1YWVkMTM1NWQ0N2JkZjc2MWI3M2I5NzA5ZTRhZTY1NTE2YWIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6Ijg2NjlmODJhMzE3ODBhMWU0OTY2YzJlZjMzYzY2ZDczMDY2MTFkYTA2NTA3OWE1YWE4MDQ3NGIwYjMyZWU5YjQiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6Ijg1MzI2M2YxNDRlNDk1NzNmNzVlNTgxZmFmMjk4MWRlYmJiZDQ0Y2I5Yzk4ZTZlZWRlOTEyMWMxOWRjMzYzMDYiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjFiMGE4NmEyOWNmNjcyMWU2ZDFkZDkzNjczYzQ5NjQwNTNkNzQxNzY3NWVhOGUyNGJjNTIxYzdhZjA3MDFmZjEifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_def86f761c3c4c9a96306ebc9ca47f95",
+      "statement": "The kernel enforces type immutability: an operation may not change an existing document's primitive type, and a patch may not change the type field to a different primitive type or mutate any registry-declared immutable_fields — both return validation_failed with a 'Use an explicit migration' hint.",
+      "evidence": [
+        {
+          "resource": "repo://src/kernel.mjs#L287-L289",
+          "version": "repo-lines-v1:sha256:86ae4b66508325c514b8db3437e768ef097c6c3de1706246b0e408c79df3d97c:eyJzZWxlY3RlZExpbmVDb3VudCI6MywiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiMmZiZWVjM2VlMzIzZWVjYTZjNjlhY2VkZmFhNDM3MTc3ZDI4MTc4ZTJhZDNkNWFkYTNkZTgzY2EzNGZlNDFkYiIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiOWI2MmY2MGQ4NTkwYTU3OWNmNDZmOGQ2NzM3OGM0YzU3MmI5NjJjZWNjZGI5MGM3YTVmN2I0MmI5NjA3ODJhNCIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiZDFjMGU1OTY2NDdhMTU5MjZmNmI1YmJkNGFiYmQwMjZjNmZlMDBiZDFmN2QwNWUxMGVkZTE3MDRkOTA1NDRkNiIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiNjMxM2RkMDJmMTdhYzJiMjYwM2I0NjQ3MzdhMDlhZTZmZjExNDJjMzY4YzQwNjZlMzY3M2IxYmYyNGQ5NzQ1YiJ9"
+        },
+        {
+          "resource": "repo://src/kernel.mjs#L320-L328",
+          "version": "repo-lines-v1:sha256:ed8397f27906349e87a9ad6af6af892f68e4a1bd2ae42d34c595be7b82b0ccb7:eyJzZWxlY3RlZExpbmVDb3VudCI6OSwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiNDA3M2RjMjFiMTMzN2I4MzU0NTIwY2M5NTYyY2NkN2E3MDgxOTk4ZDQzZTgyN2U0NzE2MWRhYjA1NmZmNDA4NSIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiOWI2MmY2MGQ4NTkwYTU3OWNmNDZmOGQ2NzM3OGM0YzU3MmI5NjJjZWNjZGI5MGM3YTVmN2I0MmI5NjA3ODJhNCIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiMTljZjRjZDFkMjgxY2FmMjFkYmExZWViYTg4ZDNlMGMzZWRjZGJhOWZlOTQ3ZmY2YWM3ZTYwNzgxYTY5OTBiMiIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiNGNlYzJkNmUwMjhmZjg4MDI1ZjM4ZWM5OWUwMjJjNTc1MDQzNjZhNzU1NGIyMDU5NzE1ZTBlMzFhN2E3NTc5OCJ9"
+        }
+      ]
+    },
+    {
+      "id": "claim_57d11be537e34c6da3b17a698f2155da",
+      "statement": "Append-only primitives (registry append_only true: conversation, run, thread) cannot be replaced by an operation or removed by a delete; they can only be extended by a patch carrying __body__, which appends to the existing body rather than replacing it.",
+      "evidence": [
+        {
+          "resource": "repo://src/kernel.mjs#L313-L315",
+          "version": "repo-lines-v1:sha256:ae767f44fb51d09a82c44273ced34f6656879373f88b6205df8c2c16cd6dfe88:eyJzZWxlY3RlZExpbmVDb3VudCI6MywiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiMTZiMDJmM2NjM2FhZGM1ZTBiODQ1MGI2NjE3NDY1ZTRkYzNmZjU5ZTk5OTc1MGIyMTVjNWE3MjgwNjc3YWY1NCIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiOWI2MmY2MGQ4NTkwYTU3OWNmNDZmOGQ2NzM3OGM0YzU3MmI5NjJjZWNjZGI5MGM3YTVmN2I0MmI5NjA3ODJhNCIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiMTIxYWNjNGJiYjRlMTM1MzVhMDg0YTk2MzY5MDVlMzAxNDg2OGM4NjZhNjAxMTA5YmQ4N2Y3YjU2YWJhZGFjNiIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiODRmNDA2NTI5NGIzOGY2M2RkM2NjMjliMjdjYjljZDgxOGQ1MmY2M2Y0NDhlMzIyOGUwYmIwNzIzMDU1ODM0YiJ9"
+        },
+        {
+          "resource": "repo://src/kernel.mjs#L330-L334",
+          "version": "repo-lines-v1:sha256:c000d4c3b9878877185c16f24026292f856d2314d266434b230362d4b8ec9e84:eyJzZWxlY3RlZExpbmVDb3VudCI6NSwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiZDg0MDFmZjE1MzdkMjE1YTdhZWNhOWFkNGM0NzRiZjAxNzBjMmNlYzFlMTMxNmQwZmI3YWYwYmIwYzEyZjJmNSIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiOWI2MmY2MGQ4NTkwYTU3OWNmNDZmOGQ2NzM3OGM0YzU3MmI5NjJjZWNjZGI5MGM3YTVmN2I0MmI5NjA3ODJhNCIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiNGNiZGNkZDVjZWZkMWFlZjMyNTRlNjYxODg2ZWVhNjI0YzRjNDE5ZmQ2MDQyZjU1YTEwY2QzODM2NGUyMmUwNCIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiYzA0NzNlOTRlNTc3YTljODNiOGEzODgxZmQwM2Y1MWE2NDFjYWNkYjg4NzMxMmVlZjBiOGQyNDlmZTRkYmVlZSJ9"
+        },
+        {
+          "resource": "repo://src/kernel.mjs#L343-L343",
+          "version": "repo-lines-v1:sha256:c17e16f9df48b679a408b5b45b97a96594981d54f40dcff3455efbe7858cd4fd:eyJzZWxlY3RlZExpbmVDb3VudCI6MSwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiYzE3ZTE2ZjlkZjQ4YjY3OWE0MDhiNWI0NWI5N2E5NjU5NDk4MWQ1NGY0MGRjZmYzNDU1ZWZiZTc4NThjZDRmZCIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiYzE3ZTE2ZjlkZjQ4YjY3OWE0MDhiNWI0NWI5N2E5NjU5NDk4MWQ1NGY0MGRjZmYzNDU1ZWZiZTc4NThjZDRmZCIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiYzlhYTQ4NWUxZTk4OTgxNzFkYjQ0MzlhMDJhZjA2NDcxZDFkYTcyYzE5NmU4MzhjNmI2ZDc2Y2M1N2I4ZWE4YyIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiODEwMTZhNDU5ZGJjNGZhZGExMTljYTE1YzY2OGJmY2NmM2ZkODdjYzhiMWExZWE0NGQ3NjU2ZTM0MjFjYmU5YyJ9"
+        },
+        {
+          "resource": "repo://src/registry.mjs#L19-L19",
+          "version": "repo-lines-v1:sha256:a661546388db3db9bf6a5ebdc3158972de54c1c84056707310103d530bf98f4c:eyJzZWxlY3RlZExpbmVDb3VudCI6MSwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiYTY2MTU0NjM4OGRiM2RiOWJmNmE1ZWJkYzMxNTg5NzJkZTU0YzFjODQwNTY3MDczMTAxMDNkNTMwYmY5OGY0YyIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiYTY2MTU0NjM4OGRiM2RiOWJmNmE1ZWJkYzMxNTg5NzJkZTU0YzFjODQwNTY3MDczMTAxMDNkNTMwYmY5OGY0YyIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiNGRmOTI3ZTNiOGE3OTc0NGFlMThiMzRjYjExODNlNzBiZWZlNmUyNzkzMzBkMTNkN2QxNmQzMTVhYWJiOGFhMSIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiNjVlYzNjMjI1ZGM3NWZjN2RiNGQwZDIzMzBhZWVjZWRlYWViMzgwNGU0NjI2ZTdhNTY2NjFmNzU1MzZmYzBkOSJ9"
+        },
+        {
+          "resource": "repo://src/registry.mjs#L452-L457",
+          "version": "repo-lines-v1:sha256:ed2982b97cc55c2709c5dfcf2d45b1d680a25390874f15f682b0b40cede02d6b:eyJzZWxlY3RlZExpbmVDb3VudCI6NiwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiOGIxZjYxOTM2Njc4YjJjYjliNjk5MmIxZjNkOWZkOGU4NTVjYWUzYmU4MjhhNjQxYTYwNzdlNWU4MmM1ZGZmYyIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiNDEyY2EzNDVjY2Y3NWJmOWMwODA2YmNlNjk1YmU4ZGU4MDhiNzk5ODQyNTFhN2E1NGQyMDJjZjYxMDFkZDQ1MSIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiMTQwOTE5MTY4ZGQzZTFhMWY5MGIzYzBjNjg1ZmM5YzRmZjRlMzUwYWE4ZjJiNTk1NzQwMDAwZDc1NWU4OTMzMyIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiY2IzMzFmNGM2NjhmZDcyYzFmNjNlZGJiNDYwNjg0MjdlZTZlZTJlYThhN2VlNzdlYzM0YmE4NzNkZDVmNDYyMiJ9"
+        }
+      ]
+    },
+    {
+      "id": "claim_5181a7996d14422cbb51f8152e3a4fca",
+      "statement": "Replaying an operation whose content is byte-identical to the current file is an unchanged no-op (not a replace), checked before the append-only guard so re-importing an already-present bundle reports unchanged instead of failing; it still requires authorization to replace.",
+      "evidence": [
+        {
+          "resource": "repo://src/kernel.mjs#L290-L311",
+          "version": "repo-lines-v1:sha256:eb63c2dc349c17df8379d323c40d0d3dd2901e45c71f7ecb76a3f38b390b886f:eyJzZWxlY3RlZExpbmVDb3VudCI6MjIsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImYyNzIxOWYzYWE3ZGY2N2YzMTMwMWFmMzNjOWZlNDRjZTdiOGRmYWVhZDk0MDE4MzFmZDZlZjA5YWFhMGNkOTYiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjliNjJmNjBkODU5MGE1NzljZjQ2ZjhkNjczNzhjNGM1NzJiOTYyY2VjY2RiOTBjN2E1ZjdiNDJiOTYwNzgyYTQiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6Ijg2YWU0YjY2NTA4MzI1YzUxNGI4ZGIzNDM3ZTc2OGVmMDk3YzZjM2RlMTcwNjI0NmIwZTQwOGM3OWRmM2Q5N2MiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjZhODZlZjEyYmI5YmRkOWFlZTRlOGM1NjBkMGI4NmJmNWMxNWVkMjc0ZDFlOGFlNmQ4YWNkOTYxNmE1YTc0N2QifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_fe738d05216d4e03963e65db721d63ec",
+      "statement": "When intent === 'upgrade', a tenant_private document is immutable: the kernel returns forbidden before commit if the resolved portability class is tenant_private.",
+      "evidence": [
+        {
+          "resource": "repo://src/kernel.mjs#L350-L355",
+          "version": "repo-lines-v1:sha256:e29c68ff32ef1f9a203b65a1ee33f2a43f5ccbc6942cb810f7bdf56d44e3eff1:eyJzZWxlY3RlZExpbmVDb3VudCI6NiwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiYmQ2M2UxNDY3MTFhZGM2NDZkOTI4NjJhMTIyNzJkMWU2ZjAyNDgxMDMyN2ZlYzkwM2RmZWI2ZGViNDQwNmE2MCIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiNDg5M2Y0MGUzNzgxZWI4OTZjODJkMDQ2YTA4MDY3YTExZTM1Y2RmMmYxZGZhZjI2ZmVhOTBiOGRiNjY3NjQxMyIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiOWI2ZGEwMDI3Y2FkNzA5ODIwNDkxNTVjNDYxZDY4YzkzNzgwNmZjNTM5MzRjYWQxNjBjOGNkZTU0MTIyMzcwMSIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiNWNlNzk2OGEzMmNjZDQxN2RhY2Y5OWMxMWVjZTYwN2FlMjA3MWFjYzdiYjNiMDMxNjY4MjE0MTU3OWMyNTUxMSJ9"
+        },
+        {
+          "resource": "repo://src/registry.mjs#L463-L469",
+          "version": "repo-lines-v1:sha256:256c9f01905e143b2fb870f7b0b4c9f322cb7292e9845948a5abb9631cc129b4:eyJzZWxlY3RlZExpbmVDb3VudCI6NywiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiZjZiOWY2NjVkNTNmY2E2YTkxYzMwMDMwOTAzZmI0MDFmMDM3YTIxNjM4NTk2MmU0YjJhMjc3YjZjYmQxZDNiMCIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiNDEyY2EzNDVjY2Y3NWJmOWMwODA2YmNlNjk1YmU4ZGU4MDhiNzk5ODQyNTFhN2E1NGQyMDJjZjYxMDFkZDQ1MSIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiNWY1YjU1ZjRkNTU4NmMxODg1YTFlNzEyZTEzYzU0YWIwNGI4MTRlZmQ1NDY4N2Q5OTg4YzlhMzYyYmNlYWQ3MSIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiYWNkOTc3MDYxNTMyN2YzOTQ5NmY4YzZiY2M0NGM5NWEyZDRkNjUyN2UxMzdjNzY3MmU2MmFmMTY4ZGMyNjAxZCJ9"
+        }
+      ]
+    },
+    {
+      "id": "claim_cd28168892fe4aca992ded48579aa0cc",
+      "statement": "The 0.9 capability authorization model is fail-closed: validateVerifiedPrincipal requires a principal with id, kind (human/agent/service/system), workspaceIds array, and authentication.provider; a non-system principal must be scoped to the request workspaceId or be denied.",
+      "evidence": [
+        {
+          "resource": "repo://src/authorization.mjs#L1-L18",
+          "version": "repo-lines-v1:sha256:168c5fef3164a72b4590652e29d48e3a2751439247d1d3dede9f83a1d9133106:eyJzZWxlY3RlZExpbmVDb3VudCI6MTgsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImI5NDk1YTE2YzM5NDQ5NGMwMzY0YzhkZGQ3NjRiMTZkZWNkZmYwMDMyYWVkOGY0Y2Y3ODFkNzE1NGJkNjM5MjgiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjowLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImFkYjYyNTU2ZjYyOGJhNTgwMTU0OGY3YzE5NjgxYTc1MWUwY2Y4MzUwZjBmOWEwZmRiYmRhMDRiZjNmNTZhNmQifQ"
+        },
+        {
+          "resource": "repo://src/authorization.mjs#L60-L67",
+          "version": "repo-lines-v1:sha256:a169160a717897b9a4f05efcc1d03eb7819282c19701f8b1179853ded2649e5d:eyJzZWxlY3RlZExpbmVDb3VudCI6OCwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiN2EwYzkzYzI4YWUwNmUzZWIwYTU4NGE4ZDRjYjk0YTk3ZGI1ZjI1YThiNzA5ODYwMjA1N2Q4ZGYyN2Y2Zjc3ZSIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiNDg5M2Y0MGUzNzgxZWI4OTZjODJkMDQ2YTA4MDY3YTExZTM1Y2RmMmYxZGZhZjI2ZmVhOTBiOGRiNjY3NjQxMyIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiZDUxMTZjYTViYTEzM2U5MWQyMzlhMWUyZWIzYmQyMzczOTVmZjUwYmVkMTkxNzNlMmUxNTA5MzBhYTAyNmZlZSIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiYjNiMjQxODkzMjc0OGEwMmFjMDVkZmE3MjQ2MTcyZmEzNTBjNDM4ZmQ5YzA5ODAxMTViOWQwZTY2ODhkN2VhZSJ9"
+        }
+      ]
+    },
+    {
+      "id": "claim_321a15c4a98d4e73822aa89febfb3b44",
+      "statement": "requiredCapabilities returns the capabilities a primitive's registry definition.capabilities[action] declares, falling back to <qualified_type>:<action>; event envelopes use a synthetic definition declaring capabilities { event: ['write:event'] }, so an event requires write:event specifically and a write:<document type> capability does not satisfy it.",
+      "evidence": [
+        {
+          "resource": "repo://src/authorization.mjs#L20-L26",
+          "version": "repo-lines-v1:sha256:da3e652f04abd95652a820bac385d94d27fc28f37be45ae5937262823ef36f7a:eyJzZWxlY3RlZExpbmVDb3VudCI6NywiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiNjNhZTE3ZmM1YTRmY2UwMmU4MWU0ZjRiYTRmZTU5Mjk0YWQ2MTkxZDA2MTk3NTU4ZmRmMzczNWYzYjFmODAwYiIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiNDEyY2EzNDVjY2Y3NWJmOWMwODA2YmNlNjk1YmU4ZGU4MDhiNzk5ODQyNTFhN2E1NGQyMDJjZjYxMDFkZDQ1MSIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiNGU2NDE4OTgyYTczNDY4MTI3ZTY3Y2Y1ZDg3MTU4OGE2ZjY3ZmM4OGZhNzQ4ZDRhMzRhMDdiZGMzMzIxZWIwOSIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiMTM0Y2VkZWFhZGUxNzEzOTMxNWZjM2NjZWYwYjVjMTllODk1MjY3YmY3Y2U2OTNmM2Y2M2RmMjhiZmY4Njk4YiJ9"
+        },
+        {
+          "resource": "repo://src/kernel.mjs#L344-L345",
+          "version": "repo-lines-v1:sha256:9cc783a624c13171d551059b1c62f5b7f1cf973df6130e3a52607e9ce987dfe3:eyJzZWxlY3RlZExpbmVDb3VudCI6MiwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiNTZiNDA5YzFhMTZhZjdkNTQ1ZDMzN2ZjMmQyZDdmYWZlOGVlZjQxYjMzMjA1ZWU1NWQ4ZWU4Njk0YjhmNjk4NSIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiNjgyNzFlZTY5YTA3OTUyOTZlNGU4NDg1NjI3MmEzMjNkYTQ3MmU0NGMyNDhlYzlmMThmZGI5N2YzZWZhZDkwZCIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiODE4NmRhMTJmMjQzYzg3M2IzNjk3MDVhYWE5MTkxZGMyYzRkYTgyNzdiZDRiYjA0OTVlNmM1MmFkOTJiMzQzYiIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiZDBiMDdkMGYxOGZkNmIzOGIxNWI1M2Q0MTcwMzVmODYxOWZmMTIxZjNjMjA1OTk2NTc1OWUwZmY5NzY4NTI5ZCJ9"
+        }
+      ]
+    },
+    {
+      "id": "claim_a9c194d9187f4186a35427b20058b28f",
+      "statement": "capabilityCovers grants access by exact match, *:* (full access), or trailing-* prefix (ssss:* covers every core capability); a capability may be path-scoped with @<glob> (e.g. ssss:rule:*@rules/marketing/**) matched against context.path via matchPathGlob with ** for any-depth and * for a single segment.",
+      "evidence": [
+        {
+          "resource": "repo://src/authorization.mjs#L28-L58",
+          "version": "repo-lines-v1:sha256:2a6210c6dbb1d372c138d650ffa17fbf99d9dbbc2af542c641ffb22298c094a3:eyJzZWxlY3RlZExpbmVDb3VudCI6MzEsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjU0MGVlOTg3YmNmYTBlOGVkODZhNTZjZDRjZWFkZThiMzc5MzAyMmVmNjU0MDNkOTk4NzY5MWMyZDk4MDA3N2UiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImVlOWY0ZjUwY2Q1MGNlYmQyMzI3NDFiMGIyMzc3ZGI5NTljNWE0OWJjYjZkY2I3OWE0ZDBkMmZkZDExYjE4MDIiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjFkZDhhNzgwMDY1NjNlZDVmNjIyMGJjNTExYjcwYzE2NWM0OGZhYTI3Y2U1NDAyNWU3YzNlMGU1NzZjMWEyYWMifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_d38476aed9334d48b144e96cb52141b6",
+      "statement": "Policy floors raise the authorization bar: createCapabilityAuthorizer merges registry-declared floor capabilities for a given action into the required set, and composeRegistryLayers validates that no primitive weakens a floor below what the registry declares.",
+      "evidence": [
+        {
+          "resource": "repo://src/authorization.mjs#L70-L86",
+          "version": "repo-lines-v1:sha256:361cc99a5ff99e74915caf56862cd8b15168eab92b6a885989bca223b8dccde9:eyJzZWxlY3RlZExpbmVDb3VudCI6MTcsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjlkYTcxY2RmM2UzM2JmOGRkMGZlOTAxZTAwYzJmYmNiNWMyYjc2MjgwMjAxNTVjZTMzNjRhNTA2Y2NkZjA3ZDgiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjkwOTNlMTI5MDZhNjFmZDVjMDg5ZmVlOGZjYWZkOTUyZTU3YTU5MDlhMjQ5ZGQxMjUwOTQ5OGQyNzFhNzFjOTYiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjE1OGNkMzJmNDc2ODkyYmZlMDJlYjU4ODEyNGVjNGUxNWI2NjI2MTRhN2RiMmUwODU5MjMyYzUyNGQ4OTE2ODIiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjE5ZGUyYmEyNzUxYmM2NjYzYzZmMzEzMGE0ZTA4NWNlZDJiMDkxYWRkMzk3NWQxOWZjZGMwNzRmNmVhMDRjODAifQ"
+        },
+        {
+          "resource": "repo://src/registry.mjs#L284-L303",
+          "version": "repo-lines-v1:sha256:533de754ee9ab4ed9fe7668a0869e9958ecca38d118272ac3d7ceeb04a39eb4f:eyJzZWxlY3RlZExpbmVDb3VudCI6MjAsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjJjM2U4NzIyM2FlNjBjY2MxYmQ0OGU5MTViN2ExOGJjOTVkMGY1OTBmMzRjMTA0MGYxNDU5ODYxYThiZWQ0Y2YiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjcxZjExOGY3NTZhZTE3N2JmYWM4MTIyNmU2OGJhMmI4YzI2NzdiN2ZkNzFhNTU0MjRkN2MwZjJmOTI5Yjk4OTIiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImZmNTE1NGE4ZjY2MDFkOWYxYjMyNzI5MDZiN2RiYTY1OWFiNDU4ZTFiMmI5ZTMzNmM1YmJlZGQxOWY3ZWQ4YmUifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_f5230e47863248f7b8d90be5794d2dfb",
+      "statement": "A principal with kind === 'system' bypasses capability checks entirely unless systemBypass === false was passed at authorizer construction.",
+      "evidence": [
+        {
+          "resource": "repo://src/authorization.mjs#L88-L88",
+          "version": "repo-lines-v1:sha256:a808a97f2169c562ed92ba00b0d15de34cd2239df7f793440ba9929eb34eb7ae:eyJzZWxlY3RlZExpbmVDb3VudCI6MSwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiYTgwOGE5N2YyMTY5YzU2MmVkOTJiYTAwYjBkMTVkZTM0Y2QyMjM5ZGY3Zjc5MzQ0MGJhOTkyOWViMzRlYjdhZSIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiYTgwOGE5N2YyMTY5YzU2MmVkOTJiYTAwYjBkMTVkZTM0Y2QyMjM5ZGY3Zjc5MzQ0MGJhOTkyOWViMzRlYjdhZSIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiYWIyNDEzMmE1ZThmY2EzYWI3Nzc1MTAxMDJhMjdkZjI1YzlmNjc0ZjM3MzE1YTg5NTNmNGYwN2NlZDdmZTVkZCIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiZDA0MDA3YjI4YjFkZmZjZDkwMjdiMGFkMTNhMDYwYjg5YzMzZDAwMDA5NzA3YWNlYTkxZjM4OTM5YTA1ZGQyOSJ9"
+        }
+      ]
+    },
+    {
+      "id": "claim_89134c7e61b34874ba859a639b142ee4",
+      "statement": "The authorizer supports context gates: requiresHumanConfirmation requires a human principal with humanConfirmation === true, and requiredAssurance requires an authentication assurance level at least as strong as the named level (unverified < verified < elevated < hardware).",
+      "evidence": [
+        {
+          "resource": "repo://src/authorization.mjs#L108-L120",
+          "version": "repo-lines-v1:sha256:baf2dade26fa7f064b4c9c4759e6979322eec466f0ccf138dfa49a495c207e25:eyJzZWxlY3RlZExpbmVDb3VudCI6MTMsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImRhYzU1Mjk3Mzk3NDc3YmUzMjU3YzBmNmUzMjA4YjExYTgwYjM0YjkxZmVhYTQxZDFiYWQzMmYwYjY5N2ExYmMiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQ4OTNmNDBlMzc4MWViODk2YzgyZDA0NmEwODA2N2ExMWUzNWNkZjJmMWRmYWYyNmZlYTkwYjhkYjY2NzY0MTMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjMyNGNkNTc5MzM0ZmJjZjRmYTM5MmE0ZmVkMDhjNDk1ZjRhY2ZhMjA2MTkxZTZiYTU1ODRiZGMyZmUxN2U0NzYiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjIzMDMwNzBkYjFhMzdmMzVmMTM2M2E5ZGE3OTQwNjUwYWY2OGUyYWQ4N2UwZTQwOGZiOTVlNWI2MmNmNDg1ZjYifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_f8ddba20652a4300b7aa579a25799648",
+      "statement": "A denied authorization maps to unauthorized when the principal failed validation and forbidden otherwise; the kernel checks validateVerifiedPrincipal to choose the code.",
+      "evidence": [
+        {
+          "resource": "repo://src/authorization.mjs#L63-L64",
+          "version": "repo-lines-v1:sha256:f37e4e2273748c0d9526e9a33400789dccee4cdd7f2a27ddc51ee647c7c5d7d2:eyJzZWxlY3RlZExpbmVDb3VudCI6MiwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiYjEzNmQ4ZGU2ZjI5Zjk3MGRjMzQ3YzAxYjFhMzA3MTQ3ZmFjN2VmMjRhYjM1ZjAyNTZhMGUxNTM0ZTlhMWI3MiIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiOTQ2OThmZTYwYjUyNjljODVhMjAxZTBiM2NjOTU0ZjYzZTI3YzYzMDA4NTc2Y2Y3MjkzZjdiYjBiMjBlYTUxNSIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiMWQ1M2FjNTc3ODQyNGVkMDQ2ODRmNjkwZGYxNGY2ZDYxMmViNmVhZWQ1MTZiMzM0YjIxMWNiMjViYjFkOGMwMyIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiYThlNTU0NWIzY2E4MmU0ZjM3NmYyMTlkYmU5ZmJjZTliZDRlNmU2OTQwNDg4YWQ1N2QxODFhNGMwZDNiMGFlMCJ9"
+        },
+        {
+          "resource": "repo://src/kernel.mjs#L359-L364",
+          "version": "repo-lines-v1:sha256:a29408ce44581f0170525ab761b213276dfa545844569ab3573a6b88275b358b:eyJzZWxlY3RlZExpbmVDb3VudCI6NiwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiYjcyNzdiNWZiODZkM2Y4MWY0YTI4NzFjY2IwNjAzMjU2YzhkYjlhZGY3MzIyYmI3NTIwYTNiOWViNTZhMDFjYSIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiNDg5M2Y0MGUzNzgxZWI4OTZjODJkMDQ2YTA4MDY3YTExZTM1Y2RmMmYxZGZhZjI2ZmVhOTBiOGRiNjY3NjQxMyIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiNWNlNzk2OGEzMmNjZDQxN2RhY2Y5OWMxMWVjZTYwN2FlMjA3MWFjYzdiYjNiMDMxNjY4MjE0MTU3OWMyNTUxMSIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiZTcwNzUxNTcwN2MxMWMyMTNlMDg4YTk1MjE3ZTY1YTVjMWZhNTUzYmE4NjMxYThhNzZhNDQzZjk3M2Q3ZmFiOCJ9"
+        }
+      ]
+    },
+    {
+      "id": "claim_c7296dca526b44a5b583508e7a54e0aa",
+      "statement": "Lease verification runs when definition.lease_required or context.requireLease is set and a leaseStore is configured; a missing, expired, or mismatched lease returns lease_conflict, and an unreadable lease store returns internal_error.",
+      "evidence": [
+        {
+          "resource": "repo://src/kernel.mjs#L366-L380",
+          "version": "repo-lines-v1:sha256:87aee4c211bf9a6849eb44720af593caee9251c935bdf92368f9ddc76fee33f9:eyJzZWxlY3RlZExpbmVDb3VudCI6MTUsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjU0MjZiZDM5MzJlOGNhMjYzN2QyMzMyYjA1N2U4ZDFiNzk1YTMzYTBlYWZhNmFmY2E0NDliZTg4ZDNkMTk1MzIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQ4OTNmNDBlMzc4MWViODk2YzgyZDA0NmEwODA2N2ExMWUzNWNkZjJmMWRmYWYyNmZlYTkwYjhkYjY2NzY0MTMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6Ijc3NTJlNDRjMjEzMDBmYTUwNzljNThiZWU3NmVhMzJlYWU3ODkzNDUzMzY2MGE1ODYwZTM3NmQxZWY3MjhkMzIiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjhkYzk0MDE1YzY5YTI0NWFlOWUyM2I4ZDdhNjhhNjY1ZDViZjMyNTk0OTY0YzA2NWJkNjMwN2Y5ZWU1Yzk5ZDMifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_eebac40d746b47799a0e2d5d8adfd051",
+      "statement": "A dry_run envelope returns a success response with committed_at: null and dry_run: true after validation and authorization, without writing anything to the VFS or event store.",
+      "evidence": [
+        {
+          "resource": "repo://src/kernel.mjs#L399-L406",
+          "version": "repo-lines-v1:sha256:902d86abf4ff1817ee83d9badde80f96ab1f5f9ad363d5deb41d883f2f036ef6:eyJzZWxlY3RlZExpbmVDb3VudCI6OCwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiMmVlNTZiMjRiOGVmZGQxNTlmOGQ1ODA4NTczMmZlMjQ4YzdhYTc0MTk1NmIwNTJmMjM5MDM0N2FhYTY5ODgwYiIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiNDg5M2Y0MGUzNzgxZWI4OTZjODJkMDQ2YTA4MDY3YTExZTM1Y2RmMmYxZGZhZjI2ZmVhOTBiOGRiNjY3NjQxMyIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiNTJmYjg5ZDEzYTQ3NjBjZmFiNmE0YjA3NTBlNGIzZTBiYmJhMzg0ZjY1ZDQ0MTUwZjRhNmI2MzBhODY2NGYyYSIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiZjhmYThkN2E0MTQwZDg4MjJiNGY1NWJmM2U3OTI0MmVlMzJmZjU5MzdjZmY4NDk4MTg5NjQ4NDUwNjA1MTU5MSJ9"
+        }
+      ]
+    },
+    {
+      "id": "claim_4a60704a54c2484ca904c019ab331e47",
+      "statement": "The canonical event append (stage 10) is the commit point: nothing after it may roll the mutation back. For non-event envelopes the VFS write (stage 9) happens under a durable commit intent holding the prior content; if the event append fails after the VFS commit, the kernel rolls the VFS back, and if that rollback also fails the intent is kept (keepIntent) so the next commit or recover() finishes it.",
+      "evidence": [
+        {
+          "resource": "repo://src/kernel.mjs#L408-L469",
+          "version": "repo-lines-v1:sha256:036b3e4b44e84cf3eb41059bca02877f5515b3a38e210866a59043e704228c87:eyJzZWxlY3RlZExpbmVDb3VudCI6NjIsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjUzNmE5Y2ExODY1YTgyZWEzY2ZhYzYxZTI0NjZlNjJlNGI1N2NjYjc3OTg4NGE3Yzk4YWJhNzQ2MDY3OWY3ZmYiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImFkOWUxMjU0NjQyNTU3NmQzZGVhZThjOWI5ZGJmMTI4ZDVkNmRkYWY1ZDdmZTg1NzkzNDkyN2RlZmZhM2I5ZGQiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImRmM2E1MDYzMzBiMGU1NDBiZjM1ZDYwZGM2ZjZlNTNmZDBkNmE0ZjllNGM3NGIyOTI0NGQ0YzMyZmNjMTkxZjUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImZjZGRhODlhN2QwNjEwMzVhZTk5ODhhODM0NzlkOTQzZWI1NmMyMjE1MGUyNWEzZTQzYzhmNjc1Y2Y3YTQwOTkifQ"
+        },
+        {
+          "resource": "repo://src/kernel.mjs#L473-L483",
+          "version": "repo-lines-v1:sha256:b1135767624d2b4e84c7cc7ebe60c6e02aba7868034fd9d26659dd2554e91102:eyJzZWxlY3RlZExpbmVDb3VudCI6MTEsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjBlMGVhZTFiNzlmY2EyMjBmYmU2ODZmMDhhNTA1OTU5YzU5ZTkzOWI1NmUwNTk4NjhlYzE2YjViMGI5MTczNjciLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjMyM2ZiZDNlMDYxNzEwNzBjY2ZmODg5YWQ1NWUzM2VmNDhiYjExY2ZjNzc4NWEwMjQ2ZmIxNjFkZjJiZjIwYWUiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImZjZGRhODlhN2QwNjEwMzVhZTk5ODhhODM0NzlkOTQzZWI1NmMyMjE1MGUyNWEzZTQzYzhmNjc1Y2Y3YTQwOTkiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjAyZTg0MDFhZTQ4NDg3YjE5YjNjZDc0NTU2Y2YxZjZlMzJkZDI0MzM4OGQ1MTYzZWM4N2Q1NDI3MzE3NzQ4YjgifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_3dc5d2ac1749472f87ece28af7467b09",
+      "statement": "For event envelopes the event_id is deterministically derived from (workspace_id, idempotency_key) via idempotentEventId (UUIDv5), so the event store's duplicate-event_id check stops two concurrent requests with the same key from both appending.",
+      "evidence": [
+        {
+          "resource": "repo://src/events.mjs#L8-L22",
+          "version": "repo-lines-v1:sha256:c7255555097224d78c3572a5b79e034d829634cbc39c385b91b757963df70b7b:eyJzZWxlY3RlZExpbmVDb3VudCI6MTUsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjM5ZTA5ZWU4ZmZhNWQ0OGQwODFjMmY4ZmFjYWZiNjZkZGMzZWNlMDI0MzUxYzE3Y2JiYzI0YTQxY2Y1MzZlZWUiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6Ijg0ZjcxMjFmMGQ5NjIyNjA1ZDg1MDlhMjNkMzNiOTVhNDJkOTFlZWRhMmI1NDI3ZmEwYWRmOTBkNGQyNmMxYTciLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImI3OGY0ODlkNWVjNTkxOWVhMjg3MmQxYzU3NTczZDQ2MmE0ZTQyODQ1YTNiNTQzODcyOTgwMDZjNjliNzFiNWMifQ"
+        },
+        {
+          "resource": "repo://src/kernel.mjs#L411-L411",
+          "version": "repo-lines-v1:sha256:a0452e18263e1856be7106a135726417c4195ba6b9be8da84259fe55d981e946:eyJzZWxlY3RlZExpbmVDb3VudCI6MSwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiYTA0NTJlMTgyNjNlMTg1NmJlNzEwNmExMzU3MjY0MTdjNDE5NWJhNmI5YmU4ZGE4NDI1OWZlNTVkOTgxZTk0NiIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiYTA0NTJlMTgyNjNlMTg1NmJlNzEwNmExMzU3MjY0MTdjNDE5NWJhNmI5YmU4ZGE4NDI1OWZlNTVkOTgxZTk0NiIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiZTA0YjhmOTRmNjFkMmI4M2NiMjA3ZThlZmQ5MWQzYzQ0NmE1MDk0YzU4ODQ4ZmYxNzhmNzU2OWVhMjdhMjZkMiIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiYzY4YjA2OWU5ZGVhMzE3Y2I5YTNhNjUyOGZiYjdjNmMyZjUxZWQ4OTVjODEzZTA2N2Q5MTI1N2FiMDk1MjViNSJ9"
+        }
+      ]
+    },
+    {
+      "id": "claim_db5951433a8c401ea5c6c555d328e7fc",
+      "statement": "Post-commit stages (resource finalize, projection dispatch, idempotency record) fail forward as warnings, never rollbacks, because the append-only event log already says the mutation happened.",
+      "evidence": [
+        {
+          "resource": "repo://src/kernel.mjs#L497-L521",
+          "version": "repo-lines-v1:sha256:9aa756a8c2db2e380c140d056a32ca5e083c8d029cc383efc2a6b0830cac2f24:eyJzZWxlY3RlZExpbmVDb3VudCI6MjUsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImJmYzA5NDQxZmYwMTAwYTExYWE2MmU1NmJjMDEyMTU0OWFkNTJkN2IxNTc5OWJiNDgxNjdhODZkYTZhMWM1N2UiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImI4Yzg3OTFhYzM0OGQwMjY5NDg4ZDhlOThiOWExMDU2ZDc2MjQ1YWFjZjFkODAxNjg1ZGMzYjQyZDM5YzUwMTAiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjU4NDc5MGUyOGM5MmE3MTI3YWFiMzZiNzM1ZDA0MmZkMThkMmY2MzljMTQyMTdhY2M4MTQxYjIyY2MyN2U2MmYiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjgyNmY1YTUwMzA1ZGI2NDIyNGY3MGViMWY1N2UzNTU3NjMyMzRjYjc4MWMxZDViODI1OWNjNGQ5OWMxOTNhMTUifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_10bf434e180b4f6c9aacbe7bb15219c7",
+      "statement": "Crash recovery via recover() resolves a commit intent whose writer is gone: committed if the event is in the log, rolled_back if the vault has the prior digest, discarded if stage 9 never landed, or conflict if the document changed outside the kernel; a failed outcome keeps the intent, and a conflict quarantines it. The decision is made from the event log and the vault digest (over raw bytes), not VFS versions.",
+      "evidence": [
+        {
+          "resource": "repo://src/intents.mjs#L1-L26",
+          "version": "repo-lines-v1:sha256:5c0e2ddcd80442af5ae25b4135115a0d092210ef700eeda451b7a02c9b3ef343:eyJzZWxlY3RlZExpbmVDb3VudCI6MjYsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImVhZjIyY2YwNzMyNTkyYzI0NzE0MWNiZTYxZWZhMTEwMTI2MTJmNWEzMTIyYjlhZjliYmFmNTJmNTcyNGQxOTQiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjE4YzYzMTAyYmQxODBlMjRmYmYzMGYxMmVlNDhhZjlhM2MyNjUwNTkwZGRjNjVlNzRmNWU4MzM0YjNkNTJlYTEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjowLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImU3Y2EwZTNlZDY1OWIxYjZiMWUxMDhkNWIzMDZhZDA4NWJhMDBhNjg1ZjMzODFlZjllMjZjZDFiYWRkYmU4ODkifQ"
+        },
+        {
+          "resource": "repo://src/kernel.mjs#L107-L146",
+          "version": "repo-lines-v1:sha256:d19d3161fb54c1c57a6fd399cf2619e235c78722d41cfd3efe4f6e448f9321b6:eyJzZWxlY3RlZExpbmVDb3VudCI6NDAsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImIxZGE3MGUxYmFhZWNmMGIyNmMyYmVlMmZjOGQ0Mjk0ZjJmNjU3YzBjMGZhY2Y0ZTgyNzU1YTk4ZTRhNjE3YzQiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjI3ZTU3ODhkNWQ5ZDczZDI0YTgxZGJjMGE1YTc0YmZhODJjOWMzYjNhZjk5ZTUyYWY3OTZlOTBiNDY4YThhM2QiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjA4ZmQ0ODg5NTZmNzljNTM4OWU5MDdiZjA1Yzg4N2NiN2Q5MTcyOWMwZjMyNjk3OTQ3MzkxZjE2MWE3NDdkZDYiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImNiZWM5NjE1ZjE3NThkYTZiZTM2YTA4NTJmMTkxODAxMmYwNTc2YTZjNjg4ZmZiMmMwNDNkNTUyOGZjMWJmMzMifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_f61c51a868f84d688a8d717110d32a0d",
+      "statement": "recoverOnce runs once per kernel before its first operation, so a commit intent a crashed writer left behind is rolled back even on paths nobody writes again; the intent journal's per-path lock and INTENT_LOCK_DEFAULTS (40s timeout, 5 min stale) ensure recovery never rolls back a commit that is still running.",
+      "evidence": [
+        {
+          "resource": "repo://src/intents.mjs#L17-L23",
+          "version": "repo-lines-v1:sha256:236624f936b28fd07863b7ce70348eafec3c406bc5ffe04454aa221b3903b2ca:eyJzZWxlY3RlZExpbmVDb3VudCI6NywiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiZWFmMjJjZjA3MzI1OTJjMjQ3MTQxY2JlNjFlZmExMTAxMjYxMmY1YTMxMjJiOWFmOWJiYWY1MmY1NzI0ZDE5NCIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiNDA4Mzg0YzA4MzJiYTg0MzA0NDkxNDNiNmU4ZTMwZWJmNGRlMmIyZDQwZDBmMzJjYTZlYzFkNzAyNzRiYzIwYSIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiZDA1ODRiNWNkMDlkOGRlOGRjMjEwNGM5ODEwM2JiMzI1NDA2NDI3YTZiZjYxY2U2MWJkMjQ3YWY5YmNlMGViOSIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiYWI0OGZiYTdjNWZkNjM3YmYyNmUyOGVmNzVhOGJlYjI2ZDM4ZmZiYWEwODgzOWExYWQzNzQ5NTEyZWZkN2Y1ZiJ9"
+        },
+        {
+          "resource": "repo://src/kernel.mjs#L153-L156",
+          "version": "repo-lines-v1:sha256:72e5b9313814ee4fbc00d05d0212be7da50df8129631892364a91dd952ac8c8a:eyJzZWxlY3RlZExpbmVDb3VudCI6NCwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiMTc0OGFjODZlZGU4MDNkNDU5Mzk5MWNhY2U1YmVhMTU0OTU2ZGM1NmY2Yjc2ZGRlZDRiMzc2NDNiZDg0YzZkYyIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiYmVmN2Q5NGJhNzY1NWFkN2RjZWY1MDcwOWM5MWU3NDU5MTJlYjU4MGNhNDkwNzM1YzJiYWZhZWJkNjg3MWNlNSIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiODdkMjhhOTg1ZDI0NDQzM2FhMzg4ZWI3MTRkYWJmN2E3ZDNlNDY5MGI2M2M5MzMwOGU5N2M3MWU4YzI1YjdhMiIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiMDU1ZDIzZjBhNzE0MTBkODZmYzY3OWQyNTg3Nzg0MGU1MGNhNmE1OGM3NTUwOTFkMWIxZjllYzI1ZDgxN2RlMCJ9"
+        }
+      ]
+    },
+    {
+      "id": "claim_81f4776a063246f690d4951dbc9e04e2",
+      "statement": "The kernel exports the frozen ERROR_CODES array: invalid_request, unauthorized, forbidden, not_found, lease_conflict, version_conflict, idempotency_conflict, validation_failed, internal_error — every failed response carries exactly one in error.code.",
+      "evidence": [
+        {
+          "resource": "repo://src/kernel.mjs#L22-L26",
+          "version": "repo-lines-v1:sha256:6200cbc10c8a9ea837a8ba251ed58956894e6855e23969ca37cd4ba86c71bb1e:eyJzZWxlY3RlZExpbmVDb3VudCI6NSwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiOTcyYTQyOTM4MmIyZTE0NzE4ZTBlMzdiMDU3MGE4YTE3MDI5OTFmY2Q4NDk4Y2Q4NDA2MGE4YmY0ZjA1MDE3YiIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiNTVlMjZjZDkyMzY2ZjYwZDhlZDkyZDAyMzlmMDdmZWY3NGNhYzE0YWE2OWFkZGY5YzJjYzBkMTFlYjAwYTQ2MyIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiZmQ5ZTcwODZhMDRjOTZlYzkwZTk0ZmEzNmJhZjk0YzUxYzU2MDkwZTlkY2UzZWQyYmViZTZmOGE4N2RjMWEzZCIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiOTc4MDA2OTMyM2NmNmM2NzgyYjhlZWU1MzY4MDUwNjYxYjQ5OTdhMDFjNDRmODRmNWU5ZGExOGVhZDZlZDUxZCJ9"
+        }
+      ]
+    },
+    {
+      "id": "claim_b782017ee58f43518afc8ba61506148d",
+      "statement": "ERROR_STATUS in http.mjs maps each symbolic code to an HTTP status (invalid_request→400, unauthorized→401, forbidden→403, not_found→404, lease_conflict/version_conflict/idempotency_conflict→409, validation_failed→422, internal_error→500); statusForResponse returns 201 for a fresh commit, 200 for replay/dry-run, and the mapped status otherwise. A transport is never a writer.",
+      "evidence": [
+        {
+          "resource": "repo://src/http.mjs#L1-L20",
+          "version": "repo-lines-v1:sha256:5f67170ecacad8f1cf982250865af69be0720bdcab794f09e6b32bd9f2adf132:eyJzZWxlY3RlZExpbmVDb3VudCI6MjAsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjhiZTIxZmJhYTZmZTM4YmUwYWQyMjkzYzdkZThjNTUwMTZkNmU3NjQ2N2NkYmMxZGM3YThlNTc3ZWU1Nzc3ZjAiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjowLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjQ4MzkxZTAyMTM0ODQ5NGVlZTAxNTI1Y2M1NGYwMGU0YzRkYTA5MmU4ZThhNWEwMGQwMjRjNWI0NDJiMzdjMTkifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_3d1a2352b85d4770b527b174a352cadd",
+      "statement": "src/engine.mjs is a compatibility façade with no second mutation implementation: createEngine builds a createKernel per (vaultRoot, eventLogDir) pair and forwards every envelope to kernel.execute, adding only legacy principal translation and response shaping.",
+      "evidence": [
+        {
+          "resource": "repo://src/engine.mjs#L1-L9",
+          "version": "repo-lines-v1:sha256:7262dcaac3a4ee6644f3c8023a12f2a8661c9ea22d6b8854177c7a3516c4aa1d:eyJzZWxlY3RlZExpbmVDb3VudCI6OSwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiZWFmMjJjZjA3MzI1OTJjMjQ3MTQxY2JlNjFlZmExMTAxMjYxMmY1YTMxMjJiOWFmOWJiYWY1MmY1NzI0ZDE5NCIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiODA0MTViZDliZWRjYzU1ZTZkODg1NzE4MjVmNGIyZTU2M2RlMmYwYWQwMjY3OWQ1MDhmMDUwZTEwMWNlYzM3ZiIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjAsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiZTNiMGM0NDI5OGZjMWMxNDlhZmJmNGM4OTk2ZmI5MjQyN2FlNDFlNDY0OWI5MzRjYTQ5NTk5MWI3ODUyYjg1NSIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiYjMyYWYyZTZhNjNlY2NjNzMxMjY3OGM4NmY0ODM4NzA0NWM0ZDI3NDgxZjNiZDI1MGQ3NDJlMmNlY2E3NjlkNyJ9"
+        },
+        {
+          "resource": "repo://src/engine.mjs#L108-L160",
+          "version": "repo-lines-v1:sha256:fc2b68e84f300ba6e0fbddd4fd0625a05c37187c4afe8224cd5b0fc97b8fea1c:eyJzZWxlY3RlZExpbmVDb3VudCI6NTMsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAwMzg5NGE2NjZmYzVlYzNmZmY5NWFkZWE0OGNmMmRjODliNjcwNGNhNTY1NjIxZDlkM2Y5NzJlZTg0OTlmNDIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImZiNTgwZTk2NGY4M2E0NzNmNDNkNDQzODQ2Mjk0OWQ2OGI1NjAwZmRhNzg3ZjE2Mzc0NWQwMGRlODljYmYzNmEiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjowLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_df7811eecc654ce5bd6309f5bd2253a6",
+      "statement": "The legacy role→capability translation in engine.mjs maps actor.role: 'system' to a system principal with *:* (unconditional bypass, not data-driven), 'admin' to a human principal with *:* (hardcoded, a roles/admin/ROLE.md can only add), any other valid role name to capabilities read from roles/<role>/ROLE.md, and an absent role to a null principal that the kernel denies as unauthorized.",
+      "evidence": [
+        {
+          "resource": "repo://docs/help/roles.md#L42-L50",
+          "version": "repo-lines-v1:sha256:252dc3efa0fb4b33f394425fa2ee3e8f22f6d11fa243af57c598eac1c16c9bee:eyJzZWxlY3RlZExpbmVDb3VudCI6OSwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiMDFiYTQ3MTljODBiNmZlOTExYjA5MWE3YzA1MTI0YjY0ZWVlY2U5NjRlMDljMDU4ZWY4Zjk4MDVkYWNhNTQ2YiIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiNmZhOTJlOGVkZWNlZjBjODk5OWE3NGMyNjViNWI4ZTA1YjIzNThiMDIwMmI3ZGMxZGI5YTIyMTFhMzkwNjRlYiIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiZmE4NWZiZmU4NGRjNzVkNWRhNzk4ZDNlYmYwNGU3ZjQ5NzA5MDI2ODFiYTRjM2RkZTU1NTQzMjVlZjAzMmQ2NiIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiODY3NTRmOGI3OTg4YmI4N2I1NTlkYmVlZWRiM2ZiZWEzNjJhNDUwMGM3ZjRjMWU0NzBiYjQ5MTBiYzEwNGZhOCJ9"
+        },
+        {
+          "resource": "repo://src/engine.mjs#L57-L79",
+          "version": "repo-lines-v1:sha256:a82598e6ab486928a7f5a96b23b0f9ddb9c891eb6e779707b772287d6f5e2533:eyJzZWxlY3RlZExpbmVDb3VudCI6MjMsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjI2MWUzYWNjZDI2MzBkYjUzOTZjNjQ2ZjI0YzU0ZWNhYzdhZTAwYzc5MDFlM2VhMWM1ZWM0ZTBhYzk5MDhkZDEiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImEzYmYwMzAxODA0NjBmNGJmNzAyZTM5NjgyNzMxZmQwNjAxZTk4ZDBiYzYwNjc1MjE4YzE2NDE0NzE0NGU5NDEiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjgwZDI0YjExOGE1NDJlZjc4MGU3ZDkwYWE5NjllOTllODZkNDA4MzJmY2I1OGU0OTdjMGYzMDU3NjE3OTlmNTYifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_c0391eeec97b403588f2cc9dc50bf78c",
+      "statement": "legacyRoleCapabilities translates pre-0.9 permissions (write:<type>, *:<type>, write:*, *:*) into 0.9 capabilities (<qualified_type>:<action> and alias forms); unknown types and read:* pass through unchanged, granting nothing extra.",
+      "evidence": [
+        {
+          "resource": "repo://src/engine.mjs#L28-L55",
+          "version": "repo-lines-v1:sha256:2dd3c2e06f7ffaa456263d1fe3f81aa4bd43ee863a9a7a97e6f6b97a02238aad:eyJzZWxlY3RlZExpbmVDb3VudCI6MjgsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImVhZjIyY2YwNzMyNTkyYzI0NzE0MWNiZTYxZWZhMTEwMTI2MTJmNWEzMTIyYjlhZjliYmFmNTJmNTcyNGQxOTQiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImY5MmE1MjE0MmM0OGYyZjZmNGJkZTE2OWU2NWMxOWEzYmQ2MTJlMDAzYjI0YzIyMjJmMmVhNGI0OThiNjNhMDYiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6Ijk5NWQwNTIxZmIwOTU5YzNjNWE0YTMyNDBlYjAzMzVhY2U5MThiYjY0OTA0NjY3NGRhZjE2ZDBlNzMwMmViNzUifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_b42f59bb1bbf46feba3a0552b3e2c7a8",
+      "statement": "The kernel's createKernel takes injectable adapters — vfs, eventStore, projectionCoordinator, leaseStore, idempotencyStore, authorize, resourceCoordinator, clock, idGenerator — and a VFS whose state outlives the process may supply its own intent journal via vfs.intentJournal() so hosts get crash recovery without wiring one.",
+      "evidence": [
+        {
+          "resource": "repo://src/kernel.mjs#L87-L105",
+          "version": "repo-lines-v1:sha256:3c920d297c69c1da8d28113c9188ce62a6eb99fd61917dd8f4b5d3caa446ac63:eyJzZWxlY3RlZExpbmVDb3VudCI6MTksImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjgwNTQ5ODcyOWRlODgyYTI2MDQwYzI4YTBkNDIwYzA4ZWU5MDFiMjNhZjU0MWNmNzFkNGY1MGY1Mjc4MGVjNzYiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImZjNWY3MTlmMDhiODBjNjBiN2QxNjQ3OTgxN2FmNzJjODJjODg0NTcyMDBiZDJhNjIwYmUzZmQ4MzgwMDg1NjIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6Ijg1ZjM2OTQ3MjBhN2NiYzA1ZmNhZWVkZTM3MzViM2MwMDViZThlMWNkNjYwYTU5ODI0MmY4YWM4YmJlOGViOTYiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImVkODhjMjZiOWRmYWVmMjNhOGI2OTQ3NWVhOWI0MDg5YzJlNDZiY2U3NTY4MTkzOTRkZGI4ZjEzZDQwYjliNzcifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_4b8735786228463a96c407f1b536aa16",
+      "statement": "VFS compare-and-swap (writeAtomic/remove) uses version preconditions: a mismatch throws VfsConflictError (SSSS_VFS_CONFLICT) which the kernel maps to version_conflict, and a path error throws VfsPathError (SSSS_VFS_PATH) mapped to invalid_request.",
+      "evidence": [
+        {
+          "resource": "repo://src/kernel.mjs#L236-L238",
+          "version": "repo-lines-v1:sha256:64a7b77e06e7fe0b854bde0ab2c855f352736e42e885471d1aeeacc40762e6fd:eyJzZWxlY3RlZExpbmVDb3VudCI6MywiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiYzk2MzY1OGRkM2UyMDhiMmRkM2U0ODJiNTBlODJlMmVlYjg5ZDI4ZWJhN2Y3OGYwMGI1ZDI4M2M2ODhlZWMwZiIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiMmQwNTExODA0ZWQyMGQ5MDhmMzVlZTI4MjkxOWE3YzlhMWIxMDUwYTA0ZDhhYWFiZWJhOTM5ZjI4Y2E1OWM4NiIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiMWIwYTg2YTI5Y2Y2NzIxZTZkMWRkOTM2NzNjNDk2NDA1M2Q3NDE3Njc1ZWE4ZTI0YmM1MjFjN2FmMDcwMWZmMSIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiNThkMzllYWI3N2Q5MzQ1MGJmYWQyZTk5ODdjOWZkYjkxYjdhMWVkMDU1NzcxMDNkNzM2ZmQ0NTg2Zjg2OTg1YiJ9"
+        },
+        {
+          "resource": "repo://src/kernel.mjs#L466-L466",
+          "version": "repo-lines-v1:sha256:d2be3244ae1f994d09313e5d87058b7354f2714c42769a819896e5c2c0996db0:eyJzZWxlY3RlZExpbmVDb3VudCI6MSwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiZDJiZTMyNDRhZTFmOTk0ZDA5MzEzZTVkODcwNThiNzM1NGYyNzE0YzQyNzY5YTgxOTg5NmU1YzJjMDk5NmRiMCIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiZDJiZTMyNDRhZTFmOTk0ZDA5MzEzZTVkODcwNThiNzM1NGYyNzE0YzQyNzY5YTgxOTg5NmU1YzJjMDk5NmRiMCIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiMTFmZDkyNWE0OGE1NThlMjM1NTFhMTljMGI0ZWIwMWRiYjFjZjFmYjgyYjdjMDJmNDY5NDkzNmZlMTU3NmVhOSIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiMTQzMTY3NjhjZmNiOTM3OGUwMWU3ZjA1YzBlOWRjMTMwZTBiNjc0NDkxN2ZhY2UyYTVhZGUxZjFhYjQzYjc4NSJ9"
+        },
+        {
+          "resource": "repo://src/vfs.mjs#L18-L24",
+          "version": "repo-lines-v1:sha256:86bfb3c6b51848dc2ca628bf957ad6a525461860dd93c83efc66e8c48514d00e:eyJzZWxlY3RlZExpbmVDb3VudCI6NywiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiNTQzZWNhNDE4NWQ4ZDJlMTkwYzNkYzViZTExZTg1OTExMzIzYzJkOGRhYmQyYThlYjNhYmRhOTdlMDQ5NzgwNCIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiNDEyY2EzNDVjY2Y3NWJmOWMwODA2YmNlNjk1YmU4ZGU4MDhiNzk5ODQyNTFhN2E1NGQyMDJjZjYxMDFkZDQ1MSIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiMjk0MjdhM2JkOWFlOTcyNjZiMTQwZGEwZWU0MjBiZjhmZTlkNjdlNTUxNGExYmFhOWYyMDY5Y2MwYTEzZWE2ZCIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiOThhNmY3NDFhMzI4NjI4NWI1MDg0NDM1OWNiMmY1NTQ5YjhiZGE0NWNhZDE2Yzc1YTllZGYxOTBlYjRiNzc4OCJ9"
+        },
+        {
+          "resource": "repo://src/vfs.mjs#L34-L40",
+          "version": "repo-lines-v1:sha256:12345224d3367e7c4b8b0c4b6c1506329f8100c8ca3f8536fcb96ddc617b69db:eyJzZWxlY3RlZExpbmVDb3VudCI6NywiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiMDZjNDRlODg3MTFmYmI1NGNhNjc0MDg2ZjE0YzA1ODcyOTQ5MzcwZTU5OTA4YmJiYWVkZjYzODYyMGQ1MzIwMyIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiNDEyY2EzNDVjY2Y3NWJmOWMwODA2YmNlNjk1YmU4ZGU4MDhiNzk5ODQyNTFhN2E1NGQyMDJjZjYxMDFkZDQ1MSIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiMGYwMjQ0OTNiZjhkODkyZjI4ZjUyMGQyNmFiZWVlNmQwY2ZkZGZlZGQwZTk2NzViNWZhYWJiODdlMTRjYjcyMSIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiNzA2YTJlMjg5NzZjODg4MGI0NWRkZmU2MTBhY2M4M2JiMjU0MGJmYzJmYzc4MWM1ZTJkMDZlNDRhMGU4NWU2OSJ9"
+        }
+      ]
+    },
+    {
+      "id": "claim_dece6fde1c8c4624a4f63852df59813c",
+      "statement": "expected_before_hash is checked against the current file hash: a mismatch returns version_conflict unless the content is byte-identical (an unchanged no-op); a non-null expected hash on a missing document also returns version_conflict.",
+      "evidence": [
+        {
+          "resource": "repo://src/kernel.mjs#L247-L262",
+          "version": "repo-lines-v1:sha256:f720b340f74e67f35d643ea6145ffef57dce5310e43d665aa9555955afe2042a:eyJzZWxlY3RlZExpbmVDb3VudCI6MTYsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImFmMWVhZWU2ODAxZDFhNWRkZGMxMzYwMDg2NDA3YTVjZTIwOTQxN2JmOTljZDA3Y2NmODI0ZTUyZTA0YWE5M2MiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQ4OTNmNDBlMzc4MWViODk2YzgyZDA0NmEwODA2N2ExMWUzNWNkZjJmMWRmYWYyNmZlYTkwYjhkYjY2NzY0MTMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjdkMWVmYmY1NmVmNzc2NTQxYTM3ZGYxM2JhZTdkMDg2YTAwNTNkOTc5MzZkZjIxYzhjZTNhYTE5OTRjM2U1NGEiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImUxMWIwMDkwZTVlN2Q3MTZhM2U0YmJkNzE1ZDZkMWRjNjNkYjU5MjNhMjZhMmQxMTJjM2I3OGMwNzcyOGYzZmYifQ"
+        }
+      ]
+    }
+  ],
+  "verification": {
+    "by": "openwiki/0.7.2",
+    "at": "2026-11-03T07:15:54.702Z"
+  }
+}

@@ -269,7 +269,7 @@
     "classes": {
       "structural": "The reusable business model — sellable and templatable. Carries no operator- or customer-specific data. Examples: workflow, assistant, page, skill, model, rule, memory, migration, release.",
       "tenant_private": "The operator's private operational data — customers, transcripts, runtime work. NEVER leaves the workspace in a template or sale bundle; included only in an encrypted backup. Examples: conversation, run, task, conflict, and (via extension) profile / CRM contact / deal.",
-      "resource_bound": "Requires a real external resource bound at provision time (a domain, phone number, mailbox, API connection). NEVER ships the seller's resource value; ships only a requirement declaration the buyer satisfies. Defined by extension registries (e.g. festech domain / phone_number / integration_connection)."
+      "resource_bound": "Requires a real external resource bound at provision time (a domain, phone number, mailbox, API connection). NEVER ships the seller's resource value; ships only a requirement declaration the buyer satisfies. Defined by extension registries (e.g. a domain, phone_number, or integration_connection primitive)."
     },
     "export_profiles": {
       "backup": { "includes": ["structural", "tenant_private", "resource_bound"], "note": "Complete fidelity copy. tenant_private MUST be encrypted at rest." },

@@ -1,0 +1,110 @@
+{
+  "schemaVersion": 1,
+  "pageVersion": "sha256:f0ef248526eef58db0ff38ae6ce83a35a37ae4c877de4d4b9eebe2e8bec65a98",
+  "claims": [
+    {
+      "id": "claim_574fe69135004b04a7658c549771cbcd",
+      "statement": "This repository is @gregiteen/ssss-cli, the dependency-free reference implementation of the Structured Semantic Syntax System (SSSS); a host needs neither Zod nor a YAML library, and the reference engine is the validator.",
+      "evidence": [
+        {
+          "resource": "repo://README.md#L1-L19",
+          "version": "repo-lines-v1:sha256:e9a2e9c40687cefe6685852b9dba6c5d50174b5a4dae4ebbe61af7a0bf80b833:eyJzZWxlY3RlZExpbmVDb3VudCI6MTksImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjgwMThlYmVkZjE5YmE2MDI2MzYwNjFkZjBjZjM0NDQ1NjRjYmY2ZmU3ZGNjODJiYjA1MDMwNDBmNDYyODAwNGIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImYwNTQ3ZGIzODAxMjE5MWYwYjQ5YzdkYjVlZDE0ZGM4ZGEwMzljMTk2MGJkNjk0NTRmN2I2YTgxNDE0ZWFiYzQiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjowLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjM3N2Q3MDJiMGE5ZWI2ZjBmNmY0Mjc0MjFkMmY1ZGRmYzNlM2Q1NWQzMWUxZmJiN2U1MzI2YWQxZWQwOTE3ZGYifQ"
+        },
+        {
+          "resource": "repo://package.json#L1-L93",
+          "version": "repo-lines-v1:sha256:af83b0afcdd3b986baa9edaa7baade615ab8f69e9ad7a7c12dd6a0131f161226:eyJzZWxlY3RlZExpbmVDb3VudCI6OTMsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImE2ZmIwOGZkYTFhY2I5NTdiNjExNmJkMzc4MTFhMWZlNDFhMDE2MTFjMDYzMWVkYmY3ODZkNjg4OWEyN2E1NWMiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjYxZTY1MzcxNWVkNmIyNmU3ZmVhNjllNGMxYjgzODk1NWY4MzUyNjZiNTUwMDQyZWVjNTY4ZWVkNjA4ZWI1M2QiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjowLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjoxLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_74b9dcfc7edc40ca8486a947724c0e82",
+      "statement": "The repo contains two distinct layers: the SSSS reference implementation (spec/registry/schemas/kernel/engine/runtime/semantic/bundle) and the Total Recall brain/IDE operational layer (IDE instruction injection, memory, skills, credentials) driven by the Total Recall CLI and plugins.",
+      "evidence": [
+        {
+          "resource": "repo://AGENTS.md#L1-L53",
+          "version": "repo-lines-v1:sha256:203f7fef1361fb6216a271aff464299a219b7790fa28a7afa57dc2fbd8fee1eb:eyJzZWxlY3RlZExpbmVDb3VudCI6NTMsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImE3MGMyMGQyMmEzN2Y5NDBiNjFhZGE3MTY2NGRmMzI2ODA1MmJlODdiOTFmYmU5MTM1NDQ3YmQwMjgyZDU0ZTYiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjowLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjVhMzA2MmU2Zjg3NWNlNDU0YzA5NjU4ZTRmNzE2N2UyOTgyM2M5MzFlMzNhYWJjNzFjNzg2YjU5YWE2MWIwYzYifQ"
+        },
+        {
+          "resource": "repo://README.md#L1-L140",
+          "version": "repo-lines-v1:sha256:439e5e6f6aa9246cdbfecf4649e5e73bf44d3811ca2165ab768ba7c1dcadf41b:eyJzZWxlY3RlZExpbmVDb3VudCI6MTQwLCJmaXJzdFNlbGVjdGVkTGluZUhhc2giOiI4MDE4ZWJlZGYxOWJhNjAyNjM2MDYxZGYwY2YzNDQ0NTY0Y2JmNmZlN2RjYzgyYmIwNTAzMDQwZjQ2MjgwMDRiIiwibGFzdFNlbGVjdGVkTGluZUhhc2giOiI0N2MwNmM1NjFkNWMzMjczNDM2ODUyNjhhNDZiMzM5MWYzOTk4ZWVlODkwZDJiZTUxZjBkMjFjYzRhNTNhZTZkIiwicHJlY2VkaW5nQ29udGV4dExpbmVDb3VudCI6MCwicHJlY2VkaW5nQ29udGV4dEhhc2giOiJlM2IwYzQ0Mjk4ZmMxYzE0OWFmYmY0Yzg5OTZmYjkyNDI3YWU0MWU0NjQ5YjkzNGNhNDk1OTkxYjc4NTJiODU1IiwiZm9sbG93aW5nQ29udGV4dExpbmVDb3VudCI6MywiZm9sbG93aW5nQ29udGV4dEhhc2giOiJkMzA0NTU4ZDhjMzNlOGNhY2U1NDEwMDAzYTBmMzExN2Q4NDIyYTdkMGE5ZDY4YWRkNjQ5MGYwYzhlZWQxY2FmIn0"
+        }
+      ]
+    },
+    {
+      "id": "claim_37825ef097354f2183d98921bf1b5673",
+      "statement": "SSSS defines document primitives validated against a registry, the spec §6 Operation Contract (operation/patch/event/delete envelopes), the spec §11.8 workflow runtime, the spec §11.9 multilingual semantic runtime, the spec §5.5 portability classification (structural/tenant_private/resource_bound), and the spec §16 .ucw bundle plus spec §17 provisioning contract (export → provision → import → upgrade).",
+      "evidence": [
+        {
+          "resource": "repo://README.md#L10-L60",
+          "version": "repo-lines-v1:sha256:33a957d41728a0d8d740a7b130a4f8eef2a05c9538b223510a1cc757d32bd5d1:eyJzZWxlY3RlZExpbmVDb3VudCI6NTEsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImRhYmY2MGZlOWQ3MzAzNzI5M2I4MzM5NjBiMjMwNjJjYzYxZmU5YzE1NjQ4NzlmYjQxN2YwZDVkODI1OWQ0NWUiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQ3YzA2YzU2MWQ1YzMyNzM0MzY4NTI2OGE0NmIzMzkxZjM5OThlZWU4OTBkMmJlNTFmMGQyMWNjNGE1M2FlNmQiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjU4YTUwNmFjYzcyNzhhNzI2MTU0MTc1MWMyOGY1YWQwZmE0YWU5NzI3NjdhNmMwN2Q3NmQyNGQ4MWQ1MjFkNzUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjNhMDc3ZjBkY2VkNTM2OGY0OTVkM2EzNmZkOTFjZmM2OWNkZjdjNzUzZjJiNzZjNDk4YzMxMWIyMDA1MDMwMmUifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_ac3c89f44343406d84be046eb38b6086",
+      "statement": "The engine.mjs is a thin façade over kernel.mjs, and kernel.mjs (kernel.execute) is the shared 0.9 mutation authority that owns all mutation semantics used by hosts and the reference engine.",
+      "evidence": [
+        {
+          "resource": "repo://README.md#L129-L130",
+          "version": "repo-lines-v1:sha256:355383822b7620a8ed36a526dae0360c5a4034d1b267aa81f44a03285b0d5e2a:eyJzZWxlY3RlZExpbmVDb3VudCI6MiwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiZWExNzAxMWI4MDRlOTNlZjgxYTVmY2M1YjZiOTY4NzNkYThhYWVkOGQ2MDhjMmQ5OWI0YTMzY2E5ZTdhNTAzNiIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiMTE1MjA1Zjc0NWRmOGVkYjMxZDk0ZjMzN2YwMmNmM2I4MDJhOTE0Njk5NzE4MmUzODc5MGM1MDk0YTYyNDI5YyIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiMDkyOGI5ZDQ0YjRkOTc3YmFkYzgxMjdiY2ZjNGM0MTI5NWU0MmU2OWNhZWRhNzgwMjk3ZjM2NGMwOWVhZGNhNCIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiZDViYjM4YzJiM2VlYjZlMDM2MmU3ZjM4NWQ1NDM3OWM0MWQ3OTFkMWI0YmFlNWM1NjFjMGFjZGNlZDhiYTNkYSJ9"
+        },
+        {
+          "resource": "repo://docs/help/overview.md#L17-L19",
+          "version": "repo-lines-v1:sha256:f07b3a2e2a3d13131151f3a9d2bcde7a931d7860813ca2340a66db198ec51f76:eyJzZWxlY3RlZExpbmVDb3VudCI6MywiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiYmI2NWJlNmNlNDQ1YzAwZTBhMjE0MzQzZmY1MjgzZWJiOThhYTBhMmViNzQ2ZWM2Zjg2ZTg3NWM1MTAyZDQ2OCIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiMjA4Y2YxZjM5ODY0NzJjNWZmYWQ1YmQ5MDIyOTZiM2VkNTFlZWJhNzI3NDU3Yjg3NDJmZTZjMjRiNWZiZGZhNCIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiZTE0OGM4MzVjZGYxMjIzOWFmY2JkZTgzYTM1YjQ3MTI2MTRlNWE2MzI4NTFiNWE5NTMwYzUzODI0YWY2MmI0YiIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiN2YxMDY2YWYwYzExYWI2ZGJlODgxN2NmMjQ3MzVkZmYwNDliMWEwNTk1M2U0ZjY5YzllMmQ0MjhlZGU0NTM5ZSJ9"
+        }
+      ]
+    },
+    {
+      "id": "claim_ca70468fb3b949348ec98505041a0497",
+      "statement": "The vault→bundle→tenant lifecycle is vault ──export──▶ .ucw bundle ──provision──▶ envelope plan ──import──▶ new vault, where export is pure (spec §16), provision adds params and links (spec §17), and import replays idempotently via the Operation Contract (spec §6).",
+      "evidence": [
+        {
+          "resource": "repo://README.md#L42-L60",
+          "version": "repo-lines-v1:sha256:57280c43409a09666a0b7874df085a83b5379edc4b422fd96e30822fd05b6a8c:eyJzZWxlY3RlZExpbmVDb3VudCI6MTksImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQ3YzA2YzU2MWQ1YzMyNzM0MzY4NTI2OGE0NmIzMzkxZjM5OThlZWU4OTBkMmJlNTFmMGQyMWNjNGE1M2FlNmQiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQ3YzA2YzU2MWQ1YzMyNzM0MzY4NTI2OGE0NmIzMzkxZjM5OThlZWU4OTBkMmJlNTFmMGQyMWNjNGE1M2FlNmQiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjY1MWY4MzE5MzZjM2JlNTAzZTViNWFhZTZhNzZiODk3ZjNjZTkwMDRmMzA1NjNmMjVkMzdlZDM2OTkxMjRkM2UiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjNhMDc3ZjBkY2VkNTM2OGY0OTVkM2EzNmZkOTFjZmM2OWNkZjdjNzUzZjJiNzZjNDk4YzMxMWIyMDA1MDMwMmUifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_1cb94ed05ea44dfab1cdaaf09e6798b0",
+      "statement": "The package exposes library subpaths (kernel, engine, runtime, bundle, semantic, vfs, identity/authorization, leases, idempotency, intents, events, projections, ui, http, guard, schema-validator, schemas/*) and the ssss bin command; it requires Node 18+ and has no runtime dependencies.",
+      "evidence": [
+        {
+          "resource": "repo://package.json#L6-L45",
+          "version": "repo-lines-v1:sha256:6e1da3a98ed9640f8f32b116b346348daa862b7fd7abf27632310e2075a9986f:eyJzZWxlY3RlZExpbmVDb3VudCI6NDAsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjNjMDViYjlmNGE4Yjk4NDUxMGY4MTVhNWZjNDA3OGQ3N2M1YTIwZTkzZjMzNzNkYzVkZGU0YTM0MWQxYjQwYzgiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjRkNWNkMmZiNGYzZGY4ODQ1MTUyNTViMzk1MjNmMmY4YjU0NzJiZWVhOWY1NjZmZmNhMjA0ZGI4MDI1NjEwNDEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImY3MWQ1NTM0ZjVkODNjOTljODhhZWIyMjhmZWI2NDI1NjFmMzFkYmRkZjMyNzdkMjM2Yzc5ZDk4MWE1NjI1MDciLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjBlYWUwMmMxODYwZWY3YzA3ZDdiNTMzYjVlZGMyNTNjODRiZTZmNjNkNjU0NjJkNmYyZWIzYjQzOTFiNTZjYTEifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_a502ea4b4b3a48958d1b0fbd05503abb",
+      "statement": "Credentials must never be placed in OpenWiki pages or compiled IDE instruction files; they are handled exclusively through the Total Recall auth plugin (total-recall auth secret set/get/rotate/audit), which resolves a single per-host store and follows TR_SECRETS_BRAIN as the only store override.",
+      "evidence": [
+        {
+          "resource": "repo://AGENTS.md#L156-L160",
+          "version": "repo-lines-v1:sha256:6acc33ee006893a5fff023cc0eb02614264c578736d2e39084080e404f075beb:eyJzZWxlY3RlZExpbmVDb3VudCI6NSwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiNGMzMjM2MTVlMTFlMmU3Njk4NjdiOGU3YWMyN2Q5OGIyZmQyOTM2MzBhMTgyMzA1NTk2YmZkZTRkOTcxNDFiOSIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiYjIyNDI1YTUxMTI4MTA2ZTQxNDVhMTE1ZmZjMmY1ZDQ2YTlkMmUxM2U0MjBmN2Y1NmY2YWNiOTM4MjRiZjgxMiIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiMDAxZjJlYzE3NTkzYzEwNTRlYjQ2MzY3ZDg0NTNlZjI0YTE3M2NlOTZiNzExN2Q5MWY5YTY4ZDQ0ZmVmOGIwMSIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiMDAxZjJlYzE3NTkzYzEwNTRlYjQ2MzY3ZDg0NTNlZjI0YTE3M2NlOTZiNzExN2Q5MWY5YTY4ZDQ0ZmVmOGIwMSJ9"
+        },
+        {
+          "resource": "repo://AGENTS.md#L5-L5",
+          "version": "repo-lines-v1:sha256:94eb8b62367b63f7c26f64481a580f318e29d19fdf698a3afd7901cd498127ed:eyJzZWxlY3RlZExpbmVDb3VudCI6MSwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiOTRlYjhiNjIzNjdiNjNmN2MyNmY2NDQ4MWE1ODBmMzE4ZTI5ZDE5ZmRmNjk4YTNhZmQ3OTAxY2Q0OTgxMjdlZCIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiOTRlYjhiNjIzNjdiNjNmN2MyNmY2NDQ4MWE1ODBmMzE4ZTI5ZDE5ZmRmNjk4YTNhZmQ3OTAxY2Q0OTgxMjdlZCIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiN2MzY2QwMDUzOTEzNDQzZjgyMmExNDk0ZjcwNGFmNmQ0MTM5MGIyMzgzY2Q1YzJhMjBlYzQzZmIyZDllM2Y0NiIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiOWYwZTI0MzMwYTRjMDg2MThhOGI1MGI2NTcxZGIyMzJhNzBiYTZiZTA2MjVmM2EyMmIxZTIxOTgyY2EyMThlZSJ9"
+        }
+      ]
+    },
+    {
+      "id": "claim_b11c0f5b0ca049ba9c95a659dd3754d5",
+      "statement": "The repository entry points are ssss new (--install) to scaffold a starter vault and conformance test, ssss conformance --engine to replay fixtures and round-trip the reference bundle, npm test as the composite suite (conformance --engine plus event/frontmatter/durability checks), and ssss serve/bridge as the HTTP and stdin/stdout JSON transports.",
+      "evidence": [
+        {
+          "resource": "repo://README.md#L111-L119",
+          "version": "repo-lines-v1:sha256:88ff1523088e815f38e18efdb3737f5f6d1d77077ea3aa827b6e905e390ae1fb:eyJzZWxlY3RlZExpbmVDb3VudCI6OSwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiNDBmNjFlZGIzNjk4YzYzMGZhMzI4N2ZhNzUyMDk1NDJjYTU0Y2U3MmY2NzBjY2ZmNGRlOTAzMzE1ZWFlM2ZjMyIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiNDdjMDZjNTYxZDVjMzI3MzQzNjg1MjY4YTQ2YjMzOTFmMzk5OGVlZTg5MGQyYmU1MWYwZDIxY2M0YTUzYWU2ZCIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiYjY4OGY0ZmExYTQxYjNjZGUzMTQ5NTNkMTVmZmM5YTFmZDUxZjNlMzRiYjIwYWIzYTRiM2JiNjk3ZTQ1OTdjYyIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiOGM2MjliMDMyMTNkNmM1NjRjMGE2Yjk5YTUzNWU1ZTkyM2EzYzJhYzc1YWU5ODNjNjk3ZTBmMmEwOWY1YTk4NCJ9"
+        },
+        {
+          "resource": "repo://package.json#L66-L67",
+          "version": "repo-lines-v1:sha256:086ec9f51494999f5d0a6c7cf6087aa642348a2cdbe6c1e78329f7c8a0cbc3a9:eyJzZWxlY3RlZExpbmVDb3VudCI6MiwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiMmQzN2I1ZGY1YzcyMzAyNzM0OWRhZDc4NTQxMzUyMjU4NDg2ODc4NWE5YjNkNDZiYWVjZjYyMmY2M2FiMTIzZCIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiZjkyOTRmNzVkNDMyNDcwYzE4YmIxNTVmM2U3MWU0YWJiODQ1YTUwZGRiNTExYTcyODZhODNlNTI5ZWU1OGVjOSIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiY2EwYWZlY2U5NGM2YTdiZDcwMTViZGI0MWQ2MjcwNzEzZTA4NjYzOTA1NDdhZTdhNTJkOGRiNTA4MzFkMzdmZCIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiYTEwNzE5ZmMzNzc1MDI0MTQ0OWMxMDQ2MTNkYjkzZTdlMWNkY2VmY2UzZGEzNTMwYzhjZTAzODc0YzU1M2FlYSJ9"
+        }
+      ]
+    }
+  ],
+  "verification": {
+    "by": "openwiki/0.7.2",
+    "at": "2026-11-03T07:15:54.702Z"
+  }
+}

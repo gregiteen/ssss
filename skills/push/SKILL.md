@@ -47,9 +47,10 @@ Run them in order. Stop at the first failure and report it. Don't skip ahead.
    node scripts/generate-sbom.mjs             # writes artifacts/sbom-<version>.spdx.json
    ```
 4. **Preflight.** `node skills/push/scripts/preflight-release.mjs` must print
-   `ok` for every check. It runs skill validation, the parity audit, the full
-   conformance suite, and `git diff --check`.
-5. **Commit only what you mean to ship.** Stage files by name. Never use
+   `ok` for every check. It strictly enforces:
+   - **Phase 1: Code Quality Gates** — skill validation, registry-engine parity, the full conformance suite, and clean git diff.
+   - **Phase 2: Docs & Knowledge Sync** — only after quality gates pass, runs `total-recall openwiki refresh --apply`, automatically synchronizes `docs/help/overview.md` via `scripts/sync-docs.mjs`, and verifies doc parity via `scripts/check-docs-parity.mjs`.
+5. **Commit only what you mean to ship.** Stage files by name (including refreshed `openwiki/` and updated `docs/help/overview.md`). Never use
    `git add .`. Check `git status --short` first: nothing unexplained may be
    left behind or swept in.
    ```bash

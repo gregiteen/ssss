@@ -1,24 +1,52 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://ssss.dev/schemas/core-registry.schema.json",
-  "title": "SSSS Core Registry Schema",
+  "title": "SSSS Core and Extension Registry Schema",
   "description": "JSON Schema for SSSS core and extension registries (spec §5).",
   "type": "object",
   "required": [
     "registry",
-    "spec_version",
-    "description",
     "document_primitives"
   ],
+  "if": {
+    "properties": { "registry": { "const": "core" } },
+    "required": ["registry"]
+  },
+  "then": {
+    "required": ["spec_version", "description"]
+  },
+  "additionalProperties": false,
   "properties": {
     "$schema": {
-      "type": "string"
+      "type": "string",
+      "minLength": 1
     },
     "registry": {
-      "type": "string"
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9_-]{0,63}$"
+    },
+    "extends": {
+      "type": "string",
+      "enum": ["core", "ssss"]
+    },
+    "version": {
+      "type": "string",
+      "pattern": "^\\d+\\.\\d+\\.\\d+(?:-[0-9A-Za-z.-]+)?$"
+    },
+    "requires": {
+      "type": "object",
+      "propertyNames": {
+        "type": "string",
+        "pattern": "^[a-z][a-z0-9_-]{0,63}$"
+      },
+      "additionalProperties": {
+        "type": "string",
+        "minLength": 1
+      }
     },
     "spec_version": {
-      "type": "string"
+      "type": "string",
+      "minLength": 1
     },
     "description": {
       "type": "string"
@@ -28,12 +56,20 @@
     },
     "document_primitives": {
       "type": "object",
+      "propertyNames": {
+        "type": "string",
+        "pattern": "^(?:[a-z][a-z0-9_-]{0,63}:)?[a-z][a-z0-9_-]{0,127}$"
+      },
       "additionalProperties": {
         "$ref": "#/$defs/primitiveDefinition"
       }
     },
     "contract_primitives": {
       "type": "object",
+      "propertyNames": {
+        "type": "string",
+        "pattern": "^[a-z][a-z0-9_-]{0,63}$"
+      },
       "additionalProperties": {
         "$ref": "#/$defs/contractPrimitive"
       }
@@ -41,18 +77,22 @@
     "universal_frontmatter": {
       "type": "object",
       "required": ["required"],
+      "additionalProperties": false,
       "properties": {
         "required": {
           "type": "array",
-          "items": { "type": "string" }
+          "items": { "type": "string", "minLength": 1 },
+          "uniqueItems": true
         },
         "recommended_okf": {
           "type": "array",
-          "items": { "type": "string" }
+          "items": { "type": "string", "minLength": 1 },
+          "uniqueItems": true
         },
         "recommended_semantic": {
           "type": "array",
-          "items": { "type": "string" }
+          "items": { "type": "string", "minLength": 1 },
+          "uniqueItems": true
         },
         "spec_ref": {
           "type": "string"
@@ -62,6 +102,7 @@
     "portability": {
       "type": "object",
       "required": ["classes", "export_profiles"],
+      "additionalProperties": false,
       "properties": {
         "description": { "type": "string" },
         "classes": {
@@ -73,14 +114,17 @@
           "additionalProperties": {
             "type": "object",
             "required": ["includes"],
+            "additionalProperties": false,
             "properties": {
               "includes": {
                 "type": "array",
-                "items": { "type": "string" }
+                "items": { "type": "string", "minLength": 1 },
+                "uniqueItems": true
               },
               "excludes": {
                 "type": "array",
-                "items": { "type": "string" }
+                "items": { "type": "string", "minLength": 1 },
+                "uniqueItems": true
               },
               "resource_bound": { "type": "string" },
               "note": { "type": "string" }
@@ -99,46 +143,56 @@
         "manifest_required_fields",
         "provenance_required_fields"
       ],
+      "additionalProperties": false,
       "properties": {
         "description": { "type": "string" },
         "container": { "type": "string" },
         "structure": {
           "type": "array",
-          "items": { "type": "string" }
+          "items": { "type": "string", "minLength": 1 },
+          "uniqueItems": true
         },
         "file_sort": { "type": "string" },
         "manifest_required_fields": {
           "type": "array",
-          "items": { "type": "string" }
+          "items": { "type": "string", "minLength": 1 },
+          "uniqueItems": true
         },
         "manifest_optional_fields": {
           "type": "array",
-          "items": { "type": "string" }
+          "items": { "type": "string", "minLength": 1 },
+          "uniqueItems": true
         },
         "provenance_required_fields": {
           "type": "array",
-          "items": { "type": "string" }
+          "items": { "type": "string", "minLength": 1 },
+          "uniqueItems": true
         },
         "provenance_optional_fields": {
           "type": "array",
-          "items": { "type": "string" }
+          "items": { "type": "string", "minLength": 1 },
+          "uniqueItems": true
         },
         "content_hash": { "type": "string" },
         "parameter_fields": {
           "type": "object",
           "required": ["required"],
+          "additionalProperties": false,
           "properties": {
             "required": {
               "type": "array",
-              "items": { "type": "string" }
+              "items": { "type": "string", "minLength": 1 },
+              "uniqueItems": true
             },
             "optional": {
               "type": "array",
-              "items": { "type": "string" }
+              "items": { "type": "string", "minLength": 1 },
+              "uniqueItems": true
             },
             "source_enum": {
               "type": "array",
-              "items": { "type": "string" }
+              "items": { "type": "string", "minLength": 1 },
+              "uniqueItems": true
             },
             "note": { "type": "string" }
           }
@@ -155,6 +209,7 @@
         "system_enum",
         "mode_enum"
       ],
+      "additionalProperties": false,
       "properties": {
         "description": { "type": "string" },
         "verbs": {
@@ -163,27 +218,33 @@
         },
         "step_required_fields": {
           "type": "array",
-          "items": { "type": "string" }
+          "items": { "type": "string", "minLength": 1 },
+          "uniqueItems": true
         },
         "step_optional_fields": {
           "type": "array",
-          "items": { "type": "string" }
+          "items": { "type": "string", "minLength": 1 },
+          "uniqueItems": true
         },
         "system_enum": {
           "type": "array",
-          "items": { "type": "string" }
+          "items": { "type": "string", "minLength": 1 },
+          "uniqueItems": true
         },
         "mode_enum": {
           "type": "array",
-          "items": { "type": "string" }
+          "items": { "type": "string", "minLength": 1 },
+          "uniqueItems": true
         },
         "edge_relations": {
           "type": "array",
-          "items": { "type": "string" }
+          "items": { "type": "string", "minLength": 1 },
+          "uniqueItems": true
         },
         "install_modes": {
           "type": "array",
-          "items": { "type": "string" }
+          "items": { "type": "string", "minLength": 1 },
+          "uniqueItems": true
         },
         "id_remap": { "type": "string" },
         "upgrade": { "type": "string" },
@@ -201,27 +262,33 @@
         "run_statuses",
         "idempotency_basis"
       ],
+      "additionalProperties": false,
       "properties": {
         "description": { "type": "string" },
         "trigger_types": {
           "type": "array",
-          "items": { "type": "string" }
+          "items": { "type": "string", "minLength": 1 },
+          "uniqueItems": true
         },
         "misfire_policies": {
           "type": "array",
-          "items": { "type": "string" }
+          "items": { "type": "string", "minLength": 1 },
+          "uniqueItems": true
         },
         "concurrency_policies": {
           "type": "array",
-          "items": { "type": "string" }
+          "items": { "type": "string", "minLength": 1 },
+          "uniqueItems": true
         },
         "task_instantiation_fields": {
           "type": "array",
-          "items": { "type": "string" }
+          "items": { "type": "string", "minLength": 1 },
+          "uniqueItems": true
         },
         "run_statuses": {
           "type": "array",
-          "items": { "type": "string" }
+          "items": { "type": "string", "minLength": 1 },
+          "uniqueItems": true
         },
         "idempotency_basis": { "type": "string" },
         "spec_ref": { "type": "string" }
@@ -238,34 +305,40 @@
         "language_pattern",
         "safe_default"
       ],
+      "additionalProperties": false,
       "properties": {
-        "version": { "type": "integer" },
+        "version": { "type": "integer", "minimum": 1 },
         "identity_fields": {
           "type": "array",
-          "items": { "type": "string" }
+          "items": { "type": "string", "minLength": 1 },
+          "uniqueItems": true
         },
         "surface_fields": {
           "type": "array",
-          "items": { "type": "string" }
+          "items": { "type": "string", "minLength": 1 },
+          "uniqueItems": true
         },
         "relation_fields": {
           "type": "array",
-          "items": { "type": "string" }
+          "items": { "type": "string", "minLength": 1 },
+          "uniqueItems": true
         },
         "renderable_fields": {
           "type": "array",
-          "items": { "type": "string" }
+          "items": { "type": "string", "minLength": 1 },
+          "uniqueItems": true
         },
-        "language_pattern": { "type": "string" },
-        "safe_default": { "type": "string" },
+        "language_pattern": { "type": "string", "minLength": 1 },
+        "safe_default": { "type": "string", "minLength": 1 },
         "spec_ref": { "type": "string" }
       }
     },
     "reserved_keys": {
       "type": "array",
-      "items": { "type": "string" }
+      "items": { "type": "string", "minLength": 1 },
+      "uniqueItems": true
     },
-    "host_field_prefix": { "type": "string" },
+    "host_field_prefix": { "type": "string", "minLength": 1 },
     "spec_ref_reserved": { "type": "string" }
   },
   "$defs": {
@@ -277,11 +350,16 @@
         "portability",
         "required_fields"
       ],
+      "additionalProperties": false,
       "properties": {
         "family": {
-          "type": "string"
+          "type": "string",
+          "minLength": 1
         },
         "canonical_filename": {
+          "type": ["string", "null"]
+        },
+        "canonical_path": {
           "type": ["string", "null"]
         },
         "filename_convention": {
@@ -296,61 +374,99 @@
         },
         "required_fields": {
           "type": "array",
-          "items": { "type": "string" }
+          "items": { "type": "string", "minLength": 1 },
+          "uniqueItems": true
+        },
+        "optional_fields": {
+          "type": "array",
+          "items": { "type": "string", "minLength": 1 },
+          "uniqueItems": true
         },
         "required_when": {
           "type": "object",
+          "propertyNames": {
+            "type": "string",
+            "pattern": "^[A-Za-z_][A-Za-z0-9_-]*==.+$"
+          },
           "additionalProperties": {
             "type": "array",
-            "items": { "type": "string" }
+            "items": { "type": "string", "minLength": 1 },
+            "uniqueItems": true
           }
         },
         "enums": {
           "type": "object",
+          "propertyNames": {
+            "type": "string",
+            "pattern": "^[A-Za-z_][A-Za-z0-9_-]*$"
+          },
           "additionalProperties": {
             "type": "array",
-            "items": { "type": "string" }
+            "items": { "type": "string", "minLength": 1 },
+            "uniqueItems": true
           }
         },
         "patterns": {
           "type": "object",
+          "propertyNames": {
+            "type": "string",
+            "pattern": "^[A-Za-z_][A-Za-z0-9_-]*$"
+          },
           "additionalProperties": {
-            "type": "string"
+            "type": "string",
+            "minLength": 1
           }
         },
         "immutable_fields": {
           "type": "array",
-          "items": { "type": "string" }
+          "items": { "type": "string", "minLength": 1 },
+          "uniqueItems": true
         },
         "references": {
           "type": "object",
+          "propertyNames": {
+            "type": "string",
+            "pattern": "^[A-Za-z_][A-Za-z0-9_-]*$"
+          },
           "additionalProperties": {
             "type": "object",
+            "additionalProperties": false,
             "properties": {
               "allowed_types": {
                 "type": "array",
-                "items": { "type": "string" }
+                "items": { "type": "string", "minLength": 1 },
+                "uniqueItems": true
               },
               "disallowed_types": {
                 "type": "array",
-                "items": { "type": "string" }
+                "items": { "type": "string", "minLength": 1 },
+                "uniqueItems": true
               },
               "allowed_portability": {
                 "type": "array",
-                "items": { "type": "string" }
+                "items": {
+                  "type": "string",
+                  "enum": ["structural", "tenant_private", "resource_bound"]
+                },
+                "uniqueItems": true
               },
               "must_exist": {
                 "type": "boolean"
               },
               "hash_field": {
-                "type": "string"
+                "type": "string",
+                "pattern": "^[A-Za-z_][A-Za-z0-9_-]*$"
               }
             }
           }
         },
         "aliases": {
           "type": "array",
-          "items": { "type": "string" }
+          "items": {
+            "type": "string",
+            "pattern": "^(?:[a-z][a-z0-9_-]{0,63}:)?[a-z][a-z0-9_-]{0,127}$"
+          },
+          "uniqueItems": true
         },
         "deprecated": {
           "type": "boolean"
@@ -360,14 +476,64 @@
         },
         "resource": {
           "type": "object",
+          "additionalProperties": false,
           "properties": {
             "kind": { "type": "string" },
+            "binds": {
+              "type": "array",
+              "items": { "type": "string", "minLength": 1 },
+              "uniqueItems": true
+            },
             "provision_relation": { "type": "string" }
           }
         },
+        "notes": {
+          "type": "string"
+        },
+        "description": {
+          "type": "string"
+        },
+        "projection_strategy": {
+          "type": "string"
+        },
         "scopes": {
           "type": "array",
-          "items": { "type": "string" }
+          "items": {
+            "type": "string",
+            "enum": ["system", "account", "workspace", "user"]
+          },
+          "uniqueItems": true
+        },
+        "capabilities": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "array",
+            "items": { "type": "string", "minLength": 1 },
+            "uniqueItems": true
+          }
+        },
+        "events": {
+          "type": "array"
+        },
+        "projections": {
+          "type": "array"
+        },
+        "ui": {
+          "type": "object"
+        },
+        "migrations": {
+          "type": "array"
+        },
+        "primitive_version": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "primitive_revision": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "authored_language": {
+          "type": ["string", "null"]
         },
         "spec_ref": {
           "type": "string"
@@ -377,9 +543,10 @@
     "contractPrimitive": {
       "type": "object",
       "required": ["purpose", "spec_ref"],
+      "additionalProperties": false,
       "properties": {
-        "purpose": { "type": "string" },
-        "spec_ref": { "type": "string" }
+        "purpose": { "type": "string", "minLength": 1 },
+        "spec_ref": { "type": "string", "minLength": 1 }
       }
     }
   }

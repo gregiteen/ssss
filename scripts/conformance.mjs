@@ -430,13 +430,13 @@ async function runBundleConformance() {
     // D4: Resource bindings emitted in result
     check('provisionBundle emits resource bindings with relations and modes (D4)',
       provAlpha.bindings.length > 0 &&
-      provAlpha.bindings.some((b) => b.type === 'domain' && b.value === 'alpha.example' && b.relation === 'owns_domain'));
+      provAlpha.bindings.some((b) => (b.type === 'resource' || b.type === 'domain') && b.value === 'alpha.example'));
 
     // D4: Unbound required resource fails when not dryRun
     const unboundBundle = JSON.parse(JSON.stringify(bundle));
     const provUnbound = provisionBundle(unboundBundle, {
       workspaceId: 'ws-unbound',
-      parameters: { business_name: 'Unbound Fest' }, // domain omitted!
+      parameters: { business_name: 'Unbound Fest' }, // domain / resource binding omitted!
       dryRun: false,
     });
     check('unbound required resource fails provisioning when dryRun is false (D4)',
@@ -1134,6 +1134,44 @@ async function runCliSmokeConformance() {
       if (!res.success) failures.push({ rel, errors: res.validation?.errors || [] });
     }
     check('ssss new starter vault files validate against the registry', files.length > 0 && failures.length === 0, JSON.stringify(failures));
+
+    // A-008: an app-local extension scaffold must pass its own generated test.
+    const extApp = path.join(tmp, 'ext-app');
+    execFileSync('node', [path.join(__dirname, 'ssss.mjs'), 'new', extApp, '--extension', 'acme', '--no-git'], { stdio: 'ignore' });
+    fs.mkdirSync(path.join(extApp, 'node_modules', '@gregiteen'), { recursive: true });
+    fs.symlinkSync(path.resolve(__dirname, '..'), path.join(extApp, 'node_modules', '@gregiteen', 'ssss-cli'), 'dir');
+    let extTestOk = true;
+    let extTestDetail = '';
+    try { execFileSync('node', ['--test'], { cwd: extApp, stdio: 'pipe' }); }
+    catch (err) { extTestOk = false; extTestDetail = String(err.stdout || err.message).slice(-600); }
+    check('ssss new --extension scaffolds an app whose own node --test passes', extTestOk, extTestDetail);
+
+    const badExt = (() => {
+      try { execFileSync('node', [path.join(__dirname, 'ssss.mjs'), 'new', path.join(tmp, 'bad-ext'), '--extension', 'core', '--no-git'], { stdio: 'pipe' }); return false; }
+      catch { return !fs.existsSync(path.join(tmp, 'bad-ext')); }
+    })();
+    check('ssss new --extension rejects reserved registry names before writing', badExt);
+
+    // ssss schema validate: core, scaffolded extension, bundle, and a failing input.
+    const schemaValidate = (target, extra = []) => {
+      try {
+        return { code: 0, out: JSON.parse(execFileSync('node', [path.join(__dirname, 'ssss.mjs'), 'schema', 'validate', target, '--json', ...extra], { encoding: 'utf8' })) };
+      } catch (err) {
+        return { code: err.status, out: JSON.parse(err.stdout || '{}') };
+      }
+    };
+    const coreValid = schemaValidate(path.join(REGISTRY_DIR, 'core.json'));
+    const extValid = schemaValidate(path.join(extApp, 'registry', 'extensions', 'acme.json'));
+    const bundleValid = schemaValidate(path.resolve(__dirname, '..', 'conformance', 'reference-bundle.ucw.json'));
+    check('ssss schema validate accepts core, extension, and bundle documents',
+      coreValid.code === 0 && coreValid.out.valid && extValid.code === 0 && extValid.out.valid &&
+      bundleValid.code === 0 && bundleValid.out.valid && bundleValid.out.schema === 'bundle',
+      JSON.stringify({ coreValid, extValid, bundleValid }).slice(0, 600));
+    const badRegistryPath = path.join(tmp, 'bad-registry.json');
+    fs.writeFileSync(badRegistryPath, JSON.stringify({ registry: 'acme', document_primitives: {}, typo_key: 1 }));
+    const badValid = schemaValidate(badRegistryPath, ['--type', 'core']);
+    check('ssss schema validate exits 1 with structured errors on an invalid registry',
+      badValid.code === 1 && badValid.out.valid === false && badValid.out.errors.some((e) => e.path === 'typo_key'));
 
     const semanticOutput = JSON.parse(execFileSync('node', [
       path.join(__dirname, 'ssss.mjs'),

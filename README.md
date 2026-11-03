@@ -9,12 +9,12 @@
 
 SSSS is a vendor-neutral standard and reference implementation for portable AI memory and state. It defines:
 
-- **Document primitives** — typed Markdown files with YAML frontmatter (`workflow`, `rule`, `page`, `assistant`, …), validated against a registry, not hand-written code.
+- **Document primitives** — typed Markdown files with YAML frontmatter (`workflow`, `rule`, `role`, `assistant`, …), validated against a registry, not hand-written code.
 - **The Operation Contract** (§6) — four envelope types (`operation` / `patch` / `event` / `delete`) for mutating a vault, with idempotency replay and audit.
-- **The Workflow Runtime Contract** (§11.8) — workflows own triggers; daemons, crons, and webhooks derive idempotent event/task/run envelopes from the vault.
+- **The Workflow Runtime Contract** (§11.8) — workflows and standalone triggers derive idempotent event/task/run envelopes from the vault.
 - **Multilingual semantic runtime** (§11.9) — deterministic lexical evidence, injected multilingual embeddings, and runtime rendering with symbolic controls fixed.
 - **Portability classification** (§5.5) — the keystone: every primitive is `structural`, `tenant_private`, or `resource_bound`, so a vault can be *sold* or *shared* without leaking private data.
-- **The `.ucw` bundle format** (§16) and **provisioning contract** (§17) — package a vault, then `export → provision → import` it into a fresh environment, deterministically.
+- **The `.ucw` bundle format** (§16) and **provisioning contract** (§17) — package a vault, then `export → provision → import → upgrade` it into a fresh environment, deterministically.
 
 This package, `@gregiteen/ssss-cli`, is **dependency-free**: a host needs neither Zod nor a YAML library to be conformant. The reference engine *is* the validator.
 
@@ -61,16 +61,17 @@ ssss import bundle.ucw.json --vault ./new-tenant \
 
 ## 0.9 application kernel
 
-SSSS 0.9 provides a shared mutation kernel and host adapter contracts for any system using SSSS:
+SSSS 0.9 provides a shared mutation kernel, canonical JSON Schemas, and host adapter contracts for any system using SSSS:
 
 ```bash
 ssss primitive create --namespace acme --name "New Item" --language en
 ssss registry compose --extension ./acme-extension.json
+ssss schema validate registry/core.json
 ssss adapter conformance
 ssss migrate 0.8-to-0.9 ./vault
 ```
 
-Library subpaths: `@gregiteen/ssss-cli/kernel`, `/vfs`, `/identity`, `/leases`, `/events`, `/projections`, `/semantic`, `/ui`.
+Library subpaths: `@gregiteen/ssss-cli/kernel`, `/vfs`, `/identity`, `/authorization`, `/leases`, `/idempotency`, `/intents`, `/events`, `/projections`, `/semantic`, `/ui`, `/http`, `/guard`, `/schema-validator`, `/schemas/*`.
 
 ## Commands
 
@@ -79,6 +80,7 @@ Library subpaths: `@gregiteen/ssss-cli/kernel`, `/vfs`, `/identity`, `/leases`, 
 | `ssss new <dir>` | Scaffold a new SSSS project (`--install`). |
 | `ssss primitive <verb>` | Create, validate, inspect, or migrate primitive definitions. |
 | `ssss registry <verb>` | Compose, lock, or verify an effective registry. |
+| `ssss schema <verb>` | Output, export, or validate against Draft 2020-12 JSON Schemas (`core`, `bundle`, `export`, `validate`). |
 | `ssss adapter conformance` | Run machine-readable VFS/lease/idempotency contract suites. |
 | `ssss migrate 0.8-to-0.9` | Dry-run migration diagnostics with backup manifest. |
 | `ssss export <vault>` | Package a vault into a `.ucw` bundle (§16). Pure & deterministic. |
@@ -86,10 +88,13 @@ Library subpaths: `@gregiteen/ssss-cli/kernel`, `/vfs`, `/identity`, `/leases`, 
 | `ssss inspect <bundle>` | Human-readable summary (manifest, inventory, params, steps). |
 | `ssss provision <bundle>` | Plan an install: params + link integrity → envelopes (§17). |
 | `ssss import <bundle>` | Replay a bundle/plan into a vault via the engine (idempotent). |
+| `ssss upgrade <bundle>` | Upgrade an installed vault to a new bundle version via structural patches (§17.4). |
+| `ssss serve [options]` | Start the reference HTTP server for operations (§6.8). |
+| `ssss bridge [options]` | Execute operations over stdin/stdout JSON (§6.8). |
 | `ssss semantic <vault>` | Build or query a deterministic, privacy-safe semantic index (§11.9). |
 | `ssss autolink [dir]` | Generate OKF wiki-links across a vault. |
 | `ssss conformance` | Run the canonical conformance suite (§12). |
-| `ssss help [topic]` | Local docs: `runtime`, `portability`, `bundle`, `provisioning`, `leases`, … |
+| `ssss help [topic]` | Local docs: `runtime`, `portability`, `bundle`, `provisioning`, `schema`, `leases`, … |
 
 Run `ssss <command> --help` for flags, or `ssss help <topic>` for concepts.
 
@@ -97,7 +102,7 @@ Run `ssss <command> --help` for flags, or `ssss help <topic>` for concepts.
 
 | Class | Meaning | In a `sale` export? |
 |-------|---------|---------------------|
-| `structural` | The sellable business model (`workflow`, `rule`, `page`, …). | ✅ shipped |
+| `structural` | The sellable business model (`workflow`, `rule`, `role`, …). | ✅ shipped |
 | `resource_bound` | Needs a real resource bound at provision (`domain`, `phone_number`). | ✅ shipped (as a parameter/step) |
 | `tenant_private` | The operator's private data (`task`, customer records). | ❌ **dropped** |
 
@@ -110,7 +115,7 @@ A host MUST NOT claim SSSS conformance without passing the suite in `conformance
 ```bash
 ssss conformance            # structural + registry validation
 ssss conformance --engine   # + replay all fixtures + round-trip the reference bundle
-npm test                    # == ssss conformance --engine
+npm test                    # == ssss conformance --engine + event/frontmatter/durability suites
 ```
 
 ## Repository layout
@@ -118,13 +123,16 @@ npm test                    # == ssss conformance --engine
 ```
 docs/ssss-spec.md          The normative specification (v0.9).
 docs/help/                 Topic docs surfaced by `ssss help`.
-registry/core.json         15 document + 5 contract primitives; semantic, bundle & provisioning schemas.
-registry/extensions/       Application extension registries.
+registry/core.json         20 document + 5 contract primitives; semantic, bundle & provisioning rules.
+registry/extensions/       Empty in this package; apps keep their own `registry/extensions/<app>.json` (`ssss new --extension`).
+schemas/                   Draft 2020-12 JSON Schemas (`core-registry.schema.json`, `bundle.schema.json`).
+src/kernel.mjs             Shared 0.9 mutation kernel (`kernel.execute`).
 src/engine.mjs             Operation Contract engine (§6).
 src/runtime.mjs            Workflow trigger → event/task/run envelope planning (§11.8).
 src/semantic.mjs           Multilingual semantic retrieval + runtime rendering (§11.9).
-src/bundle.mjs             export / validate / provision / import (§16–§17).
+src/bundle.mjs             export / validate / provision / import / upgrade (§16–§17).
 src/registry.mjs           Registry-driven type + portability resolution.
+src/schema-validator.mjs   Zero-dependency Draft 2020-12 JSON Schema validator.
 src/frontmatter.mjs        Zero-dependency YAML frontmatter.
 scripts/ssss.mjs           The `ssss` CLI dispatcher.
 conformance/               Canonical fixtures + reference bundle.

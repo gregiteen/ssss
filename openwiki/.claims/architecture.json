@@ -1,0 +1,224 @@
+{
+  "schemaVersion": 1,
+  "pageVersion": "sha256:de4d1f6b37cbe74a6c99e9eb300f3879269a4c36fd67d15bc786c5f9a30a8d53",
+  "claims": [
+    {
+      "id": "claim_410cfda101464bfea4d622a3fbba4d3d",
+      "statement": "The SSSS reference implementation is layered (spec → registry/schemas → frontmatter → validator → kernel → adapters → runtime/semantic/bundle → CLI/transports), and src/kernel.mjs is the sole mutation authority: createKernel() takes injectable adapters (VFS, event store, idempotency store, lease store, authorizer, projection coordinator, resource coordinator) and exposes execute() and recover(), owning the §6.3 stage ordering and semantics while adapters implement mechanics only.",
+      "evidence": [
+        {
+          "resource": "repo://docs/ssss-spec.md#L1019-L1023",
+          "version": "repo-lines-v1:sha256:4102c20a136cf76cebcfe88517bc10c726c8e30aaad0fb77094bbe77e02ad244:eyJzZWxlY3RlZExpbmVDb3VudCI6NSwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiOWIyOWFmODZhMmI0YjVhODg0MzIxM2E3NTkxYTNhZmM5ZmNjNjU1MDMxZDI3OTcxYzBlZjk0MGRmMzM2OTMwYiIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiYzZhNDk4NDE4NWQ5MjMxZmNlN2ZiMjY0Yzk1NzUzNDc5ZDRkOTA3YmI0YzJkNDkzMDI1NzliYjE2NDgwOWJjNyIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiYTUxYjY2ZDllNDVkZWNiOWY2MWU3NDA5ZDQzMTgwNWMwNjQzMmMwZjViNjQ5MmE2NGIwNTc0MTRkMWM2MWVmMCIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiYTg2Y2I0NWExMDgzYzQ2NzQ1ZmJjZGE5ODU4OWJhNDFjZGZhZTc1ZjZkN2U3YWQzMzA3ZDU0MGM4OGZkNTE3NCJ9"
+        },
+        {
+          "resource": "repo://src/kernel.mjs#L181-L232",
+          "version": "repo-lines-v1:sha256:8739d1afd6f66ed5c5265f1679f44d00896b8134711ff9d278429215b5f374a9:eyJzZWxlY3RlZExpbmVDb3VudCI6NTIsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImU5YThjNzFhMzJjYjBhNWNmMjM1N2M0ZWJjMWZhNDc5ZmExYTFlYWRmZGZiMzY4NjliMzEyMWJhNDZkN2M3ZTYiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6Ijg2NjlmODJhMzE3ODBhMWU0OTY2YzJlZjMzYzY2ZDczMDY2MTFkYTA2NTA3OWE1YWE4MDQ3NGIwYjMyZWU5YjQiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjVjMDU5YTkxZDkzZGNkZDdjODE4MGFjZTBjZjA3YjFlY2FiNDRiZGE3ZjNiNGIwMDY5ZThkM2MzYjE4MjkxNjkiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjFiMGE4NmEyOWNmNjcyMWU2ZDFkZDkzNjczYzQ5NjQwNTNkNzQxNzY3NWVhOGUyNGJjNTIxYzdhZjA3MDFmZjEifQ"
+        },
+        {
+          "resource": "repo://src/kernel.mjs#L87-L100",
+          "version": "repo-lines-v1:sha256:b6bfac65e894832444e6d8d955e4076b1c20445384cba1e8361ef7951cada24b:eyJzZWxlY3RlZExpbmVDb3VudCI6MTQsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjgwNTQ5ODcyOWRlODgyYTI2MDQwYzI4YTBkNDIwYzA4ZWU5MDFiMjNhZjU0MWNmNzFkNGY1MGY1Mjc4MGVjNzYiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjBmZjhjN2JjMmQ3ZDdmZjk5MDA4MDRkM2Q5NzkxODEzZDRlZTllMTBkNGRhODVmZGYyNGZkYWIzMDFlYmVjMGQiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6Ijg1ZjM2OTQ3MjBhN2NiYzA1ZmNhZWVkZTM3MzViM2MwMDViZThlMWNkNjYwYTU5ODI0MmY4YWM4YmJlOGViOTYiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImZlM2UxNjRmYjgxZmVhNTk3ODhkZjU4ZWMxODZiYzU0Y2M5ZjlmNTc1M2EwMjUyZTM2NDcyMzFmMmZkYmQ0MGUifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_84af564b523c47e7be1485bf8e5cc4cf",
+      "statement": "src/engine.mjs is a thin compatibility façade over the kernel with no second mutation implementation: createEngine() builds a createKernel() per (vaultRoot, eventLogDir) pair and forwards every envelope to kernel.execute(); its only added behavior is legacy principal translation from roles/<role>/ROLE.md permissions into 0.9 capabilities and stripping the ssss: qualifier from the validation type.",
+      "evidence": [
+        {
+          "resource": "repo://src/engine.mjs#L1-L14",
+          "version": "repo-lines-v1:sha256:85803fb0ccea2faef73f20a7682f4d1370c4bfb21ad9679b93e2af0ae94ad0c1:eyJzZWxlY3RlZExpbmVDb3VudCI6MTQsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImVhZjIyY2YwNzMyNTkyYzI0NzE0MWNiZTYxZWZhMTEwMTI2MTJmNWEzMTIyYjlhZjliYmFmNTJmNTcyNGQxOTQiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjMyMGZlOGViOWY1Mjg2N2M5MmRjOWFkOTkwNWJkYTk4MDhiNjgzNjE2ZDhiMjk0YzZiNmZkMWIxYTllNWE1MTAiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjowLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjQxZGM2MmMzNmNkOTcwMzc4ODliOWRiMjdlYTE2ODY3MGU5OTFjNmFlMDhkYTZkNjE3NTEzZWUzMDY5NTNjMzMifQ"
+        },
+        {
+          "resource": "repo://src/engine.mjs#L108-L160",
+          "version": "repo-lines-v1:sha256:fc2b68e84f300ba6e0fbddd4fd0625a05c37187c4afe8224cd5b0fc97b8fea1c:eyJzZWxlY3RlZExpbmVDb3VudCI6NTMsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAwMzg5NGE2NjZmYzVlYzNmZmY5NWFkZWE0OGNmMmRjODliNjcwNGNhNTY1NjIxZDlkM2Y5NzJlZTg0OTlmNDIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImZiNTgwZTk2NGY4M2E0NzNmNDNkNDQzODQ2Mjk0OWQ2OGI1NjAwZmRhNzg3ZjE2Mzc0NWQwMGRlODljYmYzNmEiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjowLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_5861da65629e485e8c07f483aa986c10",
+      "statement": "Type validation is registry-driven rather than per-type code: a primitive's required_fields, append_only flag, immutable_fields, references, and portability class all come from registry/core.json plus extensions, so src/validator.mjs and src/registry.mjs validate any primitive (workflow, assistant, or a host extension) by resolving the declared type against the registry.",
+      "evidence": [
+        {
+          "resource": "repo://src/registry.mjs#L1-L10",
+          "version": "repo-lines-v1:sha256:b146a11bf0770daae7ddabe0067d995046f45852b18845485fd4158cf4794fda:eyJzZWxlY3RlZExpbmVDb3VudCI6MTAsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImVhZjIyY2YwNzMyNTkyYzI0NzE0MWNiZTYxZWZhMTEwMTI2MTJmNWEzMTIyYjlhZjliYmFmNTJmNTcyNGQxOTQiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6Ijk3MmE0MjkzODJiMmUxNDcxOGUwZTM3YjA1NzBhOGExNzAyOTkxZmNkODQ5OGNkODQwNjBhOGJmNGYwNTAxN2IiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjowLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjQ3YmE2NjlkY2M5N2ZjOWU3YWE3OTQ5MDY5NjEzYjhiOTI4ZmI5YjM5NmU1ZjQ2YTdiYzZkMDhkM2ZiMjliNDQifQ"
+        },
+        {
+          "resource": "repo://src/validator.mjs#L32-L63",
+          "version": "repo-lines-v1:sha256:be592e8275efadb32ecac06c4001dcc0398265a118c3399f11044e866033b5d0:eyJzZWxlY3RlZExpbmVDb3VudCI6MzIsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6Ijc4MWY5OGE3NzRhYWIxMjI0MGM4NjgwNGE2YjUyMDc3MTUxMDQ4NGU3YTY3MDNkNTZkODg4YzA1MGFiYTEzODMiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjkyMDQwZTA5NWE5NGUyYWRhNzRlNDIxZjM3MTg3NTFhOTFhODEwYmZkNjZmNDhmNGU5MzljN2I3NDgwZWI2NzAiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjM3ZTA5MWFlYmUxYzBjOTc4MTBlNWQ0ODA2YjkzZmVlZjQwODRkYzdlNWJiMWFjNTc3ZmExZGJiMWZmN2U4ODcifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_ff9a81aa975a4eed91fc86556815ba99",
+      "statement": "A mutation flows through the §6.3 pipeline in kernel.execute as one of four envelope types (operation, patch, event, delete), authenticating the principal before any storage read, enforcing idempotency against both the idempotency store and the event log, validating content and append-only/type-immutability rules, authorizing, leasing, and committing; the canonical event append at stage 10 is the commit point before which any failure leaves no trace and after which nothing rolls back, with resource finalize, projections, and idempotency recording (stages 11-13) failing forward as warnings.",
+      "evidence": [
+        {
+          "resource": "repo://docs/ssss-spec.md#L1025-L1044",
+          "version": "repo-lines-v1:sha256:adafd591bc30b1c196950623932c5ca0a0b738c031304912de92b39d24040681:eyJzZWxlY3RlZExpbmVDb3VudCI6MjAsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjM0N2QwODllODQ1MWM5Y2I0YTA4MmMxMDgwMTA2MzcxN2ZjNzRhMWQzMzNkYjRhZmU1ZWMwY2UzOGY5ZTg3ZWMiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImRmYjc3NTNjMmNlNTI0ODVhN2RiM2ZmMzFkNjAxZjhiMjU4MGEzNjk4OTFkNDY5ZmY3Y2Q3OGRmMjlmZmQzYzMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6Ijc4ZWU4ZmViY2I1NmYzNDAxNzNkOGUwYzE5ZDExZmNkYjQ5ZjNmZTY3MGQ5MDg2ZGM5NDM1MWNiNDhlMDQ0ZGEiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImY0NDNkMmU4NThjOTNmOGM5ZmQ3MmVjMmIzYmU3ODA3NmQ0NWE5YzFmOWM3YzA2NzFmOTlkNDg4ZjhkOTVlMjMifQ"
+        },
+        {
+          "resource": "repo://src/kernel.mjs#L181-L232",
+          "version": "repo-lines-v1:sha256:8739d1afd6f66ed5c5265f1679f44d00896b8134711ff9d278429215b5f374a9:eyJzZWxlY3RlZExpbmVDb3VudCI6NTIsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImU5YThjNzFhMzJjYjBhNWNmMjM1N2M0ZWJjMWZhNDc5ZmExYTFlYWRmZGZiMzY4NjliMzEyMWJhNDZkN2M3ZTYiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6Ijg2NjlmODJhMzE3ODBhMWU0OTY2YzJlZjMzYzY2ZDczMDY2MTFkYTA2NTA3OWE1YWE4MDQ3NGIwYjMyZWU5YjQiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjVjMDU5YTkxZDkzZGNkZDdjODE4MGFjZTBjZjA3YjFlY2FiNDRiZGE3ZjNiNGIwMDY5ZThkM2MzYjE4MjkxNjkiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjFiMGE4NmEyOWNmNjcyMWU2ZDFkZDkzNjczYzQ5NjQwNTNkNzQxNzY3NWVhOGUyNGJjNTIxYzdhZjA3MDFmZjEifQ"
+        },
+        {
+          "resource": "repo://src/kernel.mjs#L414-L522",
+          "version": "repo-lines-v1:sha256:7dbd0220d6ae286c2c8fc815bf546f8b7e850be2c92315a333606a98c1b17025:eyJzZWxlY3RlZExpbmVDb3VudCI6MTA5LCJmaXJzdFNlbGVjdGVkTGluZUhhc2giOiJjZDhhYjFmOGZjOWQ4ZWYyYzE1YzcwY2M5OWFjMTUyNGVjOTlkNmIxMjc0ZDFiM2EyZGZiNmU2Y2YyNGU0OWVmIiwibGFzdFNlbGVjdGVkTGluZUhhc2giOiIyN2U1Nzg4ZDVkOWQ3M2QyNGE4MWRiYzBhNWE3NGJmYTgyYzljM2IzYWY5OWU1MmFmNzk2ZTkwYjQ2OGE4YTNkIiwicHJlY2VkaW5nQ29udGV4dExpbmVDb3VudCI6MywicHJlY2VkaW5nQ29udGV4dEhhc2giOiJhNDMyMzMwNTI5NTliMzI2NGY5ZGUxN2EzMDViYjVhODZkMTBiOGYyYzRjMWRhMjllYmUwYTFiZjc1ZDkwMGIxIiwiZm9sbG93aW5nQ29udGV4dExpbmVDb3VudCI6MywiZm9sbG93aW5nQ29udGV4dEhhc2giOiI0YTdkNjVlZGU5MGExMThhZTVhMTIyMjlhMGQ4YTk5MjVlOWFmZjM0YWJjOGEwOGI1YTkwMTNhMWM5MjFlNTMwIn0"
+        }
+      ]
+    },
+    {
+      "id": "claim_50d4b52c3d3942cfaecd195f6b3939a2",
+      "statement": "For non-event envelopes the kernel durably records a commit intent (prior content, intended digest, expected event_id) before the stage-9 VFS write and holds the path's commit lock until stage 10 ends; if the writer dies between stages 9 and 10, recover() (run once per kernel before its first operation and before the next commit on the path) resolves the intent from the event log and vault as committed, rolled_back, discarded, or conflict, and a live writer's intent is never touched.",
+      "evidence": [
+        {
+          "resource": "repo://docs/ssss-spec.md#L1046-L1068",
+          "version": "repo-lines-v1:sha256:3fe6a208e900942acba237320284bfd81385f03a6106f96b2140e5944f741189:eyJzZWxlY3RlZExpbmVDb3VudCI6MjMsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjY0YjhlZTBlYmZhZjg2YTRhZmNiODJiMjFjYjMyZWIxM2M0Y2RkYjZkMjI4MDM2MWYwMGY2ZmU5MWMzN2Y5ODEiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjEzM2Q1NjE3YjkzMjg4YWRjOTAzMzNmYTk2MDQzN2JjNjg5NTVlMmU0ZmZiZTRlOWRmOTUyODg2ZmU5ZjBiYjEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjFkMGZlYTgwODJjMmE1OWZhZGQxMzRlMTFlZGM5ZjhkNjhiYzM0NmRlM2ZhMmFmZjU1YzM0YTQwZTU2YThjZmUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjZlZDA0ZTk4YWRiZWU4OTc2NDM5NDc1Y2E2YmVkMTViNTNjZjVlNTk4OWFkODQwMjJlMGQ3OGRmM2I4NzQzODMifQ"
+        },
+        {
+          "resource": "repo://src/kernel.mjs#L107-L156",
+          "version": "repo-lines-v1:sha256:75b128bf1b263f24764976fd3412e8c4ba43455e1db7b83e21ba4195824ded91:eyJzZWxlY3RlZExpbmVDb3VudCI6NTAsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImIxZGE3MGUxYmFhZWNmMGIyNmMyYmVlMmZjOGQ0Mjk0ZjJmNjU3YzBjMGZhY2Y0ZTgyNzU1YTk4ZTRhNjE3YzQiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImJlZjdkOTRiYTc2NTVhZDdkY2VmNTA3MDljOTFlNzQ1OTEyZWI1ODBjYTQ5MDczNWMyYmFmYWViZDY4NzFjZTUiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjA4ZmQ0ODg5NTZmNzljNTM4OWU5MDdiZjA1Yzg4N2NiN2Q5MTcyOWMwZjMyNjk3OTQ3MzkxZjE2MWE3NDdkZDYiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjA1NWQyM2YwYTcxNDEwZDg2ZmM2NzlkMjU4Nzc4NDBlNTBjYTZhNThjNzU1MDkxZDFiMWY5ZWMyNWQ4MTdkZTAifQ"
+        },
+        {
+          "resource": "repo://src/kernel.mjs#L471-L493",
+          "version": "repo-lines-v1:sha256:11e7009fe2f3ad3c09e15dc2e1e27f8be91c3694250a928a7d70b49b5687ac0b:eyJzZWxlY3RlZExpbmVDb3VudCI6MjMsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6Ijg1MWQ4NjY1M2E5MmM3YzI0N2IxNGRiOWExZWZmNTUwYTMxMGViZDE5MTI1YTc5NDQwZjk5NWI1NGEyZDRlNzIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQ4OTNmNDBlMzc4MWViODk2YzgyZDA0NmEwODA2N2ExMWUzNWNkZjJmMWRmYWYyNmZlYTkwYjhkYjY2NzY0MTMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjM2ZWY0NmVmNzI5M2YzMTkwZjVlN2YyMDMwNmMwNDI0NDk2ZDQ4NzQ1Y2U5ZmVkN2U4N2I3YzcxMzM4YTdkZjYiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjU4NDc5MGUyOGM5MmE3MTI3YWFiMzZiNzM1ZDA0MmZkMThkMmY2MzljMTQyMTdhY2M4MTQxYjIyY2MyN2U2MmYifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_82c9a6fbaae74c1cb1280be7aadffe29",
+      "statement": "Every failed kernel response carries exactly one symbolic error code from ERROR_CODES (invalid_request, unauthorized, forbidden, not_found, lease_conflict, version_conflict, idempotency_conflict, validation_failed, internal_error), and transports (src/http.mjs) map these codes to HTTP status without parsing messages; an absent or malformed principal yields unauthorized rather than forbidden.",
+      "evidence": [
+        {
+          "resource": "repo://src/http.mjs#L3-L20",
+          "version": "repo-lines-v1:sha256:00fd5e6a6823712e14f1cad4e134ca562992e30c0f1fecb4dd445478bea01ca7:eyJzZWxlY3RlZExpbmVDb3VudCI6MTgsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImJjM2ZjNWNmMzE4YmVlMzIxNmQ0ZTZhMDg0YTExNjgwZmQ5Zjc5ZjM3NDk3MzRmOTBkNjRmNWE4Mjk2MjhkZDMiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjoyLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImQzZDQ1ZmM1YzY5OGYxOTE0MTAyNDJkOTQ1YzYzNzBkNDUxM2I5YjA1M2FhYWQ0NTNjMzcxMWU2MDU2ODE3MzgiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjQ4MzkxZTAyMTM0ODQ5NGVlZTAxNTI1Y2M1NGYwMGU0YzRkYTA5MmU4ZThhNWEwMGQwMjRjNWI0NDJiMzdjMTkifQ"
+        },
+        {
+          "resource": "repo://src/kernel.mjs#L200-L206",
+          "version": "repo-lines-v1:sha256:c38534a301bcdccefdd1b60cc2e5b4805007affb2d6ad5228a44847c7e4441d6:eyJzZWxlY3RlZExpbmVDb3VudCI6NywiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiNDg5M2Y0MGUzNzgxZWI4OTZjODJkMDQ2YTA4MDY3YTExZTM1Y2RmMmYxZGZhZjI2ZmVhOTBiOGRiNjY3NjQxMyIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiNDg5M2Y0MGUzNzgxZWI4OTZjODJkMDQ2YTA4MDY3YTExZTM1Y2RmMmYxZGZhZjI2ZmVhOTBiOGRiNjY3NjQxMyIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiOTdkZWJkZjZlZTI4NjY2ZDAyNWJlZjMxM2M0M2ZkMzMwODY5NmExMWFjYjMyN2FhMzUyOGZlZGFjYzUyODRlYSIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiOGM3YWMyNjU0YTFkMmYxZDE1NmE4M2I4Y2YwYWYxNTYxOGNmMGQ5MDZlOTkyYzU0NDY1ZTI4MDI1YzE5ZTFkYyJ9"
+        },
+        {
+          "resource": "repo://src/kernel.mjs#L23-L26",
+          "version": "repo-lines-v1:sha256:a50e19cc4df6a826eb204c8a1ff475f4f5fecb85a4da8b7b7ada7816d100d5e1:eyJzZWxlY3RlZExpbmVDb3VudCI6NCwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiMTU2ODhhNTJlMzFhN2ZlYmM2ZGI3ZjM0ODQzNTRkMjUyNjIwNzQ2ZDU0ODNhZTNhYjY4ZTk4YTQ4NDZjYWE3MyIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiNTVlMjZjZDkyMzY2ZjYwZDhlZDkyZDAyMzlmMDdmZWY3NGNhYzE0YWE2OWFkZGY5YzJjYzBkMTFlYjAwYTQ2MyIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiZmYyMTEyMDEyYjhiY2FjNjcyMjdiNGQ2OTkyNGRmOTIzY2U3YTVmY2MzYzhmNjM4ZTUwMzZiYTI5MjBiNTRkNCIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiOTc4MDA2OTMyM2NmNmM2NzgyYjhlZWU1MzY4MDUwNjYxYjQ5OTdhMDFjNDRmODRmNWU5ZGExOGVhZDZlZDUxZCJ9"
+        }
+      ]
+    },
+    {
+      "id": "claim_303ccd17b0ae421191b8863663bd1c9a",
+      "statement": "The event log is the durable record of idempotency: every committed event carries its idempotency_key and request_hash written at the commit point, so the idempotency store is only a cache of full responses; a cache miss (retention, lost record, or new process) is resolved from the log by findByIdempotencyKey, and the FileIdempotencyStore retains entries 24 hours by default because a host whose event store answers key lookups may expire store records.",
+      "evidence": [
+        {
+          "resource": "repo://docs/ssss-spec.md#L1081-L1117",
+          "version": "repo-lines-v1:sha256:eaf205fe4d09fce88f3413638ac3faa08e548892207ed187359a2f5543e2ce75:eyJzZWxlY3RlZExpbmVDb3VudCI6MzcsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjJlNjc2YzFjYzEyNThmZTMwZjhkZWY1NTljZTZkMTQ0ZWZlNTM3ZThkZDIyMjZiMjRmYWM0NjU2ODg1ZTJkMzAiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjdkYWE1OWM2NGI4ZjdhNWFlMTYwYWE3YjUxZDYzYzBlOGQzMWMwMzRhZTI3NTgxMWE1ZDgzNjEwZjMyMTE2M2MiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImU3Y2VkODQzOWIyNGE5ODU3YjdlYjBhYWZhYzQ3Mjk5NmMzNjM2OTE1NjNlYmU0MDMyNGY3MTljNmJkNDg3MTAiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjI2MGZhODQ1YTE1NmZmYjc0YjExMjY5YmE4ZWIxZGYxYmE1ZTNkMTg3YTZiNWM5NDUzZmVlMjY2Nzg0NzFkMTcifQ"
+        },
+        {
+          "resource": "repo://src/idempotency.mjs#L9-L20",
+          "version": "repo-lines-v1:sha256:c92c25ed37a2423b5501d555f46ac70744870952e086a84d11caec4016eea410:eyJzZWxlY3RlZExpbmVDb3VudCI6MTIsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImVhZjIyY2YwNzMyNTkyYzI0NzE0MWNiZTYxZWZhMTEwMTI2MTJmNWEzMTIyYjlhZjliYmFmNTJmNTcyNGQxOTQiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImVhM2ZlZmM0MmJlMDliNTgyNWJmMWVlYjYxMzI4MzQxYzhhNGExMmZkNDU0Mzc2MmM1MGY5NzAwY2ZjZGFmOTYiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImNmZTQxOTdlNDQ5ZTJjN2FiOTVjMDhhMzIxNzI5OGRhYTBjYTExMDk0YmViZDhlYTQxMWI0OTY3ZDA2MGUzZDkiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImNiYzg5ZDI3Y2M2MTg4YmQ4YjEzZmE3NzhmZjYyOGYzMjdiZjI3OTJmODE2ZjRmZjgxMTNiZTk2ZGQwNzQyZjUifQ"
+        },
+        {
+          "resource": "repo://src/kernel.mjs#L211-L232",
+          "version": "repo-lines-v1:sha256:db4fb9d8fd6fc07ceb44420f9f4248465cb75aef48b8eec9ddf64e673247adc8:eyJzZWxlY3RlZExpbmVDb3VudCI6MjIsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjU2ZjUyZmQxYTk0YmEyMWM1ZjQxMzJlMWQ3ZGU1YWVkMTM1NWQ0N2JkZjc2MWI3M2I5NzA5ZTRhZTY1NTE2YWIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6Ijg2NjlmODJhMzE3ODBhMWU0OTY2YzJlZjMzYzY2ZDczMDY2MTFkYTA2NTA3OWE1YWE4MDQ3NGIwYjMyZWU5YjQiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6Ijg1MzI2M2YxNDRlNDk1NzNmNzVlNTgxZmFmMjk4MWRlYmJiZDQ0Y2I5Yzk4ZTZlZWRlOTEyMWMxOWRjMzYzMDYiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjFiMGE4NmEyOWNmNjcyMWU2ZDFkZDkzNjczYzQ5NjQwNTNkNzQxNzY3NWVhOGUyNGJjNTIxYzdhZjA3MDFmZjEifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_201c0543eb144c2aacf039e5e3e0b99e",
+      "statement": "The .ucw bundle/provisioning layer (src/bundle.mjs) implements three pure-ish verbs (exportBundle: vault + profile → bundle, pure; provisionBundle: bundle + params → replayable plan; importBundle: plan + engine → committed state, idempotent), with portability filtering reading the registry §5.5 classes so sale/template profiles drop tenant_private data and reduce resource_bound fields to REQUIREMENT placeholders, and import deriving its idempotency key from workspace, target path, and content digest so re-running import commits nothing.",
+      "evidence": [
+        {
+          "resource": "repo://src/bundle.mjs#L1-L15",
+          "version": "repo-lines-v1:sha256:779aa305145e268c44ff332093fcb40736abb0a2c8695f7c6dc02c04421f9be6:eyJzZWxlY3RlZExpbmVDb3VudCI6MTUsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImVhZjIyY2YwNzMyNTkyYzI0NzE0MWNiZTYxZWZhMTEwMTI2MTJmNWEzMTIyYjlhZjliYmFmNTJmNTcyNGQxOTQiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6Ijk3MmE0MjkzODJiMmUxNDcxOGUwZTM3YjA1NzBhOGExNzAyOTkxZmNkODQ5OGNkODQwNjBhOGJmNGYwNTAxN2IiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjowLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjQ3YmE2NjlkY2M5N2ZjOWU3YWE3OTQ5MDY5NjEzYjhiOTI4ZmI5YjM5NmU1ZjQ2YTdiYzZkMDhkM2ZiMjliNDQifQ"
+        },
+        {
+          "resource": "repo://src/bundle.mjs#L105-L120",
+          "version": "repo-lines-v1:sha256:2f6b1fd63814a20f0c0569fbd5ac709b3fd71d3b53d309616bce5b85556f3f14:eyJzZWxlY3RlZExpbmVDb3VudCI6MTYsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImFjOTk2YzhhY2ZlNDhjZWY1YzdhY2MyZTE0YTRlYzhkZmU3YTA2OGQ0NzI0NTgwZGM0NWI2ODg4YmViYzg0ZTEiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImZiNTgwZTk2NGY4M2E0NzNmNDNkNDQzODQ2Mjk0OWQ2OGI1NjAwZmRhNzg3ZjE2Mzc0NWQwMGRlODljYmYzNmEiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImM2NjNhYjlmZDE4YmFkNTMxYzE0OTQ5Y2YwYzYzMzA4MDA0NDFiMzAzZjY4MGJkODk3ZWFmOGEzMTUyMjljYzQifQ"
+        },
+        {
+          "resource": "repo://src/bundle.mjs#L30-L51",
+          "version": "repo-lines-v1:sha256:5cc85c6121572bb796203489888b262f48a7e40e3732af7ad4ff9dd9a7254f41:eyJzZWxlY3RlZExpbmVDb3VudCI6MjIsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImNlZjQwZWU4YzQ3OTI3ZTk3MTM2ODJjM2ZmZmRiMTQ0NDM5ZGU2MjgxZDA1MjE0NWQ3NWVhNjE3YmFkZDQzYjMiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjRhOWEyYTYwNzc5N2Y0NGNjM2FhNTE0Nzc4OTA0YzkzMjQyOTRjOWQwYmM3ZmIwNWJmOGY4YWVlY2U4ZTc4MTEiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6Ijc4ZTRkYTA5Y2M3Yzc3NmI4NDc4YzlhY2IyMzcxMmNjNzhkYjg5ODJkZmIxZmI5ZTczMzNiMDE3OWM0ZjgyZDgifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_be9793cc80044c2e82677d2c07aeb324",
+      "statement": "The workflow runtime (src/runtime.mjs, §11.8) is a deterministic planning layer rather than a resident daemon that turns triggers into Operation Contract envelopes, and the semantic index (src/semantic.mjs, §11.9) builds a deterministic privacy-safe lexical index with link/mention edges and multilingual rendering without storing translations; both derive from vault state and neither mutates symbolic state directly.",
+      "evidence": [
+        {
+          "resource": "repo://src/runtime.mjs#L1-L8",
+          "version": "repo-lines-v1:sha256:04a9326539db7f70ebdd3a3bc44a171bc3149f2563b0a7e78a63b20624b624c7:eyJzZWxlY3RlZExpbmVDb3VudCI6OCwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiZWFmMjJjZjA3MzI1OTJjMjQ3MTQxY2JlNjFlZmExMTAxMjYxMmY1YTMxMjJiOWFmOWJiYWY1MmY1NzI0ZDE5NCIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiOTcyYTQyOTM4MmIyZTE0NzE4ZTBlMzdiMDU3MGE4YTE3MDI5OTFmY2Q4NDk4Y2Q4NDA2MGE4YmY0ZjA1MDE3YiIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjAsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiZTNiMGM0NDI5OGZjMWMxNDlhZmJmNGM4OTk2ZmI5MjQyN2FlNDFlNDY0OWI5MzRjYTQ5NTk5MWI3ODUyYjg1NSIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiNDc3MzM2ZmNhMDJkZWQzODA4MjkyNWY5ZWIwZGY3YjBmY2ViNDZhYjBjY2Y4NzViYWY4NjU3MjFiNDEzZmYyOCJ9"
+        },
+        {
+          "resource": "repo://src/semantic.mjs#L1-L9",
+          "version": "repo-lines-v1:sha256:f0be09c9e2bafed23726950fec4a18958b77e98313697171d50490584690690b:eyJzZWxlY3RlZExpbmVDb3VudCI6OSwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiZWFmMjJjZjA3MzI1OTJjMjQ3MTQxY2JlNjFlZmExMTAxMjYxMmY1YTMxMjJiOWFmOWJiYWY1MmY1NzI0ZDE5NCIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiM2U4YzEyZTdkMTI3ODA3NWQwNDAzNjc4MzQ3YTViMDFhZWI0ODRlMDgxYTYzNTYwNWM2NjBmOWM0NDQwNzY5YSIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjAsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiZTNiMGM0NDI5OGZjMWMxNDlhZmJmNGM4OTk2ZmI5MjQyN2FlNDFlNDY0OWI5MzRjYTQ5NTk5MWI3ODUyYjg1NSIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiOGVlNzhmMjZmNWNmODQ1MGZkZjE3MGNhZjczOGI5Y2ZmYjc2NjE0ZDIyNmNlODcwMTIxMzA0YmFhZGMwZjg1ZSJ9"
+        },
+        {
+          "resource": "repo://src/semantic.mjs#L34-L67",
+          "version": "repo-lines-v1:sha256:500626b5f645ea5fc281309d63a9e342dafa1f71c4436865025f4bc39d822417:eyJzZWxlY3RlZExpbmVDb3VudCI6MzQsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjFhOWMwMjUxZGY4ZGIxMjA5MzIwMDBjMjUwZmU3NTNlYjcyYTQ0MGIyY2FiNTE4NmYxODQwY2E0YmIyNjIzMTAiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjQ5YWI3OTNjZGNlNTZlMzc2MDFhOWQ1MDI3ZjM5YTY2MGVjMmIwYzk1YWEwNTIzM2IwMThmNmVjNTQyYzU1N2YiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImZjNTAwNjIxMDA1NGYyMWViYjkzOWM5OTRjNDgyZGIzMTg2ZWFlNTQxMDFiYWQ4NDA0ZWI4ZTQwNGVkNjJjZDQifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_c640f1be812b4cdbbea6c39f8b7f422b",
+      "statement": "Transports are façades over kernel.execute and never writers: the CLI (scripts/ssss.mjs) and src/http.mjs createCommandHandler authenticate a request, parse the envelope, and forward it to the kernel, mapping symbolic error codes to HTTP status (201 commit, 200 replay/dry run, else by error code).",
+      "evidence": [
+        {
+          "resource": "repo://README.md#L76-L99",
+          "version": "repo-lines-v1:sha256:48043b793530526d40cb8cadb9842cbc9fdfb0eccf315f47892893887d7fbd6e:eyJzZWxlY3RlZExpbmVDb3VudCI6MjQsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImI0YzVlZjcwZjA5N2UyZGZlZDk4Mzk3NjliMWUwMDllZGJmNjUxNjM1YmI3YTg3YTkxMmFjNGNiMWQ2YjZhMzQiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImQzNzFjZTEzZTQ5OGIyODdiYmI5ODU1NDBhNGFjZTI2ODIxNWVlOTAxN2EzMWY0YzI0MTFkMWE0Yjg4MTBjYjMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjBkNWY5Nzc0Y2EyN2JjNjgwYmQ5NzdlYTU4MzkwYzg5MGI4MmMwODg0NDA4MmI0MzNjNTZmNDIxOWU3MWIyZGIiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjVlNjBhODU0NzliZDM5NDY3ZmMyYjQwYTI4MGIyMDE1NjVhN2ExYWZmM2ZjZjlkZWM1ZGNhYTlmZWI5ZjA1OWMifQ"
+        },
+        {
+          "resource": "repo://src/http.mjs#L1-L41",
+          "version": "repo-lines-v1:sha256:b67317ccae8889acf356a9af72e68c8e4364f8a353ec20ac650dd4306fd2b0a2:eyJzZWxlY3RlZExpbmVDb3VudCI6NDEsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjhiZTIxZmJhYTZmZTM4YmUwYWQyMjkzYzdkZThjNTUwMTZkNmU3NjQ2N2NkYmMxZGM3YThlNTc3ZWU1Nzc3ZjAiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQyYTJjYjI1YTEyMmI0NDIyMWE2MjM0ZWM2NjBhN2I1ZmI3ZjliZGU3YjNiOWUyYjNjNTU5YTBkOTZmYWM3MzkiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjowLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjoxLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_df04f31b641e43bda24dfb9d772bdb26",
+      "statement": "Two envelopes racing on one path are serialized by the stage-9 VFS compare-and-swap: the loser either finds a same-key winner and returns that winner's result as a replay or fails with version_conflict, and two event envelopes with the same idempotency key are serialized by the event store's uniqueness on a UUIDv5 event_id derived from workspace and key (idempotentEventId).",
+      "evidence": [
+        {
+          "resource": "repo://docs/ssss-spec.md#L1075-L1079",
+          "version": "repo-lines-v1:sha256:e9cdd0194a16cd6c13bc1df0c421da13233b45f59f084649cfe4eb34f86b6bcc:eyJzZWxlY3RlZExpbmVDb3VudCI6NSwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiMjkyNmFkYzZiZjNiZGZjYTU3ZTFmMDU2YTZhNTQ0YzcwYzNhMmFiNDY3YjdhMDk0NWM4NTQ2NmZlOWNkYTU0ZiIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiYzk1NGE5NzQyMzU5ODc5YTYxOTI0ZDM1ZjVjNmZmZjg4Nzk2MmU1ZTU5ODRhOTEyZDkzYjMxMzQ1YzFlMDBiOCIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiMDNmODYzZGE4N2FlY2Y4ZjdlMWY2ZDdkYTU3ODhmZDZkZDhlMGY3ZTJmNGU0ZDQyOGFlNjBiNWQxMTdhMmFhMSIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiYmEwMWVkY2U4MTdiNjdlNTZhMjg5MTI5MmM0NDJiNmNlMWIzMTdkMDk2MDU5N2VlYzc3MmI5MWVkZjRiMDNjMiJ9"
+        },
+        {
+          "resource": "repo://src/events.mjs#L11-L22",
+          "version": "repo-lines-v1:sha256:ca737cde315daa0744fb88727568e16883b83317acb21933abd521fa5c0bfabc:eyJzZWxlY3RlZExpbmVDb3VudCI6MTIsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImVhZjIyY2YwNzMyNTkyYzI0NzE0MWNiZTYxZWZhMTEwMTI2MTJmNWEzMTIyYjlhZjliYmFmNTJmNTcyNGQxOTQiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjU5ZTBlYzA0NjFhMDFlOTQ3NGY4YTgwNzhjNDBhYTY0ODg2ZWM4MDMzYWZkY2QyMjc3ZGE2YjZiNzU1ZDBiMDgiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImI3OGY0ODlkNWVjNTkxOWVhMjg3MmQxYzU3NTczZDQ2MmE0ZTQyODQ1YTNiNTQzODcyOTgwMDZjNjliNzFiNWMifQ"
+        },
+        {
+          "resource": "repo://src/kernel.mjs#L408-L468",
+          "version": "repo-lines-v1:sha256:1314f35318f131381a3833fe46458727d4eeea96bb21f768cb0e44445ccc2b32:eyJzZWxlY3RlZExpbmVDb3VudCI6NjEsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjUzNmE5Y2ExODY1YTgyZWEzY2ZhYzYxZTI0NjZlNjJlNGI1N2NjYjc3OTg4NGE3Yzk4YWJhNzQ2MDY3OWY3ZmYiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjliNjJmNjBkODU5MGE1NzljZjQ2ZjhkNjczNzhjNGM1NzJiOTYyY2VjY2RiOTBjN2E1ZjdiNDJiOTYwNzgyYTQiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImRmM2E1MDYzMzBiMGU1NDBiZjM1ZDYwZGM2ZjZlNTNmZDBkNmE0ZjllNGM3NGIyOTI0NGQ0YzMyZmNjMTkxZjUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjhhMjcxMTBjZDMxZjY5YzMxYWM4ZjFkMTgzYzE1N2E4MDk0YzE2NDE4OGMyMTY4YzFmYzQ3MTdlYWFlNGJmNTgifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_63a1404935a44bde8e79d045599bbde5",
+      "statement": "The @gregiteen/ssss-cli package is dependency-free: package.json declares dependencies as an empty object and main points to src/engine.mjs, so a host needs neither Zod nor a YAML library to be conformant because the reference engine is the validator.",
+      "evidence": [
+        {
+          "resource": "repo://README.md#L19-L19",
+          "version": "repo-lines-v1:sha256:f0547db38012191f0b49c7db5ed14dc8da039c1960bd69454f7b6a81414eabc4:eyJzZWxlY3RlZExpbmVDb3VudCI6MSwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiZjA1NDdkYjM4MDEyMTkxZjBiNDljN2RiNWVkMTRkYzhkYTAzOWMxOTYwYmQ2OTQ1NGY3YjZhODE0MTRlYWJjNCIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiZjA1NDdkYjM4MDEyMTkxZjBiNDljN2RiNWVkMTRkYzhkYTAzOWMxOTYwYmQ2OTQ1NGY3YjZhODE0MTRlYWJjNCIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiMmE3NDU0ZjE4M2ExZDc3N2M1YjEwYzA0MWRjZmEzZGY4MDIwNWYyZTE0NTNjOTA5NWUwYmYxZTlmZjNmMzI4NCIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiMzc3ZDcwMmIwYTllYjZmMGY2ZjQyNzQyMWQyZjVkZGZjM2UzZDU1ZDMxZTFmYmI3ZTUzMjZhZDFlZDA5MTdkZiJ9"
+        },
+        {
+          "resource": "repo://package.json#L1-L20",
+          "version": "repo-lines-v1:sha256:4228e726a9f0053f1a6f8547f3ede8d7672a5817126cbba3f962dc0656e9dedf:eyJzZWxlY3RlZExpbmVDb3VudCI6MjAsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImE2ZmIwOGZkYTFhY2I5NTdiNjExNmJkMzc4MTFhMWZlNDFhMDE2MTFjMDYzMWVkYmY3ODZkNjg4OWEyN2E1NWMiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjFmMGNkYjk3MmE3YmZiN2VkMjQ2ZjlmZjY3MjM4NWU1NWY0OTY4ZmMxMTA0M2RjNWI2ODRkNTFkZmEzMWRiY2IiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjowLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImI3OTE3NDU4NzVmMzI1ZTg1YTRkYzkyZWQyN2RkOGE4YTRiYmM2MTE4MjNjNTViZWQwYjMxZjZiZmE4OGU0YTAifQ"
+        },
+        {
+          "resource": "repo://package.json#L93-L93",
+          "version": "repo-lines-v1:sha256:61e653715ed6b26e7fea69e4c1b838955f835266b550042eec568eed608eb53d:eyJzZWxlY3RlZExpbmVDb3VudCI6MSwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiNjFlNjUzNzE1ZWQ2YjI2ZTdmZWE2OWU0YzFiODM4OTU1ZjgzNTI2NmI1NTAwNDJlZWM1NjhlZWQ2MDhlYjUzZCIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiNjFlNjUzNzE1ZWQ2YjI2ZTdmZWE2OWU0YzFiODM4OTU1ZjgzNTI2NmI1NTAwNDJlZWM1NjhlZWQ2MDhlYjUzZCIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiYzYzMTA2ZDIwNzdlMWFjYTYxNjE1YWRkOTg5YWY0OTQ1MzgwYzUxYzZkZTJiNzJjMDRlNjEyOGY1MTA1MTkzMSIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjEsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiNDEyY2EzNDVjY2Y3NWJmOWMwODA2YmNlNjk1YmU4ZGU4MDhiNzk5ODQyNTFhN2E1NGQyMDJjZjYxMDFkZDQ1MSJ9"
+        }
+      ]
+    },
+    {
+      "id": "claim_5b0b2b519b794657b4564b5f27820506",
+      "statement": "An upgrade (envelope intent 'upgrade', §17.4) may not modify a tenant_private document: the kernel resolves the portability class of the target and rejects with forbidden when intent is upgrade and the class is tenant_private for non-event envelopes, so structural patches during an upgrade leave tenant-private state immutable.",
+      "evidence": [
+        {
+          "resource": "repo://src/kernel.mjs#L350-L355",
+          "version": "repo-lines-v1:sha256:e29c68ff32ef1f9a203b65a1ee33f2a43f5ccbc6942cb810f7bdf56d44e3eff1:eyJzZWxlY3RlZExpbmVDb3VudCI6NiwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiYmQ2M2UxNDY3MTFhZGM2NDZkOTI4NjJhMTIyNzJkMWU2ZjAyNDgxMDMyN2ZlYzkwM2RmZWI2ZGViNDQwNmE2MCIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiNDg5M2Y0MGUzNzgxZWI4OTZjODJkMDQ2YTA4MDY3YTExZTM1Y2RmMmYxZGZhZjI2ZmVhOTBiOGRiNjY3NjQxMyIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiOWI2ZGEwMDI3Y2FkNzA5ODIwNDkxNTVjNDYxZDY4YzkzNzgwNmZjNTM5MzRjYWQxNjBjOGNkZTU0MTIyMzcwMSIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiNWNlNzk2OGEzMmNjZDQxN2RhY2Y5OWMxMWVjZTYwN2FlMjA3MWFjYzdiYjNiMDMxNjY4MjE0MTU3OWMyNTUxMSJ9"
+        }
+      ]
+    }
+  ],
+  "verification": {
+    "by": "openwiki/0.7.2",
+    "at": "2026-11-03T07:15:54.702Z"
+  }
+}

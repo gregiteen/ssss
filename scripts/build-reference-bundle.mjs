@@ -84,20 +84,19 @@ permissions:
   - "write:task"
 ---
 Full access to all festival operations.`,
-  // resource_bound — declares "this business needs a domain"; the SELLER's domain never ships
-  'domains/festival.md':
+  // resource_bound — declares "this business needs an external domain resource"; the SELLER's bound value never ships
+  'resources/domain.md':
 `---
-type: domain
+type: resource
 title: Festival Domain Requirement
 description: Domain resource requirement that the buyer binds during provisioning.
 timestamp: 2026-07-02T00:00:00Z
-domain_name: REQUIREMENT
-registrar: REQUIREMENT
-status: required
-payment_status: unbound
-x_portability: resource_bound
+name: Festival Domain
+kind: domain
+status: pending
+binds: festival.example
 ---
-This festival needs a domain. The buyer binds their own at provision (owns_domain).`,
+This festival needs a domain. The buyer binds their own at provision.`,
   // tenant_private — operator's ticket record; MUST be dropped from a sale bundle
   'tasks/ticket-4821.md':
 `---
@@ -138,7 +137,7 @@ try {
     description: 'A complete music-festival operation as a tradeable SSSS bundle.',
     version: '1.0.0',
     exporter: `${PACKAGE.name}@${PACKAGE.version}`,
-    requiredExtensions: ['festech'],
+    requiredExtensions: [],
     parameters: [
       { key: 'business_name', label: 'Festival name', type: 'string', scope: 'workspace', source: 'user', required: true },
       { key: 'domain', label: 'Domain to bind', type: 'string', scope: 'workspace', source: 'user', required: true, description: 'Satisfies the resource_bound domain requirement (owns_domain).' },

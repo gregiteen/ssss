@@ -99,6 +99,27 @@ When starting work on a new feature or project:
 5. **Execute with the Tracker** — Mark tasks `[/]` in-progress, `[x]` completed. Append every action to the mandatory bottom `## Action Log`.
 6. **Verify and Archive** — Run full quality tier, record `Readiness Status: Verified`, move folder to `docs/projects/completed/`, and extract deferred items to `docs/projects/DEFERRED_BACKLOG.md`.
 
+## Open Source vs. Private Boundary Hygiene
+
+When authoring project documents in public open-source repositories (such as `@gregiteen/ssss-cli`):
+- **Vendor-Neutral Scope**: Public specs and PRDs must describe contracts in terms of universal primitives (`resource`, `rule`, `workflow`), never proprietary application models.
+- **No Private Host Entity Leaks**: Never cite internal proprietary product file paths (e.g. `apps/web/server/services/...`), internal database schemas, or production host secrets.
+- **No Local Path Leakage**: Always use repository-relative paths (`src/engine.mjs`) or package specifiers (`@gregiteen/ssss-cli`), never workstation-specific absolute paths (`/Users/...`).
+- **Sanitization Before Archival**: Verify with automated grep checks before moving any project from `in-progress/` to `completed/` that zero local host or private app names were introduced.
+
+## SWE Workflow Comparison: Standard Industry vs. Your 5-File System
+
+To provide full context for engineers and maintainers:
+- **Standard Industry SWE Workflow**:
+  - Teams use external issue trackers (Jira, Linear, GitHub Issues) for task tracking.
+  - Requirements are often distributed across Google Docs or Notion PRDs, and design discussions happen in PR comments or RFC pull requests.
+  - Changes are submitted via git branches and Pull Requests with code reviews and automated CI/CD checks (GitHub Actions).
+- **Your 5-File Specification System (`AUDIT` → `PRD` → `ARCHITECTURE` → `DEV_PLAN` → `PROJECT_TRACKER`)**:
+  - **Audit-First**: Unique and significantly more rigorous than typical startup engineering. Requiring an explicit, structured audit (`AUDIT.md`) with baseline test verification *before* writing requirements prevents assumption drift and premature coding.
+  - **Repository-Native Source of Truth**: Instead of scattered cloud dashboards, all engineering intent, architecture decisions, and real-time execution logs live directly in version-controlled markdown alongside the codebase.
+  - **Deterministic Verification**: Tasks are tied to explicit finding IDs (`A-001`), and every action taken is recorded with proof in an append-only action log.
+  - **Dual Benefit**: It combines the thoroughness of formal Aerospace / Safety-Critical Systems engineering (RFC + traceability matrix) with the speed of autonomous agent pair programming.
+
 ## References
 
 - Global project-management skill (universal Kanban mechanics): `project-management`

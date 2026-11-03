@@ -1,0 +1,232 @@
+{
+  "schemaVersion": 1,
+  "pageVersion": "sha256:8a0812a4d3b314a71818ae24ad87336646f5b02c7d713abc0b2de43fd14fd2a6",
+  "claims": [
+    {
+      "id": "claim_be2b165aa3f449298142345d4d7de3fc",
+      "statement": "The engine has no per-type code: a document primitive's required_fields, optional_fields, immutable_fields, required_when, enums, patterns, references, append_only flag, portability class, and resource.binds metadata all come from registry/core.json and extension registries, resolved at runtime by src/registry.mjs.",
+      "evidence": [
+        {
+          "resource": "repo://registry/core.json#L8-L250",
+          "version": "repo-lines-v1:sha256:ac7eaae9838d670be13723f134db1792ab136a8af3f98272a5d40da98c99b946:eyJzZWxlY3RlZExpbmVDb3VudCI6MjQzLCJmaXJzdFNlbGVjdGVkTGluZUhhc2giOiI1NWEzY2MxMjVhNzMzYjgyOWViZGJjOTQ0OWFmZTY4MGY1ZWE0YzE3MTJjODgzMGU2Nzg1MzhmMjU4OTc2OTU0IiwibGFzdFNlbGVjdGVkTGluZUhhc2giOiI0ZDVjZDJmYjRmM2RmODg0NTE1MjU1YjM5NTIzZjJmOGI1NDcyYmVlYTlmNTY2ZmZjYTIwNGRiODAyNTYxMDQxIiwicHJlY2VkaW5nQ29udGV4dExpbmVDb3VudCI6MywicHJlY2VkaW5nQ29udGV4dEhhc2giOiJkOWE2ZDg0MzQ3YjM0YjM1ODlkNjBiOGIzMjlmMzRiNGM5MjhlYzc5ZWU2MTI4MjNmMzhmYjEwZGE5Njg5M2Q3IiwiZm9sbG93aW5nQ29udGV4dExpbmVDb3VudCI6MywiZm9sbG93aW5nQ29udGV4dEhhc2giOiI2ZDUzMGUxOWUxYWFhNmNiZGFhOGY2YjMzODcwNDlkN2QyYjQxOGZhOWEzMjIwMTUyMWNiZjM4MWExYzYwZmFkIn0"
+        },
+        {
+          "resource": "repo://src/registry.mjs#L1-L10",
+          "version": "repo-lines-v1:sha256:b146a11bf0770daae7ddabe0067d995046f45852b18845485fd4158cf4794fda:eyJzZWxlY3RlZExpbmVDb3VudCI6MTAsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImVhZjIyY2YwNzMyNTkyYzI0NzE0MWNiZTYxZWZhMTEwMTI2MTJmNWEzMTIyYjlhZjliYmFmNTJmNTcyNGQxOTQiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6Ijk3MmE0MjkzODJiMmUxNDcxOGUwZTM3YjA1NzBhOGExNzAyOTkxZmNkODQ5OGNkODQwNjBhOGJmNGYwNTAxN2IiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjowLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjQ3YmE2NjlkY2M5N2ZjOWU3YWE3OTQ5MDY5NjEzYjhiOTI4ZmI5YjM5NmU1ZjQ2YTdiYzZkMDhkM2ZiMjliNDQifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_32a01c86278346bc86304aa4251f550b",
+      "statement": "composeRegistries composes the package core with extension registry objects: it validates each primitive definition, resolves bare and qualified aliases bidirectionally, rejects core/extension and cross-extension name collisions as hard errors (§5.6), enforces extension namespace prefixes, semver-checks extension requires, and verifies that every reference allowed_types/disallowed_types names a known primitive with no allow/forbid overlap through aliases.",
+      "evidence": [
+        {
+          "resource": "repo://src/registry.mjs#L149-L281",
+          "version": "repo-lines-v1:sha256:7d86a4a5591909b24d4ea64f653750a694d02221e0331848190b043b55964b4b:eyJzZWxlY3RlZExpbmVDb3VudCI6MTMzLCJmaXJzdFNlbGVjdGVkTGluZUhhc2giOiI4NzFiMGU3MWY2ZTM4MzgxZmI1Mzc5ZGVmZDdjMDY3MmNkZWMxOTRhNmViODcwOGMyZmU3YjFlYTFjMDM4OTc5IiwibGFzdFNlbGVjdGVkTGluZUhhc2giOiI0MTJjYTM0NWNjZjc1YmY5YzA4MDZiY2U2OTViZThkZTgwOGI3OTk4NDI1MWE3YTU0ZDIwMmNmNjEwMWRkNDUxIiwicHJlY2VkaW5nQ29udGV4dExpbmVDb3VudCI6MywicHJlY2VkaW5nQ29udGV4dEhhc2giOiI2NWQ5NDFhZjBlZjQ2YmZlNWE4NmU0Yzk0OTFjMzQzNGQ0ZDJmZjJkOTg1YzExYjI3ZWQxZjNlMGE3MDdmN2Q1IiwiZm9sbG93aW5nQ29udGV4dExpbmVDb3VudCI6MywiZm9sbG93aW5nQ29udGV4dEhhc2giOiIzZWUwNWZmMmY4YTQ4MDRjOGY3MGQyZDY3Zjk3OWUzZjc3OWYwYjdiMThjZTMyYjY3MTUyYTUwMDk4N2UyZTgwIn0"
+        }
+      ]
+    },
+    {
+      "id": "claim_e48c540b58374017bbd548d780b1ff40",
+      "statement": "loadRegistries reads core.json plus a non-symlinked extensions/ directory, using the package core when an application registry dir holds only extensions, and scopes loading via extensions/defaults.json or an explicit options.only set so unrelated product extensions that share a primitive name do not collide.",
+      "evidence": [
+        {
+          "resource": "repo://src/registry.mjs#L389-L450",
+          "version": "repo-lines-v1:sha256:58d3df06acbafa65f295b335062f30d734355937f54b04c428000ad97da63da9:eyJzZWxlY3RlZExpbmVDb3VudCI6NjIsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjIwY2ZiYjU3ZjU2MWNlNmFmM2EwZjY5Nzk0MGFhZDdiY2YwNTE0MDQ1YmE2YWNhYjRjMjQ1MTIyZTUwOTNkYzUiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImNiYmVkZDBjNzczOTQ4ZjBmNmY5NWI2MzMzZmEzYzZlYWFiYmY2MzgwODEyMmM2MTQ2OTc1ZGY5NWQxZGQ3ZjkiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjkyNDY3MWZlNmI4MTlkY2E1YzVjZmMxOWQyODc2MzRjYzQ3MDdmNGZlNDc5OTM4NGUxZTNkZWMwNDZhNzllNDEifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_83346ed17fcb437ca1df073d34ba3241",
+      "statement": "resolvePortability computes a file's effective portability class as the most restrictive of the type default and an x_portability frontmatter override, using the order structural (0) -> resource_bound (1) -> tenant_private (2); an override can only escalate restrictiveness, never relax it.",
+      "evidence": [
+        {
+          "resource": "repo://src/registry.mjs#L459-L469",
+          "version": "repo-lines-v1:sha256:bc1fcb9e85efbe5f83f39912cc5bd4edb58137366035c98bbf7abf777e586ca1:eyJzZWxlY3RlZExpbmVDb3VudCI6MTEsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImVhZjIyY2YwNzMyNTkyYzI0NzE0MWNiZTYxZWZhMTEwMTI2MTJmNWEzMTIyYjlhZjliYmFmNTJmNTcyNGQxOTQiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjBmM2Y4N2JmMzg0YjgzYzYzNTEwM2IxNzJmMDRhZDZhNTMxODNhZGVmNTBlNDA5Y2RmMGU5MGNjMjUyZjM3MWMiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImFjZDk3NzA2MTUzMjdmMzk0OTZmOGM2YmNjNDRjOTVhMmQ0ZDY1MjdlMTM3Yzc2NzJlNjJhZjE2OGRjMjYwMWQifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_eaad15bea91c403ab00f74dadfa28afc",
+      "statement": "The three portability classes are structural (sellable business model), tenant_private (operator private data, never sold/templated, only encrypted backup), and resource_bound (needs a real external resource bound at provision time); contract primitives carry no portability class.",
+      "evidence": [
+        {
+          "resource": "repo://registry/core.json#L267-L281",
+          "version": "repo-lines-v1:sha256:373784318c15e2ed6b5a29510a7d56fb35372e241176f17f385edf223e745ea8:eyJzZWxlY3RlZExpbmVDb3VudCI6MTUsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImEzZmE0MDM0MDMzMTllM2VmOTgyYTVkMGYwYTFjYzY5MDEyOGJlMDUwOTY4NGJhY2Q1ZjAxNjkwMmQ5Nzk1ZTgiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjRkNWNkMmZiNGYzZGY4ODQ1MTUyNTViMzk1MjNmMmY4YjU0NzJiZWVhOWY1NjZmZmNhMjA0ZGI4MDI1NjEwNDEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjhmOWZiMTEwY2M0NjFjOTE3ZDllNWZiMTBmMGQzNzU2YjMxZjZhMmQ3OWRkMTcwZTZhNTNkMmNkNzYwNzllNzgiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjNlODMwYWIwNzc0ZDRlMDU2MmQ5OTc1NDQ4ZmNkZDExOTBkN2I2MWE2OTYzZDJjNmYxOWIzNDk3ZjUxNzA3MzkifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_da98dc2a07a64020a215a0c15c72c438",
+      "statement": "The three export profiles are filters over the portability classes: backup includes all three (tenant_private encrypted at rest), while template and sale include structural + resource_bound and exclude tenant_private; template/sale must drop every tenant_private primitive and reduce every resource_bound primitive to a requirement declaration.",
+      "evidence": [
+        {
+          "resource": "repo://registry/core.json#L274-L279",
+          "version": "repo-lines-v1:sha256:114493f2d48afdf28dff92eda616717daae2c0961db4826fb915a74f2a2e9917:eyJzZWxlY3RlZExpbmVDb3VudCI6NiwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiOTM3NDRhOWEzYTBlZGEyYTU5NzZlZmFkYmYzNTZjNmNlM2MzMjRmZTY4YmVmM2Q5M2NmNjQyM2QxY2ZjNzUyMCIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiOGM4OWJkMmUyMmJiZmUxNmU3OTA0YWVlYTM0YTc3YjYzMDQ1NTkyMGVjZGNlNzIwNzRiM2E4ZTBkOTJmM2Y1NyIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiZDdmOGUyYzBhMzAyMzFiNmVjMDk0OTk2ZWNiY2ViYjllNDVmZDc2ZTEyNTcwYjQ2YjE0NjhiOGZlY2QyZmM4ZCIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiYWIyOWIyNzc4NzhlYWEyOTdhOTE1ZjFjZjYwNmVhODM1Zjk4OTVmZDU4ZWQ4NTg5NDBhYWMwZDQyMWIyMTYxYyJ9"
+        },
+        {
+          "resource": "repo://src/bundle.mjs#L30-L34",
+          "version": "repo-lines-v1:sha256:6d7e6214b2990c63e1338a7038ef1d722110a48954b189025514bc2c190ad093:eyJzZWxlY3RlZExpbmVDb3VudCI6NSwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiY2VmNDBlZThjNDc5MjdlOTcxMzY4MmMzZmZmZGIxNDQ0MzlkZTYyODFkMDUyMTQ1ZDc1ZWE2MTdiYWRkNDNiMyIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiYWExZDFhNjMzOTAyMjljNzk4MzQ3ZTgzYTA0MDU0NDFjOTQwMDAzNTI4NGFkMTY4YzFiZjZjZGYxZDcwYTM3MCIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiNGE5YTJhNjA3Nzk3ZjQ0Y2MzYWE1MTQ3Nzg5MDRjOTMyNDI5NGM5ZDBiYzdmYjA1YmY4ZjhhZWVjZThlNzgxMSIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiYTY0MjRkZmYzYTAxZGNlMWExYjBmYjg5NzJlYjgzZDU5ZjdjN2Y1NTZjMzI0MDg1ZjUxY2FkZTRiYThkYzdhNSJ9"
+        }
+      ]
+    },
+    {
+      "id": "claim_81a0cae2364049aa8c71d5a54c5b012e",
+      "statement": "During template/sale export, reduceResourceBoundFile sets x_portability to resource_bound and replaces every field named in the type's resource.binds with the literal REQUIREMENT; ensureRequirementDeclarations adds a user-source provisioning parameter and a provision-mode bind step per bound field; a resource_bound type with no resource.binds causes export to throw.",
+      "evidence": [
+        {
+          "resource": "repo://src/bundle.mjs#L189-L203",
+          "version": "repo-lines-v1:sha256:cb22444d5c58a1a55811c28cbd5ba5aa6f6bfadbf8300920921640f878eb6c34:eyJzZWxlY3RlZExpbmVDb3VudCI6MTUsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImJjMzdiNmZjOWRiMTY0NmEzOTcxNmUxM2Q5MmIyZWZkNmIwMThhNmZkMDZjMzQ4MTdiZDNlY2M0ODE4NjZjM2EiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjI3ZTU3ODhkNWQ5ZDczZDI0YTgxZGJjMGE1YTc0YmZhODJjOWMzYjNhZjk5ZTUyYWY3OTZlOTBiNDY4YThhM2QiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6Ijk3ZDg2MzJlNTRlOTI5OGFiYjk1ODcyN2UyZDUxNDA4YWJhZjEzNjYwMzUzNzkxMDE0MGFiZjY1YjMwYWI2MTMiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImE2NGU4NDU2Y2IzNzVmMmZkNWU1NDJlN2U4OGVhMmFiMmFmYTQ3YjI1MTNmNWFhMDUwYTJmNzAwZDZjMTcwMWQifQ"
+        },
+        {
+          "resource": "repo://src/bundle.mjs#L71-L114",
+          "version": "repo-lines-v1:sha256:cee4bbaaa2e9a91c7449d26f0e13065cf02792fdb3908b638e1a600ae8db6494:eyJzZWxlY3RlZExpbmVDb3VudCI6NDQsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImIwZjdhOWE5OWU2MDYyMmRkNDY5OTk2YTMxMGY4ZGY3MzAyMDk4Yzg5NWU4OTQzOTE0NDJlMTQ4NGM0OTQ2MjgiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjEzMDBiOWI5Zjg1NjQzOGE0ZDZjZWEzNjJjNjg0ODhlMTcxOWI2MDRmYmQ2NGY4YWRkYjk1NDM4MGEwZmM3NmYiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjA2N2ZkMDVhYzg5MTJjMmVhOGIyZDkzNzg0MTFlMzk3MDkzMDdmMjIyNTU0N2ZkOWMzNWQ2YzA1ZjQ0OTZjYTEifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_0ad459e841324f68acb9838a2581177d",
+      "statement": "validateBundle independently enforces the portability guarantee: for every resource_bound file in a template/sale bundle, each resource.binds field must equal REQUIREMENT or the bundle is rejected for leaking a seller-bound value, and any file whose resolved portability class is excluded by the profile is rejected.",
+      "evidence": [
+        {
+          "resource": "repo://src/bundle.mjs#L373-L408",
+          "version": "repo-lines-v1:sha256:3f918a712613e91ab6c0061bf5c383346290d264d2775129cb74f2fa3064bef2:eyJzZWxlY3RlZExpbmVDb3VudCI6MzYsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImRjZTQ5ZWJlNDJhYjc2ZWYyZTFiZTc5YzdjY2RkMTZhYzQ4NzU0MWE2ZmNiOTQ0ZjAyMGIzMWI4MmM5YjJlOGUiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjI3ZTU3ODhkNWQ5ZDczZDI0YTgxZGJjMGE1YTc0YmZhODJjOWMzYjNhZjk5ZTUyYWY3OTZlOTBiNDY4YThhM2QiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjFjMDhjYjdiODU0OTI2NGYxNWIyNGMyM2EzOTJiOTQ2YjM0ODM1ZTMyMDg1NGUwYWM1YTA1MzNjNTZjOWMzNmQiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6Ijc4YjBlNDhkNTRlYjFiZmE2ZDI2ZDU4NTM3NDFiMzU4OWU5NmViZmQwNzFhYzNkNzc0Yzc0Mzc5N2ExOTY1ZjUifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_dbb7530c28cc485db36083424f9b1922",
+      "statement": "At provision time, provisionBundle resolves each REQUIREMENT placeholder against caller parameters using well-known aliases (e.g. domain for domain.domain_name, phone for phone_number.phone_number) and replaces the value before commit; an unresolved required binding is a provision error.",
+      "evidence": [
+        {
+          "resource": "repo://src/bundle.mjs#L59-L69",
+          "version": "repo-lines-v1:sha256:a952cb6321fd17cf2f780d8b5eaaa130f7c216d8b7893f0263a410e67cd389fb:eyJzZWxlY3RlZExpbmVDb3VudCI6MTEsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjFmMzI2OWE5Yjk4NjdmYTA4NTI5NGI3YmY2N2E5NzA1ZDhmNjIzODBlMWM5MDI5YWJiNzBmYTRmNDI1NmRlMjkiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImJjNzdjOTMyODZkMzNiYjIxZTdmYjA1YWVmYjU1MTU5NTM1N2ZhOWMzNzFkYTkyNjk0MGRmOWI2N2Y1ZGQ4MGQiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImE0NTQ1N2UzZWZkNDY3OGJjMDJhOWI5ZTYwMzVlZDM0ZmVmMzA1MTdhYWQ2NzY5MjViNDMxMzY4ZGM5MmJjMjUifQ"
+        },
+        {
+          "resource": "repo://src/bundle.mjs#L651-L681",
+          "version": "repo-lines-v1:sha256:939e16320153392d758c2dc3ba69630d540106eb3a5b0d2a6d9efc9b9a45f0fd:eyJzZWxlY3RlZExpbmVDb3VudCI6MzEsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjVmNmZiMWVkYTFkNjllYmEwYzlkMjBmZWY3ODUzMTlhNWU2MWMyNDQwYzJlZTNiNzdlMjhkZjhlNzIyMTFhYTIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQ4OTNmNDBlMzc4MWViODk2YzgyZDA0NmEwODA2N2ExMWUzNWNkZjJmMWRmYWYyNmZlYTkwYjhkYjY2NzY0MTMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjMyNTM1YWZkMTU2YTYwZjkyZWNkZTFkMmY4ODQyNmFmZDI4OWQyNzVhZmRmMjhjOTA5YTI1NDRjNjU1NjNiZDAiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImM0MzA1OTY0NGM0MTk2MzkyNzVmNmJlODRkYzVlYmIwNDg5NDJiYmNmZmM3OGFhNjc5YWVkMDk5Nzc1NDc1ZWEifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_72cf18e1666348c993d81d948fd09429",
+      "statement": "validateDataConstraints validates required fields (universal plus type required_fields, treating empty arrays as present), required_when conditional requirements keyed by field==value, enums, and u-flagged patterns, all read from the registry type definition.",
+      "evidence": [
+        {
+          "resource": "repo://src/registry.mjs#L484-L529",
+          "version": "repo-lines-v1:sha256:760d808a12f99a1e3754584c517aec79ff2c65d610d08d9967848c41bbc911f5:eyJzZWxlY3RlZExpbmVDb3VudCI6NDYsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImM0ZGVkYTIzZmM2NzY3NGJlMjIwZTM0NzFmZWZjNTg4NTkzNmI2ZDg5ZmYyOTFhMTY0OTI1NGE4Yjk1MjI5ZTYiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjY3MmZmNDVlMzJhZjM0ZjkwNzRmYWZmZTNlMGYwNTZiMGVjMTRjYzM3YTM4Zjk3YzVkZjZlZWUzMmRmYjc4OTEiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImZmNDEyNDk3ZDIwNzg1ODFiYjM3ZGEyNTdhZDIzMjMxNjk0NzBiNGE3NWY2ZGU4ZTU0NjczZDFhNWRlNjM5ZWEifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_d31fd16a36f54da3bc8dad8f9121d39f",
+      "statement": "validateReferenceConstraints uses a caller-provided resolver to check that registry-declared reference fields are safe vault-relative paths, exist (unless must_exist is false), satisfy allowed_types/disallowed_types via isSamePrimitiveType, satisfy allowed_portability, and match a hash_field binding when declared.",
+      "evidence": [
+        {
+          "resource": "repo://src/registry.mjs#L536-L589",
+          "version": "repo-lines-v1:sha256:b042cde13ee3563c8bbb3bb7123b111f9e8235af17fe8ff9ffe13a0bc24feb18:eyJzZWxlY3RlZExpbmVDb3VudCI6NTQsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImYzMjE3Y2NlNjkwYmQ0OWVjODYxZWE5ZTg2NjE0ODFjNWQzZDI5ZGViNmRlNzcxM2EyMjEwY2IxMjcxMzZkNTMiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjFmNDIzMWJlMTAyMzJlOTJmMzEwYTY2MzI1ZmEwMDQyN2ExOTdjZmVhYTE4NmJmMDAxZGViN2ZlYjI4Y2I1NzEiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjowLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_6c35de2a55e24a08812bc98b136f1615",
+      "statement": "src/validator.mjs exposes validateData (resolves type, runs validateDataConstraints, and for type: primitive also runs the authoring validator), validateDocument (parses a fenced document then delegates), and createValidator (binds a registry set and returns reusable validateData/validateDocument/resolve).",
+      "evidence": [
+        {
+          "resource": "repo://src/validator.mjs#L32-L87",
+          "version": "repo-lines-v1:sha256:cdad3acea654fb25987ecaa660216ee46c0abe035385b408409876ce005e020d:eyJzZWxlY3RlZExpbmVDb3VudCI6NTYsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6Ijc4MWY5OGE3NzRhYWIxMjI0MGM4NjgwNGE2YjUyMDc3MTUxMDQ4NGU3YTY3MDNkNTZkODg4YzA1MGFiYTEzODMiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjkyMDQwZTA5NWE5NGUyYWRhNzRlNDIxZjM3MTg3NTFhOTFhODEwYmZkNjZmNDhmNGU5MzljN2I3NDgwZWI2NzAiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjowLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_464c2a008ab0406caa03a0735a579fb4",
+      "statement": "src/primitive.mjs is the primitive-authoring API: definePrimitive normalizes and generates stable symbolic IDs, validatePrimitiveDefinition validates rich definitions, primitiveDefinitionToRegistryEntry compiles a definition into the executable registry shape (required/optional fields, enums, patterns, references, append_only from mutation), and definitionsToExtensionRegistry packages definitions into an extension registry object.",
+      "evidence": [
+        {
+          "resource": "repo://src/primitive.mjs#L48-L227",
+          "version": "repo-lines-v1:sha256:58cdfe0933e2f19de209d3d4e660dc208d5086434769b1b0fd52911b211cfab3:eyJzZWxlY3RlZExpbmVDb3VudCI6MTgwLCJmaXJzdFNlbGVjdGVkTGluZUhhc2giOiJiZTAwNTQxMzIzYTM1MGYxMzNjMDA5NGU4ZjRjZGYxNWI2ZmZhMGYzYWU2YWYyNWYxMjdlZWNhNjY5ODRhYmE1IiwibGFzdFNlbGVjdGVkTGluZUhhc2giOiI0MTJjYTM0NWNjZjc1YmY5YzA4MDZiY2U2OTViZThkZTgwOGI3OTk4NDI1MWE3YTU0ZDIwMmNmNjEwMWRkNDUxIiwicHJlY2VkaW5nQ29udGV4dExpbmVDb3VudCI6MywicHJlY2VkaW5nQ29udGV4dEhhc2giOiI4YWI3MGFkZjExNDMxM2Q0Mjg4YTYyNDk2MWJjZTJjMGIwOTRmYzgxOWQzY2Y2MTRmYWVjYTM0OTIxNzY4YjQ3IiwiZm9sbG93aW5nQ29udGV4dExpbmVDb3VudCI6MCwiZm9sbG93aW5nQ29udGV4dEhhc2giOiJlM2IwYzQ0Mjk4ZmMxYzE0OWFmYmY0Yzg5OTZmYjkyNDI3YWU0MWU0NjQ5YjkzNGNhNDk1OTkxYjc4NTJiODU1In0"
+        }
+      ]
+    },
+    {
+      "id": "claim_0d3df3e7cb234bbab2c65fe06ae9d866",
+      "statement": "src/frontmatter.mjs is a zero-dependency YAML-frontmatter parser and serializer covering the SSSS subset (scalars, inline flow arrays/maps, block arrays, nested maps, arrays of shallow maps, and |/ > block scalars with chomping), with a strict mode that throws on malformed input and a serializer that quotes values to preserve type round-trips.",
+      "evidence": [
+        {
+          "resource": "repo://src/frontmatter.mjs#L1-L11",
+          "version": "repo-lines-v1:sha256:6b49394a47559a94a42a79817abedc38a69c101a0290f7282a3bd1f6c153533f:eyJzZWxlY3RlZExpbmVDb3VudCI6MTEsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImVhZjIyY2YwNzMyNTkyYzI0NzE0MWNiZTYxZWZhMTEwMTI2MTJmNWEzMTIyYjlhZjliYmFmNTJmNTcyNGQxOTQiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6Ijk3MmE0MjkzODJiMmUxNDcxOGUwZTM3YjA1NzBhOGExNzAyOTkxZmNkODQ5OGNkODQwNjBhOGJmNGYwNTAxN2IiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjowLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjkzNjk4M2NkZWQ1NzQxYzRmNDQxYTczM2I4ZDI4Njk0MWI1OTE1ZWU0Nzc1NjNjZjcyZDBmYWMxNWE2N2M3NzEifQ"
+        },
+        {
+          "resource": "repo://src/frontmatter.mjs#L394-L482",
+          "version": "repo-lines-v1:sha256:306c92b693d91300d6c9fc62fb94c4aaec4f1ff1573cfa70f38b5c347752d7f7:eyJzZWxlY3RlZExpbmVDb3VudCI6ODksImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImZhMjQ0ZGUzODg5ZjRkMzRhNzM0Njg1MjUxNWM2MTk1Y2Q2MDU1Yjc0NDkyMDRhZTQwNWJkNGNhOWEwNzA4NjAiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjdiODNjNTg5YmRmZjg1ZWVjMWQ0NjFiYjFjN2JlZGQzYTllMGVjMTI0OWQxMjJkYmY1NTg3NGY1ZGU1MjJhNzUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjowLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_c3d32a346da24ae98305cd8a62599128",
+      "statement": "Two canonical Draft 2020-12 JSON Schemas govern the shapes: schemas/core-registry.schema.json for core and extension registries (with a primitiveDefinition $def mirroring the runtime-validated fields and additionalProperties false) and schemas/bundle.schema.json for .ucw bundles (export_profile enum, primitive_inventory counts, provisioning step/parameter enums).",
+      "evidence": [
+        {
+          "resource": "repo://schemas/bundle.schema.json#L1-L300",
+          "version": "repo-lines-v1:sha256:b691841df752f1c517d149332cae6bbef0409a16b06d2ac1e214b0367fbbc2ab:eyJzZWxlY3RlZExpbmVDb3VudCI6MzAwLCJmaXJzdFNlbGVjdGVkTGluZUhhc2giOiJhNmZiMDhmZGExYWNiOTU3YjYxMTZiZDM3ODExYTFmZTQxYTAxNjExYzA2MzFlZGJmNzg2ZDY4ODlhMjdhNTVjIiwibGFzdFNlbGVjdGVkTGluZUhhc2giOiI0MTJjYTM0NWNjZjc1YmY5YzA4MDZiY2U2OTViZThkZTgwOGI3OTk4NDI1MWE3YTU0ZDIwMmNmNjEwMWRkNDUxIiwicHJlY2VkaW5nQ29udGV4dExpbmVDb3VudCI6MCwicHJlY2VkaW5nQ29udGV4dEhhc2giOiJlM2IwYzQ0Mjk4ZmMxYzE0OWFmYmY0Yzg5OTZmYjkyNDI3YWU0MWU0NjQ5YjkzNGNhNDk1OTkxYjc4NTJiODU1IiwiZm9sbG93aW5nQ29udGV4dExpbmVDb3VudCI6MCwiZm9sbG93aW5nQ29udGV4dEhhc2giOiJlM2IwYzQ0Mjk4ZmMxYzE0OWFmYmY0Yzg5OTZmYjkyNDI3YWU0MWU0NjQ5YjkzNGNhNDk1OTkxYjc4NTJiODU1In0"
+        },
+        {
+          "resource": "repo://schemas/core-registry.schema.json#L344-L553",
+          "version": "repo-lines-v1:sha256:e059c80d59126f872b9d842f6381cb9b46064da93481c8669bd5e4e529a163ce:eyJzZWxlY3RlZExpbmVDb3VudCI6MjEwLCJmaXJzdFNlbGVjdGVkTGluZUhhc2giOiIzZDE2M2VmOWM4YjZmMGIyMzNjYTBiMWVhNTNjMGFhOTM1MjhjZDI4ZDE1OGJmZDhhYWE4MmQzYjgwMGMwMzY0IiwibGFzdFNlbGVjdGVkTGluZUhhc2giOiI0MTJjYTM0NWNjZjc1YmY5YzA4MDZiY2U2OTViZThkZTgwOGI3OTk4NDI1MWE3YTU0ZDIwMmNmNjEwMWRkNDUxIiwicHJlY2VkaW5nQ29udGV4dExpbmVDb3VudCI6MywicHJlY2VkaW5nQ29udGV4dEhhc2giOiIzMmRiYzM2MzUxNmQ1NzZmMTFiZmI1MGE4Yjg1OGFmYmZjYmYxZTUzMDUzMDUzYWMzMWE0MTQwYTRiMjk1ZTBkIiwiZm9sbG93aW5nQ29udGV4dExpbmVDb3VudCI6MCwiZm9sbG93aW5nQ29udGV4dEhhc2giOiJlM2IwYzQ0Mjk4ZmMxYzE0OWFmYmY0Yzg5OTZmYjkyNDI3YWU0MWU0NjQ5YjkzNGNhNDk1OTkxYjc4NTJiODU1In0"
+        }
+      ]
+    },
+    {
+      "id": "claim_4eaeda3e60b74f9f9247e632ba7b2840",
+      "statement": "src/schema-validator.mjs is a zero-dependency Draft 2020-12 validator implementing type/const/enum, properties/additionalProperties/propertyNames, required, items/minItems/maxItems/uniqueItems, string constraints, minimum/maximum, allOf/anyOf/oneOf, if/then/else, and local root-anchored $ref pointers with cycle protection; getCoreRegistrySchema/getBundleSchema cache the schema files and validateRegistryAgainstSchema/validateBundleAgainstSchema wrap validateJsonSchema.",
+      "evidence": [
+        {
+          "resource": "repo://src/schema-validator.mjs#L1-L43",
+          "version": "repo-lines-v1:sha256:9d58cf5d83216d67a8ebd94e3e767a7839300e1881eb60cfeae39441a797bfb4:eyJzZWxlY3RlZExpbmVDb3VudCI6NDMsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImVhZjIyY2YwNzMyNTkyYzI0NzE0MWNiZTYxZWZhMTEwMTI2MTJmNWEzMTIyYjlhZjliYmFmNTJmNTcyNGQxOTQiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjowLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjI0NDMxYTViOGQ0M2RmMTFmYmYxYzZjMmJkZDhiNGNiZTdlZGUxYWMxYmI5MTFhMmY2ZDUxM2NkMDkwNGY4MjkifQ"
+        },
+        {
+          "resource": "repo://src/schema-validator.mjs#L75-L315",
+          "version": "repo-lines-v1:sha256:8b57a7b40ec476801480e89992c513ccd9891e5b28feebc52d43c8ae6aed57cb:eyJzZWxlY3RlZExpbmVDb3VudCI6MjQxLCJmaXJzdFNlbGVjdGVkTGluZUhhc2giOiJkYzYyZDM5MWVlZDZhYjgxMjg0M2JjMDc0NjRhYTgyNDI1YmFhMDdjOWNhOGM0OTYyOGRlNDRmMDlkNWRlNDFkIiwibGFzdFNlbGVjdGVkTGluZUhhc2giOiI0MTJjYTM0NWNjZjc1YmY5YzA4MDZiY2U2OTViZThkZTgwOGI3OTk4NDI1MWE3YTU0ZDIwMmNmNjEwMWRkNDUxIiwicHJlY2VkaW5nQ29udGV4dExpbmVDb3VudCI6MywicHJlY2VkaW5nQ29udGV4dEhhc2giOiJlZGRjNGZlNTQxYzgxOWZmNTc1OTc5MzY2YjE4NjM0OGEyNzllMTBhZDIyMGY4NGZjYWY4ZThlZmVkYWQ3MzQ5IiwiZm9sbG93aW5nQ29udGV4dExpbmVDb3VudCI6MCwiZm9sbG93aW5nQ29udGV4dEhhc2giOiJlM2IwYzQ0Mjk4ZmMxYzE0OWFmYmY0Yzg5OTZmYjkyNDI3YWU0MWU0NjQ5YjkzNGNhNDk1OTkxYjc4NTJiODU1In0"
+        }
+      ]
+    },
+    {
+      "id": "claim_5cd0eedf9104447e8ad632aea9b8187d",
+      "statement": "The conformance reference bundle (conformance/reference-bundle.ucw.json) is a sale-profile export whose primitive_inventory contains only structural and resource types (no task), whose resources/domain.md carries binds: REQUIREMENT and x_portability: resource_bound, and whose manifest declares a domains provisioning step and a domain parameter for the buyer to satisfy.",
+      "evidence": [
+        {
+          "resource": "repo://conformance/reference-bundle.ucw.json#L116-L119",
+          "version": "repo-lines-v1:sha256:4afff9911cfb7357784dba2add5ffd30683f81c7b8f64faa29b803e0f1e0b264:eyJzZWxlY3RlZExpbmVDb3VudCI6NCwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiZjljYTg5MWJmZjdhYzFmN2NlYWFlNDBlZjA1MTA2NmJlOWVmZTQ3YjRlNDI4MWU4NmMzMTliZTJjNTVlYmNlNCIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiMWYwY2RiOTcyYTdiZmI3ZWQyNDZmOWZmNjcyMzg1ZTU1ZjQ5NjhmYzExMDQzZGM1YjY4NGQ1MWRmYTMxZGJjYiIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiMjkyMTE2MzE0OTgwNzg0ZmNjMmUyZDc4MjhhZDUwNzRhMjI0MzU4NTI5MzdmNzJkMmYyNmVmNmM1YmI5OWRkMSIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiYzJmYjIzNWY0NzYwYWQzMmJiMTRlNWQ3NTY3NDRhNjk1MGU4ODE5YjdkMGFmNTdlM2Q1MDI3Y2FmODBlYjljMCJ9"
+        },
+        {
+          "resource": "repo://conformance/reference-bundle.ucw.json#L9-L97",
+          "version": "repo-lines-v1:sha256:4446b96d8b43b8d338f5eb225bfee780ff2d942a3bb139226112f45a6092b393:eyJzZWxlY3RlZExpbmVDb3VudCI6ODksImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6Ijg4NGZiNTE3NTcwMDcxYjNmMmRhMWNkNWU0NGZhYTkwOTBlZWIwMGI0ZjdjOTZiNjcwYTQzYTVjZmU3OTIxMGQiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQ4OTNmNDBlMzc4MWViODk2YzgyZDA0NmEwODA2N2ExMWUzNWNkZjJmMWRmYWYyNmZlYTkwYjhkYjY2NzY0MTMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImRkMTU4NjEwOThhYjU0NDY0MjYzMTA5ZmU2YzU2YjllYzYxYTViYjY1ZWQ2ZWQ1N2U0Y2FhMDQ3MjE2NmEzODgiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImYwOWVlZDkyMWU1NjNiZmNjNTc0YjJlMGMyZDQ0ZjIxZmI2MTE5YThjYmZjMzI3ODljMWQ0NTk3OTY3NjM4ZjQifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_235727dd0e9f4c02a6d567d6cce2a8cb",
+      "statement": "composeRegistryLayers composes named ownership layers (installed/repository/workspace/user) as a flat composition with source labels and enforces policy floors: a primitive's declared capabilities must be a superset of each floor's required capabilities, so a layer cannot weaken a policy floor.",
+      "evidence": [
+        {
+          "resource": "repo://src/registry.mjs#L283-L303",
+          "version": "repo-lines-v1:sha256:b7bb019e9687e05eb60c107813c165a02dd6ed93043d25b340a432df7522e0bb:eyJzZWxlY3RlZExpbmVDb3VudCI6MjEsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjFmMmQ5YWVjYmMwNzJjYjEzZjE4MzJhMTM0ZjM1ZDMxMmFjY2ZiOTRiMWFmM2Q5NDRlYzhlMmQyOTdlODU1MTMiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImI5ZmNiNTRkNzkwNDZlZjlhNTZlOWU1ZmQxNTIyY2FhOGExOGNhNTgxMzM2MzNjZDViOTVmOWU0N2E3MmNlM2IiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImZmNTE1NGE4ZjY2MDFkOWYxYjMyNzI5MDZiN2RiYTY1OWFiNDU4ZTFiMmI5ZTMzNmM1YmJlZGQxOWY3ZWQ4YmUifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_9f1374f1d3214065aacfc5c3acd53072",
+      "statement": "createRegistryLock produces a stable content-addressed lock over the composed registry (primitives sorted by qualified_type, extension versions sorted, sha256 integrity over key-sorted JSON) and verifyRegistryLock recomputes and compares the digest to detect registry drift.",
+      "evidence": [
+        {
+          "resource": "repo://src/registry.mjs#L311-L331",
+          "version": "repo-lines-v1:sha256:7ca1009c8e34037b5e0b6d90c04e3be9ff27d482fc7c5a588374a882bab50651:eyJzZWxlY3RlZExpbmVDb3VudCI6MjEsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjRkMTYzY2RmNjEyMTM2NDI5MmY0ZGI4Nzg4OGEzYTUxYjY3NTU0MzNkN2Y4YTJhMTM5MjMxODE3MTBlMjBkZmEiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjcxODg3MGE4MDQwOWY4YzRjOTk0ODA3YWY4MjU5Y2MwNGJkMGM1Y2EyZTlmMWMzYjEzZGVmMTBiMTYyNzg2ZDYiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjM0ZjRjMDhiYzlhYWY0MDc4ODM3MTk2NGNmMmU1ODgwZjEzMDM4MDY5YTIyNDg1NTMxYWY3YTJmYmQ4Y2E3NmEifQ"
+        }
+      ]
+    }
+  ],
+  "verification": {
+    "by": "openwiki/0.7.2",
+    "at": "2026-11-03T07:15:54.702Z"
+  }
+}

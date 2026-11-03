@@ -63,6 +63,7 @@ function requirementParameterKey(type, field) {
 function resourceFieldParameterAliases(type, field) {
   const aliases = [requirementParameterKey(type, field), field];
   if (type === 'domain' && field === 'domain_name') aliases.push('domain');
+  if (type === 'resource' && (field === 'binds' || field === 'name')) aliases.push('domain', 'resource_domain');
   if (type === 'phone_number' && field === 'phone_number') aliases.push('phone');
   return aliases;
 }

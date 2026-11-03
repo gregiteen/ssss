@@ -14,7 +14,7 @@ integrity. The container file is conventionally named `*.ucw.json`.
     "version": "0.1.0",
     "exported_at": "1970-01-01T00:00:00.000Z",   // frozen → deterministic export
     "ssss_core_version": "0.7",
-    "required_extensions": ["festech"],
+    "required_extensions": ["acme"],
     "export_profile": "sale",                      // backup | template | sale
     "primitive_inventory": { "workflow": 1, "page": 1, "rule": 1, "assistant": 1, "domain": 1 },
     "provisioning": [ /* steps, see `ssss help provisioning` */ ],

@@ -408,12 +408,19 @@ function loadExtensionDefaults(registryDir) {
  * `extensions/defaults.json` is loaded; failing that, every extension is loaded
  * and any duplicate name remains a hard error rather than a silent preference.
  *
- * @param {string} [registryDir] - directory containing core.json + extensions/
+ * @param {string} [registryDir] - directory containing core.json + extensions/, or an
+ *   application `registry/` holding only extensions/ (the package core is used)
  * @param {{ only?: string[]|Set<string> }} [options]
  * @returns {{ types: Map<string, object>, contractTypes: Set<string>, portabilityClasses: string[], core: object, extensions: Set<string> }}
  */
 export function loadRegistries(registryDir = DEFAULT_REGISTRY_DIR, options = {}) {
-  const corePath = path.join(registryDir, 'core.json');
+  // Application repositories hold only `registry/extensions/`; the core always
+  // comes from this package (hosts never copy core.json). Fall back to the
+  // package core when the given directory has extensions but no core.json.
+  const ownCore = path.join(registryDir, 'core.json');
+  const corePath = fs.existsSync(ownCore) || !fs.existsSync(path.join(registryDir, 'extensions'))
+    ? ownCore
+    : path.join(DEFAULT_REGISTRY_DIR, 'core.json');
   const core = JSON.parse(fs.readFileSync(corePath, 'utf8'));
   const requested = options.only ? new Set(options.only) : null;
   const defaults = requested ? null : loadExtensionDefaults(registryDir);
