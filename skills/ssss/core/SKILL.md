@@ -1,6 +1,6 @@
-# SSSS portable core — 0.14.2
+# SSSS portable core — 0.14.3
 
-Verified against the SSSS owner package, registry and spec on 2026-11-02. Establish ground truth from the installed validator, composed registry plus lock, and actual host mutation path. Schema support does not prove a configured runner or provider integration.
+Verified against the SSSS owner package, registry and spec on 2026-11-03. Establish ground truth from the installed validator, composed registry plus lock, and actual host mutation path. Schema support does not prove a configured runner or provider integration.
 
 All canonical state is Markdown/YAML in the VFS. Use the owning CLI/API and validated operation/patch/event/delete envelopes. Preserve universal and primitive fields, identity, unknown fields and timestamps. Validate before atomic commit; enforce actor authority, path containment, idempotency request hashes, leases and append-only constraints. No raw database or filesystem fallback for canonical mutations. Databases and queues are projections; never back them up as the source of truth.
 
@@ -15,4 +15,4 @@ Preserve portability classes: structural definitions, tenant-private data and re
 ## Verification
 Run relevant schema/registry/lock and operation conformance, with valid and invalid examples. Cover duplicate/conflicting idempotency (including retries answered from the event log), unsafe paths, unauthorized/expired actors, leases, append semantics, rollback and commit-intent crash recovery where changed. Use `ssss --help`, then operation-specific help; commands differ by installed version. Report exact package version, registry/lock identity and actual results. Keep secrets and private runtime data out of skill content, bundles and logs.
 
-Normative sources are bundled below from the owner release tag v0.14.2 (`docs/ssss-spec.md` and `registry/core.json` at that tag). Retain authored local wrappers/references; this managed core is the portable update boundary.
+Normative sources are bundled below from the owner release tag v0.14.3 (`docs/ssss-spec.md` and `registry/core.json` at that tag). Retain authored local wrappers/references; this managed core is the portable update boundary.
