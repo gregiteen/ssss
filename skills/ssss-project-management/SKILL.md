@@ -4,10 +4,10 @@ title: SSSS Project Management
 name: ssss-project-management
 description: >
   Project management skill for the SSSS (Structured Semantic Syntax System) standard repo.
-  Guides agents through the standard SWE sequence (PRD → Architecture → Dev Plan → Tracker) 
+  Guides agents through the standard SWE sequence (AUDIT → PRD → Architecture → Dev Plan → Tracker)
   and enforces per-project document isolation. ACTIVATE this skill for any task related to
   SSSS project planning, tracking, or feature scoping.
-timestamp: 2026-07-02T00:00:00Z
+timestamp: 2026-11-03T00:00:00Z
 ---
 
 # SSSS — Project Management Skill
@@ -19,15 +19,15 @@ timestamp: 2026-07-02T00:00:00Z
 
 ## Overview
 
-The SSSS repository is the vendor-neutral standard and canonical validator implementation 
+The SSSS repository is the vendor-neutral standard and canonical validator implementation
 used across `festech.live`, `total-recall`, and `ultrachat`.
 
 ## Relationship to the global project-management skill
 
-This is a **repo-specific overlay**, not a standalone system. The universal 4-file Kanban
+This is a **repo-specific overlay**, not a standalone system. The universal 5-file Kanban
 mechanics — `docs/projects/<kanban-state>/<PROJECT_PREFIX>/` folder layout, the
 `PROJECT_PREFIX` naming rule (ALL CAPS WITH UNDERSCORES, unique, descriptive), the
-"no ephemeral planning artifacts" invariant, and standard tracker checkbox syntax — are
+"no ephemeral planning artifacts" invariant, Phase 0 Audit rule, and standard tracker checkbox syntax — are
 defined once in the global `project-management` skill; read that first. This overlay
 adds SSSS readiness, severity, and document-header rules.
 
@@ -49,9 +49,16 @@ timestamp: YYYY-MM-DDTHH:mm:ssZ
 > **Kanban State**: 📋 Planned / 🏗️ In Progress / ✅ Completed
 > **Author**: <Author>
 > **Date**: YYYY-MM-DD
+> **Based on audit**: <PROJECT_PREFIX>_AUDIT.md (Complete, <commit-hash>)
+```
+
+For `<PROJECT_PREFIX>_AUDIT.md`, replace the `Based on audit` line with:
+```markdown
+> **Audit Status**: In progress / Complete
+> **Audited commit**: <commit-hash>
+```
 
 ---
-```
 
 ## OKF Interoperability
 
@@ -85,12 +92,12 @@ ESM, and keep host-specific policy out of the core registry. The repository is
 
 When starting work on a new feature or project:
 
-1. **Create project documents** — Generate all 4 SSSS docs with the project's unique `PROJECT_PREFIX`
-2. **Write the PRD** — Define the problem, scope, and requirements
-3. **Write the Architecture** — Design the schema, API, and component structure
-4. **Write the Dev Plan** — Break down into phased tasks
-5. **Use the Tracker** — Mark tasks `[/]` in-progress, `[x]` completed
-6. **Update the Tracker** — Mark as complete with verification log entry
+1. **Conduct the Audit (`AUDIT`)** — Investigate existing code, data, tests, and invariants. Run baseline tests. Record findings with IDs. The audit must be `Complete` before any other document is created or code is edited.
+2. **Write the PRD** — Define problem, scope, and requirements citing audit findings.
+3. **Write the Architecture** — Design schema, API, component structure, and tradeoffs.
+4. **Write the Dev Plan** — Break down into phased tasks.
+5. **Execute with the Tracker** — Mark tasks `[/]` in-progress, `[x]` completed. Append every action to the mandatory bottom `## Action Log`.
+6. **Verify and Archive** — Run full quality tier, record `Readiness Status: Verified`, move folder to `docs/projects/completed/`, and extract deferred items to `docs/projects/DEFERRED_BACKLOG.md`.
 
 ## References
 

@@ -1,5 +1,6 @@
 /** Replayable, cursor-aware SSSS projection coordinator and host adapter examples. */
 import crypto from 'node:crypto';
+import { MemoryEventStore, createCanonicalEvent } from './events.mjs';
 
 function stable(value) {
   if (Array.isArray(value)) return value.map(stable);
@@ -130,4 +131,96 @@ export class ProjectionCoordinator {
     const actualHash = projectionHash(await projection.snapshot());
     return { drift: actualHash !== expectedHash, expected_hash: expectedHash, actual_hash: actualHash };
   }
+}
+
+/**
+ * Conformance runner for projection adapters (spec §10, §12).
+ * Verifies:
+ *   1. Rebuild from event log produces the correct state.
+ *   2. Incremental apply equals a full rebuild.
+ *   3. Tampered state is reported as drift.
+ *   4. Replay is idempotent.
+ */
+export async function runProjectionContract(createAdapter = createSqlProjectionAdapter) {
+  const checks = [];
+  const record = (name, passed) => checks.push({ name, passed: !!passed });
+
+  const eventStore = new MemoryEventStore();
+  const testWorkspace = 'ws-projection-test';
+  const principal = { id: 'agent-1', kind: 'agent' };
+
+  const events = [
+    createCanonicalEvent({
+      workspace_id: testWorkspace,
+      action: 'create',
+      subject: 'tasks/task-1.md',
+      operation_id: 'op-1',
+      idempotency_key: 'key-1',
+      principal,
+      after_hash: 'sha256:1111111111111111111111111111111111111111111111111111111111111111',
+    }),
+    createCanonicalEvent({
+      workspace_id: testWorkspace,
+      action: 'patch',
+      subject: 'tasks/task-1.md',
+      operation_id: 'op-2',
+      idempotency_key: 'key-2',
+      principal,
+      before_hash: 'sha256:1111111111111111111111111111111111111111111111111111111111111111',
+      after_hash: 'sha256:2222222222222222222222222222222222222222222222222222222222222222',
+    }),
+    createCanonicalEvent({
+      workspace_id: testWorkspace,
+      action: 'create',
+      subject: 'tasks/task-2.md',
+      operation_id: 'op-3',
+      idempotency_key: 'key-3',
+      principal,
+      after_hash: 'sha256:3333333333333333333333333333333333333333333333333333333333333333',
+    }),
+  ];
+
+  for (const ev of events) {
+    await eventStore.append(ev);
+  }
+
+  // 1. Rebuild from event log
+  const rebuildAdapter = typeof createAdapter === 'function' ? createAdapter({ table: 'rebuild_test' }) : createAdapter;
+  const coordinatorRebuild = new ProjectionCoordinator({ eventStore });
+  coordinatorRebuild.register(rebuildAdapter);
+
+  const rebuildRes = await coordinatorRebuild.replay(rebuildAdapter.id, { rebuild: true, workspaceId: testWorkspace });
+  record('rebuild from event log applies all events', rebuildRes.applied === 3);
+
+  const rebuildSnapshot = await rebuildAdapter.snapshot();
+  record('rebuild snapshot contains all projected rows', rebuildSnapshot && Object.keys(rebuildSnapshot).length === 3);
+  const rebuildHash = projectionHash(rebuildSnapshot);
+
+  // 2. Incremental apply equals full rebuild
+  const incrementalAdapter = typeof createAdapter === 'function' ? createAdapter({ table: 'incremental_test' }) : createSqlProjectionAdapter({ table: 'incremental_test' });
+  const coordinatorIncremental = new ProjectionCoordinator({ eventStore });
+  coordinatorIncremental.register(incrementalAdapter);
+
+  for (const ev of events) {
+    await coordinatorIncremental.dispatch(ev);
+  }
+  const incrementalSnapshot = await incrementalAdapter.snapshot();
+  const incrementalHash = projectionHash(incrementalSnapshot);
+  record('incremental apply equals a full rebuild', rebuildHash === incrementalHash);
+
+  // 3. Drift detection
+  const cleanDrift = await coordinatorRebuild.detectDrift(rebuildAdapter.id, rebuildHash);
+  record('matching state reports no drift', cleanDrift.drift === false);
+
+  const tamperedDrift = await coordinatorRebuild.detectDrift(rebuildAdapter.id, 'sha256:0000000000000000000000000000000000000000000000000000000000000000');
+  record('tampered state is reported as drift', tamperedDrift.drift === true);
+
+  // 4. Replay idempotency
+  const replayAtEnd = await coordinatorRebuild.replay(rebuildAdapter.id, { workspaceId: testWorkspace });
+  record('replay at cursor end applies 0 events', replayAtEnd.applied === 0);
+
+  const snapshotAfterReplay = await rebuildAdapter.snapshot();
+  record('replay at cursor end preserves projection state and hash', projectionHash(snapshotAfterReplay) === rebuildHash);
+
+  return { passed: checks.every((c) => c.passed), checks };
 }

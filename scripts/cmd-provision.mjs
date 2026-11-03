@@ -5,6 +5,7 @@
  * deterministic idempotency keys so a later `import` is a no-op on re-run.
  */
 import fs from 'node:fs';
+import path from 'node:path';
 import { provisionBundle } from '../src/bundle.mjs';
 import { parseArgs, parseKeyValues, usage, die, wantsHelp } from './lib/cli.mjs';
 
@@ -13,13 +14,16 @@ const HELP = usage({
   usage: 'ssss provision <bundle.ucw.json> [options]',
   options: [
     ['--param <k=v>', 'Bind a bundle parameter (repeatable).'],
+    ['--dependency <id=file>', 'Provide a dependency bundle (repeatable).'],
     ['--workspace <id>', 'Target workspace id (default: ws-provision).'],
     ['--prefix <path>', 'Place every file under this path prefix (id-remap).'],
     ['--out <file>', 'Write the envelope plan here (default: stdout).'],
     ['--dry-run', 'Mark every envelope dry_run (import will validate, not commit).'],
+    ['--json', 'Emit complete JSON plan including bindings and dependency summary.'],
   ],
   examples: [
     'ssss provision festival.ucw.json --param business_name="Acme Fest" --param domain=acme.live',
+    'ssss provision festival.ucw.json --dependency ticketing=./ticketing.ucw.json',
     'ssss provision festival.ucw.json --workspace ws-42 --out plan.json',
   ],
   seeAlso: ['ssss import', 'ssss inspect', 'ssss help provisioning'],
@@ -27,7 +31,7 @@ const HELP = usage({
 
 export async function run(argv) {
   if (wantsHelp(argv)) { console.log(HELP); return; }
-  const { positionals, flags } = parseArgs(argv, { booleans: ['dry-run'], multi: ['param'] });
+  const { positionals, flags } = parseArgs(argv, { booleans: ['dry-run', 'json'], multi: ['param', 'dependency'] });
   const file = positionals[0];
   if (!file) die('provision needs a bundle file.\n\n' + HELP);
   if (!fs.existsSync(file)) die(`no such file: ${file}`);
@@ -36,11 +40,29 @@ export async function run(argv) {
   try { bundle = JSON.parse(fs.readFileSync(file, 'utf8')); }
   catch (err) { die(`not valid JSON: ${err.message}`); }
 
+  const dependencies = {};
+  for (const dep of flags.dependency || []) {
+    const eq = dep.indexOf('=');
+    let id = null;
+    let depPath = dep;
+    if (eq !== -1) {
+      id = dep.slice(0, eq);
+      depPath = dep.slice(eq + 1);
+    }
+    if (!fs.existsSync(depPath)) die(`no such dependency file: ${depPath}`);
+    let depBundle;
+    try { depBundle = JSON.parse(fs.readFileSync(depPath, 'utf8')); }
+    catch (err) { die(`dependency ${depPath} is not valid JSON: ${err.message}`); }
+    id = id || depBundle.manifest?.name || depBundle.manifest?.id || path.basename(depPath, '.json');
+    dependencies[id] = depBundle;
+  }
+
   const result = provisionBundle(bundle, {
     parameters: parseKeyValues(flags.param),
     workspaceId: flags.workspace || 'ws-provision',
     pathPrefix: flags.prefix || '',
     dryRun: !!flags['dry-run'],
+    dependencies,
   });
 
   if (result.unresolved.length) {
@@ -55,8 +77,17 @@ export async function run(argv) {
     console.error(`✗ ${result.errors.length} bundle validation error(s):`);
     for (const e of result.errors) console.error(`  - ${e}`);
   }
+  if (result.dependencies?.suggested?.length) {
+    console.error(`ℹ suggested optional/recommended dependencies: ${result.dependencies.suggested.map((d) => d.id).join(', ')}`);
+  }
 
-  const plan = { workspace_id: flags.workspace || 'ws-provision', steps: result.steps, envelopes: result.plan };
+  const plan = {
+    workspace_id: flags.workspace || 'ws-provision',
+    steps: result.steps,
+    bindings: result.bindings,
+    dependencies: result.dependencies,
+    envelopes: result.plan,
+  };
   const json = JSON.stringify(plan, null, 2);
   if (flags.out) {
     fs.writeFileSync(flags.out, json + '\n');

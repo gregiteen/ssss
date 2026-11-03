@@ -7,6 +7,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.14.0] - 2026-11-02
+### Added
+- **Parameter bindings & Resource bindings (D2, D4)**: `provisionBundle` supports `x_bind` in template frontmatter and resource bindings (`bindings` array with `relation`, `field`, `mode`), with type validation and parameter substitution.
+- **Deterministic ID, slug, and link remapping (D3)**: Target workspace and path isolation with automatic Markdown link and typed references rewriting.
+- **Topological dependency resolution (D5)**: Bundles declare dependencies via `manifest.dependencies.bundles` (`required`, `recommended`, `optional`). Dependencies are resolved in topological order with circular dependency detection.
+- **Base-version precondition & conflict protection (D8)**: `importBundle` assigns `expected_before_hash`; kernel enforces match at Stage 3, preventing regression of concurrent local edits.
+- **Structural bundle upgrade (D6)**: `upgradeBundle` and `ssss upgrade` CLI produce structural patches and `migration` primitive records; engine fail-closed refusal of `tenant_private` targets for upgrade envelopes.
+- **Cross-language HTTP wire protocol & reference server (G3)**: Spec §6.8 HTTP wire transport, `ssss serve` reference server with bearer token authentication (`Authorization: Bearer <token>`), health check (`GET /health`), and canonical HTTP status mapping matching `ERROR_STATUS`.
+- **Subprocess stdin-JSON bridge (G3)**: `ssss bridge` command for non-JS hosts (e.g. Python Dabber CRM), supporting single JSON object, JSON array batch, and streaming NDJSON with `--stream`.
+- **Projection adapter conformance suite (G4)**: `runProjectionContract` in `@gregiteen/ssss-cli/projections` and `projection_memory` in `ssss adapter conformance`, covering log rebuild, incremental apply parity, drift detection, and replay idempotency.
+- **Path-scoped capability grants (G5)**: Capability authorizer supports `<capability>@<glob>` format (e.g. `ssss:rule:*@rules/marketing/**`) enforced at Stage 5 authorization.
+
+### Behavior changes hosts should check
+- `provisionBundle` returns `{ manifest, envelopes, bindings, dependencies, unmappedLinks }`. An unbound required resource fails provisioning unless `dryRun: true`.
+- Envelopes with `envelope.intent === 'upgrade'` targeting `tenant_private` documents are rejected with `forbidden`.
+- `importBundle` envelopes include `expected_before_hash` when the source document existed at export time.
+
 ## [0.13.1] - 2026-11-02
 ### Changed
 - No change to the package's code, registry, spec or bundled skill. This

@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * Scaffold the 4 canonical SSSS project documents (PRD, Architecture, Dev Plan,
+ * Scaffold the 5 canonical SSSS project documents (AUDIT, PRD, Architecture, Dev Plan,
  * Tracker) for a new PROJECT_PREFIX, per the ssss-project-management skill's
  * Standard SWE Sequence.
  *
@@ -50,7 +50,10 @@ function nowIso() {
   return new Date().toISOString().replace(/\.\d{3}Z$/, 'Z');
 }
 
-function header(prefix, docType, kanbanState) {
+function header(prefix, docType, kanbanState, suffix) {
+  const auditLines = suffix === 'AUDIT'
+    ? '> **Audit Status**: In progress\n> **Audited commit**: HEAD'
+    : `> **Based on audit**: ${prefix}_AUDIT.md (Complete, HEAD)`;
   return `---
 type: project_document
 title: ${prefix} — ${docType}
@@ -64,6 +67,7 @@ timestamp: ${nowIso()}
 > **Kanban State**: ${kanbanState}
 > **Author**: <Author>
 > **Date**: ${nowIso().slice(0, 10)}
+${auditLines}
 
 ---
 `;
@@ -74,7 +78,7 @@ const DOC_TYPES = [
   { suffix: 'PRD', title: 'Product Requirements', body: (p) => `## Problem\n\n<What problem does ${p} solve, and for whom?>\n\n## Scope\n\n<In scope / out of scope.>\n\n## Requirements\n\n<Numbered, testable requirements.>\n` },
   { suffix: 'ARCHITECTURE', title: 'Architecture', body: () => `## Design\n\n<Schema, API, component structure.>\n\n## Tradeoffs\n\n<Alternatives considered and why this one won.>\n` },
   { suffix: 'DEVELOPMENT_PLAN', title: 'Development Plan', body: () => `## Phases\n\n1. <Phase 1>\n2. <Phase 2>\n` },
-  { suffix: 'PROJECT_TRACKER', title: 'Project Tracker', body: (p) => `## Tasks\n\n- [ ] <first task for ${p}>\n\n## Verification Log\n\n<Entries added as work completes.>\n` },
+  { suffix: 'PROJECT_TRACKER', title: 'Project Tracker', body: (p) => `## ⏳ Phase 0: Audit\n\nGoal: Verify baseline, existing code, and standing rules.\n\n- [ ] [AUDIT](${p}_AUDIT.md) complete\n- [ ] [PRD](${p}_PRD.md), [ARCHITECTURE](${p}_ARCHITECTURE.md), [DEVELOPMENT_PLAN](${p}_DEVELOPMENT_PLAN.md) written\n\n## ⏳ Phase 1: Fixes for P0/P1 Audit Findings\n\nGoal: Fix identified blockers before new feature work.\n\n- [ ] <task>\n\n## ⏳ Phase 2: Feature Implementation\n\nGoal: Deliver scoped feature requirements.\n\n- [ ] <task>\n\n## ⏳ Phase 3: Testing and Verification\n\nGoal: Full quality gates and verification.\n\n- [ ] Full code-quality tier passes\n- [ ] check-project-docs.mjs ${p} passes before archival\n\n## Verification Log\n\n<Entries added as work completes.>\n\n## Action Log\n\n| Timestamp (UTC) | Agent | Action / files or commands | Result | Evidence |\n| --- | --- | --- | --- | --- |\n` },
 ];
 
 function main() {
@@ -107,7 +111,7 @@ function main() {
       console.error(`skip (exists): ${path.relative(root, file)}`);
       continue;
     }
-    fs.writeFileSync(file, header(args.prefix, doc.title, kanbanState) + '\n' + doc.body(args.prefix));
+    fs.writeFileSync(file, header(args.prefix, doc.title, kanbanState, doc.suffix) + '\n' + doc.body(args.prefix));
     console.error(`wrote: ${path.relative(root, file)}`);
     written++;
   }

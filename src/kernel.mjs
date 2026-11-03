@@ -5,7 +5,7 @@
 import crypto from 'node:crypto';
 import { parseDocument, serializeDocument } from './frontmatter.mjs';
 import { createValidator } from './validator.mjs';
-import { isAppendType, isSafeDocumentPath, resolvePrimitiveDefinition } from './registry.mjs';
+import { isAppendType, isSafeDocumentPath, resolvePortability, resolvePrimitiveDefinition } from './registry.mjs';
 import { createCapabilityAuthorizer, validateVerifiedPrincipal } from './authorization.mjs';
 import { createCanonicalEvent, idempotentEventId } from './events.mjs';
 import { MemoryIdempotencyStore } from './idempotency.mjs';
@@ -44,6 +44,7 @@ export function canonicalRequestHash(envelope, principal) {
     primitive_type: envelope?.primitive_type,
     content: envelope?.content,
     patches: envelope?.patches,
+    expected_before_hash: envelope?.expected_before_hash ?? null,
     verified_principal_id: principal?.id || null,
   };
   return `sha256:${crypto.createHash('sha256').update(JSON.stringify(stable(clean))).digest('hex')}`;
@@ -243,6 +244,23 @@ export function createKernel(options = {}) {
     let nextData = null;
     let currentData = null;
 
+    if (envelope.expected_before_hash !== undefined) {
+      const expected = envelope.expected_before_hash;
+      if (!current) {
+        if (expected !== null) {
+          return failure('version_conflict', envelope, operationId, [`Document does not exist; expected before hash '${expected}'.`], [{ field: 'expected_before_hash', issue: 'Expected document to exist.' }]);
+        }
+      } else {
+        if (current.hash !== expected) {
+          if (typeof envelope.content === 'string' && current.bytes.toString('utf8') === envelope.content) {
+            // Replaying identical content is an unchanged no-op
+          } else {
+            return failure('version_conflict', envelope, operationId, [`Document hash '${current.hash}' does not match expected_before_hash '${expected}'.`], [{ field: 'expected_before_hash', issue: 'Hash mismatch.' }]);
+          }
+        }
+      }
+    }
+
     if (current) {
       try { currentData = parseDocument(current.bytes.toString('utf8')).data; }
       catch (error) { return failure('internal_error', envelope, operationId, [`Existing document is invalid: ${error.message}`]); }
@@ -276,7 +294,7 @@ export function createKernel(options = {}) {
         const noopAuth = await authorize({
           principal, workspaceId: envelope.workspace_id, definition,
           action: envelope.type === 'operation' ? 'replace' : actionFor(envelope, true, isAppendType(definition)),
-          context,
+          context: { ...context, path: envelope.path },
         });
         if (!noopAuth.allowed) {
           const code = validateVerifiedPrincipal(principal).valid ? 'forbidden' : 'unauthorized';
@@ -329,9 +347,16 @@ export function createKernel(options = {}) {
       catch { return failure('invalid_request', envelope, operationId, ['Event content must be valid JSON.'], [{ field: 'content', issue: 'Expected JSON string.' }]); }
     }
 
+    if (envelope.intent === 'upgrade' && definition && envelope.type !== 'event') {
+      const klass = resolvePortability(definition, currentData || nextData);
+      if (klass === 'tenant_private') {
+        return failure('forbidden', envelope, operationId, [`Upgrade may not modify tenant_private document '${envelope.path}'.`], [{ field: 'path', issue: 'tenant_private documents are immutable during upgrades.' }]);
+      }
+    }
+
     const appendOnly = isAppendType(definition);
     const action = actionFor(envelope, !!current, appendOnly);
-    const auth = await authorize({ principal, workspaceId: envelope.workspace_id, definition, action, context });
+    const auth = await authorize({ principal, workspaceId: envelope.workspace_id, definition, action, context: { ...context, path: envelope.path } });
     if (!auth.allowed) {
       // An absent or malformed principal is an authentication failure, not a permission one.
       const code = validateVerifiedPrincipal(principal).valid ? 'forbidden' : 'unauthorized';

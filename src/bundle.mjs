@@ -284,6 +284,22 @@ export function validateBundle(bundle, opts = {}) {
       for (const key of ['primitives', 'extensions', 'migrations']) {
         if (!Array.isArray(m.dependencies[key])) errors.push(`manifest.dependencies.${key} must be an array`);
       }
+      if (m.dependencies.bundles !== undefined) {
+        if (!Array.isArray(m.dependencies.bundles)) {
+          errors.push('manifest.dependencies.bundles must be an array');
+        } else {
+          for (const b of m.dependencies.bundles) {
+            if (!b || typeof b !== 'object') {
+              errors.push('manifest.dependencies.bundles entries must be objects');
+              continue;
+            }
+            if (!b.id && !b.name) errors.push("manifest.dependencies.bundles entry missing 'id' or 'name'");
+            if (b.installMode && !['optional', 'recommended', 'required'].includes(b.installMode)) {
+              errors.push(`invalid installMode '${b.installMode}' in bundle dependency`);
+            }
+          }
+        }
+      }
       if (!m.dependencies.integrity || typeof m.dependencies.integrity !== 'object' || Array.isArray(m.dependencies.integrity)) {
         errors.push('manifest.dependencies.integrity must be an object');
       } else if (typeof m.dependencies.integrity.content_hash !== 'string' || !m.dependencies.integrity.content_hash.startsWith('sha256:')) {
@@ -436,52 +452,308 @@ function internalRefs(content) {
  * list of Operation Contract envelopes (§6). Does not touch the filesystem.
  */
 export function provisionBundle(bundle, opts = {}) {
-  const { parameters = {}, workspaceId = 'ws-provision', pathPrefix = '', dryRun = false } = opts;
-  const validation = validateBundle(bundle, { registryDir: opts.registryDir });
+  const {
+    parameters = {},
+    workspaceId = 'ws-provision',
+    pathPrefix = '',
+    dryRun = false,
+    expectedHashes = {},
+    dependencies = {},
+    registryDir,
+  } = opts;
+  const validation = validateBundle(bundle, { registryDir });
   if (!validation.valid) {
-    return { ok: false, plan: [], unresolved: [], danglingLinks: [], errors: validation.errors, steps: [] };
+    return { ok: false, plan: [], unresolved: [], danglingLinks: [], bindings: [], dependencies: { installed: [], suggested: [] }, errors: validation.errors, steps: [] };
   }
   const m = bundle.manifest;
-
-  // Resolve required parameters (§16.5).
+  const errors = [];
   const unresolved = [];
-  for (const p of m.parameters || []) {
-    if (p.required && parameters[p.key] === undefined && p.defaultValue === undefined) unresolved.push(p.key);
-  }
 
-  // Id-remap: every file is placed under the target prefix; build the slug set so
-  // we can verify link integrity (§17.3) against the remapped target.
-  const normalizedPrefix = pathPrefix ? pathPrefix.replace(/\/$/, '') : '';
-  if (normalizedPrefix && !isSafeBundlePath(normalizedPrefix)) {
-    return { ok: false, plan: [], unresolved, danglingLinks: [], errors: [`unsafe path prefix '${pathPrefix}'`], steps: m.provisioning || [] };
-  }
-  const remap = (rel) => (normalizedPrefix ? `${normalizedPrefix}/${rel}` : rel);
-  const presentSlugs = new Set();
-  for (const f of bundle.files) {
-    const { data } = parseDocument(f.content);
-    if (data.slug) presentSlugs.add(data.slug);
-    presentSlugs.add(f.path.replace(/\.md$/, ''));
-    presentSlugs.add(f.path.replace(/.*\//, '').replace(/\.md$/, ''));
-  }
-  const danglingLinks = [];
-  for (const f of bundle.files) {
-    for (const ref of internalRefs(f.content)) {
-      if (!presentSlugs.has(ref)) danglingLinks.push({ file: f.path, ref });
+  // 1. Resolve and type-check parameters (§16.5).
+  const paramMap = new Map();
+  const paramDefMap = new Map();
+  for (const p of m.parameters || []) {
+    paramDefMap.set(p.key, p);
+    const val = parameters[p.key] !== undefined ? parameters[p.key] : p.defaultValue;
+    if (val === undefined) {
+      if (p.required) unresolved.push(p.key);
+    } else {
+      if (p.type === 'string' && typeof val !== 'string') errors.push(`parameter '${p.key}' must be a string`);
+      else if (p.type === 'boolean' && typeof val !== 'boolean') errors.push(`parameter '${p.key}' must be a boolean`);
+      else if (p.type === 'number' && typeof val !== 'number') errors.push(`parameter '${p.key}' must be a number`);
+      paramMap.set(p.key, val);
     }
   }
 
-  // Build the envelope plan. Deterministic idempotency keys make import a no-op on re-run.
-  // The key covers the content: committed keys are durable (spec §6.4), so a key
-  // derived from the path alone would make every changed re-import a conflict.
-  const plan = bundle.files.map((f) => {
-    const targetPath = remap(f.path);
-    const contentDigest = crypto.createHash('sha256').update(f.content).digest('hex');
-    const key = 'prov-' + crypto.createHash('sha256').update(workspaceId + ':' + targetPath + ':' + contentDigest).digest('hex').slice(0, 24);
-    return { type: 'operation', idempotency_key: key, path: targetPath, workspace_id: workspaceId, content: f.content, intent: 'provision', dry_run: dryRun, actor: { role: 'system' } };
+  // 2. Dependencies (§17.4)
+  const resolvedDependencies = {
+    installed: [],
+    suggested: [],
+  };
+
+  const declaredBundles = Array.isArray(m.dependencies?.bundles)
+    ? m.dependencies.bundles
+    : (Array.isArray(m.bundle_dependencies) ? m.bundle_dependencies : []);
+
+  const depPool = new Map();
+  if (bundle) {
+    if (bundle.manifest?.name) depPool.set(bundle.manifest.name, bundle);
+    if (bundle.manifest?.id) depPool.set(bundle.manifest.id, bundle);
+  }
+  if (dependencies && typeof dependencies === 'object') {
+    const entries = dependencies instanceof Map
+      ? dependencies.entries()
+      : Object.entries(dependencies);
+    for (const [key, depBundle] of entries) {
+      if (depBundle) {
+        depPool.set(key, depBundle);
+        if (depBundle.manifest?.name) depPool.set(depBundle.manifest.name, depBundle);
+        if (depBundle.manifest?.id) depPool.set(depBundle.manifest.id, depBundle);
+      }
+    }
+  }
+
+  const visiting = new Set();
+  const visited = new Set();
+  const orderedDeps = [];
+
+  function resolveDeps(b, pathStack = []) {
+    const bId = b.manifest?.name || b.manifest?.id || '(bundle)';
+    if (visiting.has(bId)) {
+      const cycle = [...pathStack, bId].join(' -> ');
+      throw new Error(`dependency cycle detected: ${cycle}`);
+    }
+    if (visited.has(bId)) return;
+    visiting.add(bId);
+
+    const bDeclared = Array.isArray(b.manifest?.dependencies?.bundles)
+      ? b.manifest.dependencies.bundles
+      : (Array.isArray(b.manifest?.bundle_dependencies) ? b.manifest.bundle_dependencies : []);
+
+    for (const dep of bDeclared) {
+      const mode = dep.installMode || dep.install_mode || 'required';
+      const depKey = dep.id || dep.name;
+      if (mode === 'required') {
+        const depBundle = depPool.get(depKey);
+        if (!depBundle) {
+          errors.push(`missing required bundle dependency '${depKey}'`);
+          continue;
+        }
+        resolveDeps(depBundle, [...pathStack, bId]);
+      } else {
+        if (!resolvedDependencies.suggested.some((s) => s.id === depKey)) {
+          resolvedDependencies.suggested.push({
+            id: depKey,
+            name: dep.name || depKey,
+            installMode: mode,
+            description: dep.description || '',
+          });
+        }
+      }
+    }
+
+    visiting.delete(bId);
+    visited.add(bId);
+    if (b !== bundle) {
+      orderedDeps.push({ id: bId, bundle: b });
+    }
+  }
+
+  try {
+    resolveDeps(bundle);
+  } catch (err) {
+    errors.push(err.message);
+  }
+
+  const dependencyPlans = [];
+  const dependencyBindings = [];
+  const dependencySteps = [];
+
+  for (const { id: depId, bundle: depBundle } of orderedDeps) {
+    const depResult = provisionBundle(depBundle, {
+      ...opts,
+      dependencies: {},
+    });
+    if (!depResult.ok) {
+      errors.push(...depResult.errors);
+      unresolved.push(...depResult.unresolved);
+    }
+    dependencyPlans.push(...depResult.plan);
+    dependencyBindings.push(...depResult.bindings);
+    dependencySteps.push(...depResult.steps);
+    resolvedDependencies.installed.push(depId);
+  }
+
+  // 3. Setup path remapping and slug dictionary (§17.3)
+  const normalizedPrefix = pathPrefix ? pathPrefix.replace(/\/$/, '') : '';
+  if (normalizedPrefix && !isSafeBundlePath(normalizedPrefix)) {
+    return { ok: false, plan: [], unresolved, danglingLinks: [], bindings: [], dependencies: resolvedDependencies, errors: [`unsafe path prefix '${pathPrefix}'`], steps: m.provisioning || [] };
+  }
+  const remapPath = (rel) => (normalizedPrefix ? `${normalizedPrefix}/${rel}` : rel);
+  const slugPrefix = normalizedPrefix ? normalizedPrefix.replace(/[/_]/g, '-') + '-' : '';
+
+  const declaredExts = m.required_extensions;
+  const registryNames = Array.isArray(declaredExts) && declaredExts.length ? declaredExts : null;
+  const registrySet = loadRegistries(registryDir, registryNames ? { only: registryNames } : {});
+
+  const idMap = new Map();
+  const slugMap = new Map();
+  const presentSlugs = new Set();
+  const fileParsedList = [];
+
+  for (const f of bundle.files) {
+    const parsed = parseDocument(f.content);
+    fileParsedList.push({ file: f, parsed });
+    const targetPath = remapPath(f.path);
+    if (parsed.data.slug) {
+      const targetSlug = normalizedPrefix
+        ? `${slugPrefix}${crypto.createHash('sha256').update(workspaceId + ':' + parsed.data.slug).digest('hex').slice(0, 12)}`
+        : parsed.data.slug;
+      slugMap.set(parsed.data.slug, targetSlug);
+      presentSlugs.add(targetSlug);
+    }
+    if (parsed.data.id) {
+      const targetId = normalizedPrefix
+        ? `${slugPrefix}${crypto.createHash('sha256').update(workspaceId + ':' + parsed.data.id).digest('hex').slice(0, 12)}`
+        : parsed.data.id;
+      idMap.set(parsed.data.id, targetId);
+    }
+    presentSlugs.add(targetPath.replace(/\.md$/, ''));
+    presentSlugs.add(targetPath.replace(/.*\//, '').replace(/\.md$/, ''));
+  }
+
+  // 4. Second pass: apply parameter bindings, rewrite IDs/references, reserialize
+  const bindings = [];
+  const processedFiles = [];
+
+  for (const { file: f, parsed } of fileParsedList) {
+    const data = { ...parsed.data };
+    let body = parsed.body;
+    const targetPath = remapPath(f.path);
+
+    // Apply explicit x_bind frontmatter parameter bindings (G1 §16.5.1)
+    if (data.x_bind && typeof data.x_bind === 'object' && !Array.isArray(data.x_bind)) {
+      for (const [field, paramKey] of Object.entries(data.x_bind)) {
+        const paramDef = paramDefMap.get(paramKey);
+        const val = paramMap.has(paramKey)
+          ? paramMap.get(paramKey)
+          : (parameters[paramKey] !== undefined ? parameters[paramKey] : paramDef?.defaultValue);
+        if (val === undefined) {
+          if (paramDef?.required) unresolved.push(paramKey);
+        } else {
+          data[field] = val;
+        }
+      }
+      delete data.x_bind;
+    }
+
+    // Apply resource_bound requirement parameter bindings (D4 §17.1)
+    for (const [k, v] of Object.entries(data)) {
+      if (v === 'REQUIREMENT') {
+        const aliases = resourceFieldParameterAliases(data.type, k);
+        const matchedKey = aliases.find((alias) => parameters[alias] !== undefined);
+        const resolvedVal = matchedKey ? parameters[matchedKey] : null;
+        if (resolvedVal !== null) {
+          data[k] = resolvedVal;
+        }
+        const matchingStep = (m.provisioning || []).find((s) => s.id === `bind-${data.type}` || s.system === RESOURCE_SYSTEM_BY_KIND[data.type]);
+        const def = resolvePrimitiveDefinition(registrySet, data.type);
+        const relation = def?.resource?.provision_relation || def?.resource?.binds?.[0] || k;
+        const mode = matchingStep?.mode || 'provision';
+        const paramDef = paramDefMap.get(matchedKey || aliases[0]) || aliases.map((a) => paramDefMap.get(a)).find(Boolean);
+        const isRequired = paramDef ? !!paramDef.required : false;
+
+        bindings.push({
+          path: targetPath,
+          type: data.type,
+          field: k,
+          relation,
+          parameter_key: matchedKey || aliases[0],
+          value: resolvedVal,
+          mode,
+        });
+
+        if (resolvedVal === null && isRequired && !dryRun) {
+          errors.push(`unbound required resource '${data.type}.${k}' for '${targetPath}' (parameter '${matchedKey || aliases[0]}')`);
+        }
+      }
+    }
+
+    // Remap frontmatter slug / id fields
+    if (normalizedPrefix) {
+      if (data.slug && slugMap.has(data.slug)) data.slug = slugMap.get(data.slug);
+      if (data.id && idMap.has(data.id)) data.id = idMap.get(data.id);
+      if (data.workspace_id) data.workspace_id = workspaceId;
+
+      // Remap frontmatter typed reference paths (D3 §17.3)
+      const def = resolvePrimitiveDefinition(registrySet, data.type);
+      const declaredRefs = def?.references ? Object.keys(def.references) : [];
+      const refFields = new Set(['resource_ref', 'target_workflow', ...declaredRefs]);
+      for (const refField of refFields) {
+        if (typeof data[refField] === 'string' && !data[refField].startsWith('/') && !data[refField].startsWith('http')) {
+          data[refField] = remapPath(data[refField]);
+        }
+      }
+
+      // Remap body links (D3 §17.3)
+      body = body.replaceAll(/\[\[([^\]]+)\]\]/g, (match, slug) => {
+        const remapped = slugMap.get(slug.trim());
+        return remapped ? `[[${remapped}]]` : match;
+      });
+      body = body.replaceAll(/\[([^\]]*)\]\(([^)]+\.md)\)/g, (match, text, rel) => {
+        if (!rel.startsWith('/') && !rel.startsWith('http')) return `[${text}](${remapPath(rel)})`;
+        return match;
+      });
+    }
+
+    const rewrittenContent = serializeDocument(data, body);
+    processedFiles.push({ path: targetPath, content: rewrittenContent });
+  }
+
+  // 5. Check link integrity
+  const danglingLinks = [];
+  for (const pf of processedFiles) {
+    for (const ref of internalRefs(pf.content)) {
+      if (!presentSlugs.has(ref)) danglingLinks.push({ file: pf.path, ref });
+    }
+  }
+
+  // 6. Build operation plan with expected_before_hash (D8 §6.1 / §17.1)
+  const plan = processedFiles.map((pf) => {
+    const expectedBeforeHash = expectedHashes[pf.path];
+    const contentDigest = crypto.createHash('sha256').update(pf.content).digest('hex');
+    const key = 'prov-' + crypto.createHash('sha256').update(workspaceId + ':' + pf.path + ':' + contentDigest).digest('hex').slice(0, 24);
+    const envelope = {
+      type: 'operation',
+      idempotency_key: key,
+      path: pf.path,
+      workspace_id: workspaceId,
+      content: pf.content,
+      intent: 'provision',
+      dry_run: dryRun,
+      actor: { role: 'system' },
+    };
+    if (expectedBeforeHash !== undefined) {
+      envelope.expected_before_hash = expectedBeforeHash;
+    }
+    return envelope;
   });
 
-  const ok = unresolved.length === 0 && danglingLinks.length === 0;
-  return { ok, plan, unresolved, danglingLinks, steps: m.provisioning || [] };
+  const combinedPlan = [...dependencyPlans, ...plan];
+  const combinedBindings = [...dependencyBindings, ...bindings];
+  const combinedSteps = [...dependencySteps, ...(m.provisioning || [])];
+
+  const ok = unresolved.length === 0 && danglingLinks.length === 0 && errors.length === 0;
+  return {
+    ok,
+    plan: combinedPlan,
+    unresolved: [...new Set(unresolved)],
+    danglingLinks,
+    bindings: combinedBindings,
+    dependencies: resolvedDependencies,
+    steps: combinedSteps,
+    errors,
+  };
 }
 
 /**
@@ -542,4 +814,174 @@ export async function importBundle(plan, vaultRoot, engine) {
   for (const env of plan) results.push(await engine.processOperation(env, vaultRoot, operationOptions));
   const committed = results.filter((r) => r.success && !r.replay && !r.dry_run && !r.unchanged).length;
   return { ok: results.every((r) => r.success), committed, wouldCommit: 0, results };
+}
+
+/**
+ * upgradeBundle(installed, next, opts) → replayable plan of structural patch envelopes (§17.4).
+ *
+ * Moving an installed bundle to a new version produces only `patch` envelopes,
+ * and only for structural paths. Never writes `tenant_private` data.
+ * Records the upgrade in a `migration` primitive document.
+ */
+export function upgradeBundle(installed, next, opts = {}) {
+  const {
+    migration = null,
+    workspaceId = 'ws-upgrade',
+    dryRun = false,
+    registryDir,
+    pathPrefix = '',
+  } = opts;
+
+  const nextValidation = validateBundle(next, { registryDir });
+  if (!nextValidation.valid) {
+    return { ok: false, plan: [], errors: nextValidation.errors, migration: null, patchesCount: 0 };
+  }
+
+  const mNext = next.manifest;
+  const fromVersion = installed?.manifest?.version || opts.fromVersion || '1.0.0';
+  const toVersion = mNext.version || opts.toVersion || '1.1.0';
+
+  const declaredExts = mNext.required_extensions;
+  const registryNames = Array.isArray(declaredExts) && declaredExts.length ? declaredExts : null;
+  const registrySet = loadRegistries(registryDir, registryNames ? { only: registryNames } : {});
+
+  const normalizedPrefix = pathPrefix ? pathPrefix.replace(/\/$/, '') : '';
+  const remapPath = (rel) => (normalizedPrefix ? `${normalizedPrefix}/${rel}` : rel);
+
+  const installedFiles = Array.isArray(installed) ? installed : (installed?.files || []);
+  const installedMap = new Map(installedFiles.map((f) => [f.path, f]));
+
+  const errors = [];
+  const patchEnvelopes = [];
+  const modifiedPaths = [];
+
+  for (const nextFile of next.files) {
+    const targetPath = remapPath(nextFile.path);
+    const parsed = parseDocument(nextFile.content);
+    const def = resolvePrimitiveDefinition(registrySet, parsed.data.type);
+    const klass = resolvePortability(def, parsed.data);
+
+    if (klass === 'tenant_private') {
+      // An upgrade bundle must never carry or modify tenant_private files
+      if (installedMap.has(nextFile.path) || installedMap.has(targetPath)) {
+        errors.push(`Upgrade may not target tenant_private file '${targetPath}'`);
+      }
+      continue;
+    }
+
+    const installedFile = installedMap.get(targetPath) || installedMap.get(nextFile.path);
+    if (!installedFile) {
+      // New structural file in next bundle
+      const key = 'upg-create-' + crypto.createHash('sha256')
+        .update(`${workspaceId}:${targetPath}:${toVersion}`)
+        .digest('hex')
+        .slice(0, 24);
+      patchEnvelopes.push({
+        type: 'operation',
+        idempotency_key: key,
+        path: targetPath,
+        workspace_id: workspaceId,
+        content: nextFile.content,
+        intent: 'upgrade',
+        dry_run: dryRun,
+        actor: { role: 'system' },
+        expected_before_hash: null,
+      });
+      modifiedPaths.push(targetPath);
+      continue;
+    }
+
+    if (installedFile.content === nextFile.content) {
+      continue; // identical, unchanged
+    }
+
+    // Compute diff between installedFile and nextFile
+    const installedParsed = parseDocument(installedFile.content);
+    const patches = {};
+
+    for (const [key, val] of Object.entries(parsed.data)) {
+      if (JSON.stringify(installedParsed.data[key]) !== JSON.stringify(val)) {
+        patches[key] = val;
+      }
+    }
+    for (const key of Object.keys(installedParsed.data)) {
+      if (!(key in parsed.data)) {
+        patches[key] = null;
+      }
+    }
+    if (installedParsed.body !== parsed.body) {
+      patches.__body__ = parsed.body;
+    }
+
+    if (Object.keys(patches).length > 0) {
+      const canonicalInstalled = serializeDocument(installedParsed.data, installedParsed.body);
+      const contentHashBefore = opts.expectedHashes?.[targetPath] || ('sha256:' + crypto.createHash('sha256')
+        .update(Buffer.from(canonicalInstalled, 'utf8'))
+        .digest('hex'));
+      const key = 'upg-patch-' + crypto.createHash('sha256')
+        .update(`${workspaceId}:${targetPath}:${toVersion}:${contentHashBefore}`)
+        .digest('hex')
+        .slice(0, 24);
+      patchEnvelopes.push({
+        type: 'patch',
+        idempotency_key: key,
+        path: targetPath,
+        workspace_id: workspaceId,
+        patches,
+        intent: 'upgrade',
+        dry_run: dryRun,
+        actor: { role: 'system' },
+        expected_before_hash: contentHashBefore,
+      });
+      modifiedPaths.push(targetPath);
+    }
+  }
+
+  // Create migration primitive document record
+  const migrationId = migration?.migration_id || `mig-${fromVersion}-to-${toVersion}`.replace(/[^A-Za-z0-9_-]+/g, '-');
+  const migrationTitle = migration?.title || `Upgrade from ${fromVersion} to ${toVersion}`;
+  const migrationDesc = migration?.description || `Structural upgrade applying ${patchEnvelopes.length} patch(es).`;
+  const migrationTime = migration?.timestamp || new Date().toISOString();
+  const migrationPath = remapPath(`migrations/${migrationId}.md`);
+
+  const migrationData = {
+    type: 'migration',
+    title: migrationTitle,
+    description: migrationDesc,
+    timestamp: migrationTime,
+    migration_id: migrationId,
+    from_version: fromVersion,
+    to_version: toVersion,
+    status: 'applied',
+  };
+  const migrationBody = `# Migration ${migrationId}\n\nUpgraded capability bundle from ${fromVersion} to ${toVersion}.\nApplied ${patchEnvelopes.length} structural patch(es):\n${modifiedPaths.map((p) => `- ${p}`).join('\n')}\n`;
+  const migrationContent = serializeDocument(migrationData, migrationBody);
+
+  const migrationKey = 'upg-mig-' + crypto.createHash('sha256')
+    .update(`${workspaceId}:${migrationPath}:${migrationId}`)
+    .digest('hex')
+    .slice(0, 24);
+
+  const migrationEnvelope = {
+    type: 'operation',
+    idempotency_key: migrationKey,
+    path: migrationPath,
+    workspace_id: workspaceId,
+    content: migrationContent,
+    intent: 'upgrade',
+    dry_run: dryRun,
+    actor: { role: 'system' },
+  };
+
+  const plan = [...patchEnvelopes, migrationEnvelope];
+  return {
+    ok: errors.length === 0,
+    plan,
+    fromVersion,
+    toVersion,
+    migration: { id: migrationId, path: migrationPath },
+    patchesCount: patchEnvelopes.filter((e) => e.type === 'patch').length,
+    operationsCount: patchEnvelopes.filter((e) => e.type === 'operation').length + 1,
+    errors,
+  };
 }

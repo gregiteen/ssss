@@ -303,6 +303,12 @@ async function checkCapabilities(root, check) {
     capabilityCovers('ssss:assistant:*', 'ssss:assistant:create') && !capabilityCovers('ssss:assistant:*', 'ssss:rule:create'));
   check('capabilities: a namespace wildcard covers its namespace only',
     capabilityCovers('ssss:*', 'ssss:rule:patch') && !capabilityCovers('acme:*', 'ssss:rule:patch') && !capabilityCovers('ss:*', 'ssss:rule:patch'));
+  check('capabilities: path selector @<glob> grants matching path',
+    capabilityCovers('ssss:rule:*@rules/marketing/**', 'ssss:rule:create', 'rules/marketing/promo.md')
+    && !capabilityCovers('ssss:rule:*@rules/marketing/**', 'ssss:rule:create', 'rules/finance/audit.md'));
+  check('capabilities: path selector @<glob> with *:* grants only matching paths',
+    capabilityCovers('*:*@capabilities/messaging/**', 'ssss:rule:create', 'capabilities/messaging/rules.md')
+    && !capabilityCovers('*:*@capabilities/messaging/**', 'ssss:rule:create', 'capabilities/other/rules.md'));
 
   const engine = createEngine();
   const vault = path.join(root, 'legacy-roles');
@@ -318,6 +324,20 @@ async function checkCapabilities(root, check) {
   check('legacy roles: *:<type> grants writes to that type', (await write('lr-6', 'assistants/c/ASSISTANT.md', doc('assistant', 'C'), 'typed')).success);
   check('legacy roles: write:* grants writes to every type', (await write('lr-7', 'workflows/d/WORKFLOW.md', doc('workflow', 'D'), 'owner')).success);
   check('legacy roles: an unknown role is forbidden, not promoted', (await write('lr-8', 'rules/e.md', doc('rule', 'E'), 'ghost')).error?.code === 'forbidden');
+
+  const pathPrincipal = {
+    id: 'scoped-user',
+    kind: 'agent',
+    workspaceIds: ['w'],
+    capabilities: ['ssss:rule:*@rules/marketing/**'],
+    authentication: { provider: 'token', assurance: 'verified' },
+  };
+  const writeScoped = (key, pathName, content) => engine.processOperation(
+    { type: 'operation', workspace_id: 'w', idempotency_key: key, path: pathName, content }, vault, { principal: pathPrincipal });
+  check('kernel authorization: path-scoped grant allows matching path (G5)',
+    (await writeScoped('ps-1', 'rules/marketing/banner.md', doc('rule', 'Banner'))).success);
+  check('kernel authorization: path-scoped grant forbids non-matching path (G5)',
+    (await writeScoped('ps-2', 'rules/engineering/lint.md', doc('rule', 'Lint'))).error?.code === 'forbidden');
 }
 
 // Resource hooks (spec §6.3): every prepare ends in exactly one finalize or

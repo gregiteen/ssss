@@ -957,6 +957,7 @@ An envelope is a JSON object:
   "path": "assistants/bot/ASSISTANT.md", // vault-relative, no leading "/", no "." or ".." segments
   "content": "---\ntype: …",       // operation: full document; event: JSON payload string
   "patches": { },                  // patch only
+  "expected_before_hash": "sha256:…", // OPTIONAL — asserts target content hash before mutation (§6.1)
   "primitive_type": "assistant",   // OPTIONAL — asserts the target's type
   "operation_id": "uuid",          // OPTIONAL — client-chosen; generated if absent
   "lease_id": "uuid",              // OPTIONAL — §7
@@ -969,6 +970,14 @@ The envelope carries **no identity**. Who is acting is supplied by the host as a
 verified principal, next to the envelope and never inside it (§6.6). A kernel
 MUST ignore any identity-bearing field a client places in the envelope, including
 the pre-0.9 `actor` object.
+
+A client or bundle provisioner MAY include `expected_before_hash` on an
+`operation` or `patch` envelope to assert that the target document has not been
+modified locally since the intended baseline was read. For a new document creation,
+`expected_before_hash` is `null`. For an update, it is the `sha256:...` digest of
+the baseline content. If the target document's current hash diverges from
+`expected_before_hash` (and its content is not already equal to the intended write),
+the kernel rejects the mutation with `version_conflict`.
 
 A `path` MUST be rejected with `invalid_request` if it is empty, absolute, contains
 a backslash or NUL, or has an empty, `.`, or `..` segment. A host MUST also refuse
@@ -1016,7 +1025,7 @@ Kernels MUST NOT reorder or skip stages. Adapters (§6.7) implement mechanics on
 |---|-------|------------|
 | 1 | **Envelope & identity** — known `type`, required fields present and well-typed (§6.2); a principal with an `id` and `kind` is attached. Nothing is read before this passes, so an anonymous caller learns nothing about the vault. | `invalid_request`, `unauthorized` |
 | 2 | **Idempotency** — look up (`workspace_id`, `idempotency_key`). Same request hash: return the stored response with `replay: true` and stop. Different hash: stop (§6.4). | `idempotency_conflict` |
-| 3 | **Read current state** — load the target, if any, and its version. An unsafe path fails here. | `invalid_request`, or `internal_error` for unreadable stored state |
+| 3 | **Read current state & base-version check** — load the target, if any, and its version. An unsafe path fails here with `invalid_request`. If `expected_before_hash` is specified: if the target is absent and `expected_before_hash !== null`, or if the target exists and its hash does not match `expected_before_hash` (and its content differs from the intended write), reject with `version_conflict`. | `invalid_request`, `version_conflict`, or `internal_error` for unreadable stored state |
 | 4 | **Content validation** — resolve the primitive and validate the resulting document (§9). Enforce type immutability, `immutable_fields`, patch/delete target existence, and append-only rules. | `not_found`, `validation_failed` |
 | 5 | **Authorization** — the verified principal must be complete (§6.6), scoped to `workspace_id`, and hold every capability the primitive and action require. | `unauthorized`, `forbidden` |
 | 6 | **Lease** — if the primitive is `lease_required` or the host requires a lease for this path, verify it (§7). | `lease_conflict` |
@@ -1181,6 +1190,11 @@ envelope, after authenticating the caller:
   it ends in `:*` and the required capability starts with everything before that
   `*`. So `ssss:*` covers every core primitive and `ssss:assistant:*` covers every
   action on assistants.
+- A granted capability string MAY include an optional path selector separated by `@`:
+  `<capability>@<glob>` (for example, `ssss:rule:*@rules/marketing/**` or
+  `*:*@capabilities/messaging/**`). When a selector is present, the capability grants
+  permission only when the envelope's target path matches the glob pattern. When omitted,
+  the capability applies workspace-wide.
 - A `system` principal bypasses capability checks. It exists for trusted internal
   callers such as import (§17). A host MUST NOT grant `system` to anything a remote
   caller controls.
@@ -1214,6 +1228,73 @@ each with a shared contract test in the conformance suite (§12):
 
 "Across every writer" means across threads, processes, and hosts sharing the same
 storage, not just within one instance.
+
+### 6.8 HTTP/JSON Wire Protocol & Subprocess Bridge
+
+To enable portable, cross-language interoperation across diverse runtimes (Node.js, Python,
+Ruby, Go, Rust), SSSS defines a normative HTTP/JSON wire transport contract and a standard
+subprocess bridge. A host or engine that exposes SSSS over a network MUST conform to this
+wire contract.
+
+#### Endpoint & HTTP Headers
+
+- **Endpoint**: `POST /v1/operations` (hosts MAY also route `POST /` to this handler for convenience).
+- **Request Content-Type**: `application/json`.
+- **Response Content-Type**: `application/json`.
+- **Authentication**: When remote authentication is required, the client MUST present
+  a bearer token via the `Authorization: Bearer <token>` HTTP header. The host verifies
+  the token and resolves it out-of-band to a verified principal (§6.6). The envelope body
+  itself carries no secret credentials.
+- **Health check**: A host exposing the HTTP interface SHOULD expose `GET /health`, returning
+  HTTP 200 with `{ "ok": true, "version": "<version>" }`.
+
+#### Request and Response Wire Contract
+
+- **Request Body**: An Operation Contract envelope (§6.1, §6.2) as a JSON object:
+  ```json
+  {
+    "type": "operation",
+    "idempotency_key": "00000000-0000-0000-0000-000000000001",
+    "path": "assistants/support-bot.md",
+    "workspace_id": "ws-main",
+    "content": "---\ntype: assistant\nname: Support Bot\ntitle: Support Bot\ndescription: Customer support assistant\ntimestamp: 2026-07-02T00:00:00Z\n---\nHelp customers.\n"
+  }
+  ```
+  Callers attaching an explicit principal context MAY submit:
+  ```json
+  {
+    "envelope": {
+      "type": "operation",
+      "idempotency_key": "00000000-0000-0000-0000-000000000001",
+      "path": "assistants/support-bot.md",
+      "workspace_id": "ws-main",
+      "content": "---\ntype: assistant\nname: Support Bot\ntitle: Support Bot\ndescription: Customer support assistant\ntimestamp: 2026-07-02T00:00:00Z\n---\nHelp customers.\n"
+    },
+    "principal": {
+      "id": "agent-1",
+      "kind": "agent",
+      "workspaceIds": ["ws-main"],
+      "capabilities": ["*:*"],
+      "authentication": { "provider": "token", "assurance": "verified" }
+    }
+  }
+  ```
+- **Response Body**: The kernel response object (§6.5) serialized as JSON:
+  - On commit: `201 Created` with `{ "success": true, "type": "operation", ... }`.
+  - On idempotent replay or dry run: `200 OK` with `{ "success": true, "replay": true, ... }`.
+  - On error: status mapped from `ERROR_STATUS` (§6.5) with `{ "success": false, "error": { "code": "...", "message": "..." } }`.
+
+#### Subprocess Bridge Contract (`ssss bridge`)
+
+For local process orchestration without opening network ports (for example, Python hosts
+integrating SSSS as a subprocess), the reference CLI provides `ssss bridge`:
+
+- Reads JSON from standard input (`stdin`). Supports:
+  1. A single JSON request object.
+  2. A JSON array of requests (`[...]`).
+  3. Newline-delimited JSON (`NDJSON`), with one request per line when running with `--stream`.
+- Writes JSON response objects to standard output (`stdout`) matching the wire contract shape.
+- Does not alter envelope semantics, schema validation, or error status mappings.
 
 ---
 
@@ -1868,6 +1949,23 @@ of `source: user` or `source: system` — e.g. the phone number, domain, and mai
 must bind. This is how the standard guarantees a sold business says exactly what real-world
 resources it needs without shipping the seller's own.
 
+#### 16.5.1 Frontmatter Parameter Binding (`x_bind`)
+
+Values bind exclusively through **frontmatter**, never through free-text string substitution in Markdown body text. A template document declares frontmatter parameter bindings using the reserved `x_bind` mapping:
+
+```yaml
+x_bind:
+  channel_id: support_channel_id
+  notify_email: primary_admin_email
+```
+
+During `provisionBundle` (§17.1):
+1. For each `field: parameter_key` entry in `x_bind`, the provisioner resolves the value from the supplied `parameters` dictionary, or the parameter's `defaultValue` if omitted.
+2. If a parameter is `required: true` and has no supplied value or default, provisioning fails with `unresolved`.
+3. The resolved value MUST match the parameter's declared `type` (`string`, `boolean`, `number`, etc.).
+4. The target frontmatter field is assigned the resolved value, and the `x_bind` property is stripped from the provisioned output document.
+5. In `template` and `sale` export profiles (§5.5), when `reduceResourceBoundFile()` strips sensitive infrastructure values from `resource.binds` (such as domain names or phone numbers), it automatically emits corresponding `x_bind` bindings targeting the synthesized resource requirement parameters.
+
 ---
 
 ## 17. The Provisioning Contract
@@ -1916,12 +2014,18 @@ binding each requires.
 ### 17.3 Determinism, Id-Remap & Link Integrity
 
 When a bundle is provisioned into a target vault, identifiers (slugs, workspace ids,
-cross-file links) are **remapped** so the imported business is a fresh, self-consistent
-instance rather than a clone aliasing the seller's ids. Remapping MUST preserve link
-integrity: every internal `[[link]]` / relative reference that resolved in the source bundle
-MUST resolve to the remapped target after import. This is the same rewrite engine the
-semantic layer's autolink (§11) uses, run with a bundle-relative id map. An importer that
-cannot resolve a link MUST fail the provision rather than emit a dangling reference.
+cross-file links, and typed references) are **remapped** so the imported business is a fresh, self-consistent
+instance rather than a clone aliasing the seller's ids.
+
+Given a target `workspaceId` and optional `pathPrefix`:
+1. **Deterministic ID Map:** Every source identifier or slug derives a deterministic target identifier:
+   `newId = "<pathPrefix>-" + sha256(workspaceId + ":" + sourceId).slice(0, 12)`
+2. **Path Prefixing:** Target file paths are placed under the path prefix:
+   `targetPath = pathPrefix ? `${pathPrefix}/${sourcePath}` : sourcePath`
+3. **Identifier Fields:** Frontmatter identifier fields (`slug`, `id`, `workflow_id`, `run_id`, `task_id`, `migration_id`) are mapped to their derived `newId`.
+4. **Link Rewriting:** Body wiki-links `[[source-slug]]` and relative Markdown links `[title](source-path.md)` are rewritten to the target slug and target relative path.
+5. **Registry-Declared Typed References (§9):** Frontmatter fields constrained by `references` (e.g. `asset.resource_ref`, `trigger.target_workflow`) that point to relative paths within the bundle MUST be rewritten to point to their remapped target paths under `pathPrefix`.
+6. **Link & Reference Integrity:** Remapping MUST preserve link integrity: every internal `[[link]]`, relative markdown link, and typed frontmatter reference that resolved in the source bundle MUST resolve to the remapped target after import. An importer that cannot resolve a link or reference MUST fail the provision (`danglingLinks`) rather than emit a dangling reference.
 
 ### 17.4 Composition & Upgrade
 
@@ -1946,6 +2050,7 @@ MUST NOT be repurposed by hosts:
   `aliases`, `feedback`, `confidence`.
 - Lifecycle: `slug`, `schema_version`, `status`.
 - Portability (§5.5): `x_portability`.
+- Parameter Binding (§16.5): `x_bind`.
 
 The patch key `__body__` (§6.2) is reserved and can never be a frontmatter key.
 

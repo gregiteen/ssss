@@ -34,8 +34,11 @@ Vault → bundle → tenant lifecycle:
   inspect <bundle>      Human-readable summary of a bundle.
   provision <bundle>    Plan an install: params + link integrity → envelopes (§17).
   import <bundle>       Replay a bundle/plan into a target vault (idempotent).
+  upgrade <bundle>      Move an installed bundle to a new version via structural patches (§17.4).
 
-Authoring & conformance:
+Authoring, wire protocol & conformance:
+  serve [options]       Start a reference HTTP server for operations (spec §6.8).
+  bridge [options]      Execute operations over stdin/stdout JSON (spec §6.8).
   primitive <verb>      Create, validate, inspect, migrate, or emit types.
   registry <verb>       Compose, lock, or verify an effective registry.
   adapter conformance   Run machine-readable adapter contract suites.
@@ -65,11 +68,14 @@ const MODULES = {
   inspect: './cmd-inspect.mjs',
   provision: './cmd-provision.mjs',
   import: './cmd-import.mjs',
+  upgrade: './cmd-upgrade.mjs',
   semantic: './cmd-semantic.mjs',
   primitive: './cmd-primitive.mjs',
   registry: './cmd-registry.mjs',
   adapter: './cmd-adapter.mjs',
   migrate: './cmd-migrate.mjs',
+  serve: './cmd-serve.mjs',
+  bridge: './cmd-bridge.mjs',
   help: './cmd-help.mjs',
 };
 

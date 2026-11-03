@@ -26,6 +26,7 @@ import {
   validateBundle,
   provisionBundle,
   importBundle,
+  upgradeBundle,
 } from '../src/bundle.mjs';
 import { parseDocument } from '../src/frontmatter.mjs';
 import { loadRegistries } from '../src/registry.mjs';
@@ -41,6 +42,7 @@ import { auditRegistryFieldUsage } from './audit-registry-field-usage.mjs';
 import { validateSkills } from './validate-skills.mjs';
 import { auditSpecExamples } from './audit-spec-examples.mjs';
 import { runKernel09Conformance } from './conformance-09.mjs';
+import { createServer } from './cmd-serve.mjs';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const FIXTURES = path.resolve(__dirname, '..', 'conformance', 'fixtures.json');
@@ -373,6 +375,335 @@ async function runBundleConformance() {
   } finally {
     fs.rmSync(referenceVault, { recursive: true, force: true });
     fs.rmSync(missingVault, { recursive: true, force: true });
+  }
+
+  // Phase 3 Deliverables: S2, S3, S4, S11, D4 bindings, legacy bundle
+  const multiVault = fs.mkdtempSync(path.join(os.tmpdir(), 'ssss-bundle-multi-'));
+  try {
+    const engine = createEngine({ registryDir: REGISTRY_DIR });
+    // S2: Two-workspace install into different workspaces with prefixes
+    const provAlpha = provisionBundle(bundle, {
+      workspaceId: 'ws-alpha',
+      pathPrefix: 'apps/alpha',
+      parameters: { business_name: 'Alpha Fest', domain: 'alpha.example' },
+    });
+    const provBeta = provisionBundle(bundle, {
+      workspaceId: 'ws-beta',
+      pathPrefix: 'apps/beta',
+      parameters: { business_name: 'Beta Fest', domain: 'beta.example' },
+    });
+    check('two-workspace provisioning succeeds for both instances', provAlpha.ok && provBeta.ok,
+      `alpha=${provAlpha.ok} beta=${provBeta.ok}`);
+
+    // Check slug remapping and prefixing
+    const alphaSlugs = provAlpha.plan.map((e) => parseDocument(e.content).data.slug).filter(Boolean);
+    const betaSlugs = provBeta.plan.map((e) => parseDocument(e.content).data.slug).filter(Boolean);
+    const distinctSlugs = alphaSlugs.every((s) => !betaSlugs.includes(s) && s.startsWith('apps-alpha-'));
+    check('two-workspace install isolates slugs and prefixes paths without alias collision (S2)',
+      distinctSlugs && provAlpha.plan.every((e) => e.path.startsWith('apps/alpha/')) &&
+      provBeta.plan.every((e) => e.path.startsWith('apps/beta/')));
+
+    // Check link integrity in both targets (no dangling links)
+    check('two-workspace install rewrites internal links and resolves all targets (S2)',
+      provAlpha.danglingLinks.length === 0 && provBeta.danglingLinks.length === 0);
+
+    // Import both into the same vault
+    const importAlpha = await importBundle(provAlpha.plan, multiVault, engine);
+    const importBeta = await importBundle(provBeta.plan, multiVault, engine);
+    check('two-workspace import commits both instances into the same vault without conflict (S2)',
+      importAlpha.ok && importBeta.ok &&
+      importAlpha.committed === bundle.files.length && importBeta.committed === bundle.files.length);
+
+    // S3: Determinism
+    const provBeta2 = provisionBundle(bundle, {
+      workspaceId: 'ws-beta',
+      pathPrefix: 'apps/beta',
+      parameters: { business_name: 'Beta Fest', domain: 'beta.example' },
+    });
+    check('provisioning is deterministic: equal inputs yield byte-identical plan (S3)',
+      JSON.stringify(provBeta.plan) === JSON.stringify(provBeta2.plan));
+
+    const reimportBeta = await importBundle(provBeta2.plan, multiVault, engine);
+    check('re-importing provisioned plan commits 0 new documents (S3)',
+      reimportBeta.ok && reimportBeta.committed === 0);
+
+    // D4: Resource bindings emitted in result
+    check('provisionBundle emits resource bindings with relations and modes (D4)',
+      provAlpha.bindings.length > 0 &&
+      provAlpha.bindings.some((b) => b.type === 'domain' && b.value === 'alpha.example' && b.relation === 'owns_domain'));
+
+    // D4: Unbound required resource fails when not dryRun
+    const unboundBundle = JSON.parse(JSON.stringify(bundle));
+    const provUnbound = provisionBundle(unboundBundle, {
+      workspaceId: 'ws-unbound',
+      parameters: { business_name: 'Unbound Fest' }, // domain omitted!
+      dryRun: false,
+    });
+    check('unbound required resource fails provisioning when dryRun is false (D4)',
+      !provUnbound.ok && provUnbound.errors.some((e) => e.includes('unbound required resource')));
+
+    const provUnboundDry = provisionBundle(unboundBundle, {
+      workspaceId: 'ws-unbound',
+      parameters: { business_name: 'Unbound Fest' },
+      dryRun: true,
+    });
+    check('unbound required resource error is suppressed when dryRun is true (D4)',
+      !provUnboundDry.errors.some((e) => e.includes('unbound required resource')));
+
+    // S4: Dependencies
+    const depFiles = [
+      { path: 'rules/dep.md', content: '---\ntype: rule\ntitle: Dep\ndescription: Dep.\ntimestamp: 2026-07-02T00:00:00Z\nname: Dep\n---\nDep body.\n' },
+    ];
+    const depBundle = {
+      manifest: {
+        name: 'core-dep',
+        description: 'Core dependency bundle',
+        version: '1.0.0',
+        exported_at: '2026-07-02T00:00:00Z',
+        ssss_core_version: '0.9',
+        required_extensions: [],
+        export_profile: 'template',
+        primitive_inventory: { rule: 1 },
+        provisioning: [],
+        parameters: [],
+        file_count: 1,
+        provenance: {
+          content_hash: contentHash(depFiles),
+          exporter: DEFAULT_EXPORTER,
+        },
+      },
+      files: depFiles,
+    };
+
+    const bundleWithDep = JSON.parse(JSON.stringify(bundle));
+    bundleWithDep.manifest.dependencies = {
+      primitives: bundle.manifest.dependencies?.primitives || [],
+      extensions: bundle.manifest.dependencies?.extensions || [],
+      migrations: [],
+      integrity: bundle.manifest.dependencies?.integrity,
+      bundles: [
+        { id: 'core-dep', installMode: 'required' },
+        { id: 'opt-pack', installMode: 'optional', description: 'Optional telemetry pack' },
+      ],
+    };
+
+    // Missing required dependency fails
+    const provMissingDep = provisionBundle(bundleWithDep, {
+      workspaceId: 'ws-dep-test',
+      parameters: { business_name: 'Test', domain: 'test.example' },
+    });
+    check('bundle with missing required dependency fails clearly (S4)',
+      !provMissingDep.ok && provMissingDep.errors.some((e) => e.includes("missing required bundle dependency 'core-dep'")));
+
+    // Supplied dependency installs first and suggested dependencies are returned
+    const provWithDep = provisionBundle(bundleWithDep, {
+      workspaceId: 'ws-dep-test',
+      parameters: { business_name: 'Test', domain: 'test.example' },
+      dependencies: { 'core-dep': depBundle },
+    });
+    check('bundle with supplied dependency provisions dependency first (S4)',
+      provWithDep.ok &&
+      provWithDep.dependencies.installed.includes('core-dep') &&
+      provWithDep.plan[0].path === 'rules/dep.md' &&
+      provWithDep.dependencies.suggested.some((s) => s.id === 'opt-pack' && s.installMode === 'optional'));
+
+    // Dependency cycle detection
+    const cyclicBundleA = JSON.parse(JSON.stringify(depBundle));
+    cyclicBundleA.manifest.name = 'cycle-a';
+    cyclicBundleA.manifest.dependencies = {
+      primitives: ['rule'], extensions: [], migrations: [],
+      integrity: { content_hash: cyclicBundleA.manifest.provenance.content_hash, ssss_core_version: '0.9' },
+      bundles: [{ id: 'cycle-b', installMode: 'required' }],
+    };
+    const cyclicBundleB = JSON.parse(JSON.stringify(depBundle));
+    cyclicBundleB.manifest.name = 'cycle-b';
+    cyclicBundleB.manifest.dependencies = {
+      primitives: ['rule'], extensions: [], migrations: [],
+      integrity: { content_hash: cyclicBundleB.manifest.provenance.content_hash, ssss_core_version: '0.9' },
+      bundles: [{ id: 'cycle-a', installMode: 'required' }],
+    };
+    const provCycle = provisionBundle(cyclicBundleA, {
+      dependencies: { 'cycle-b': cyclicBundleB },
+    });
+    check('dependency cycle is rejected with clear cycle error (D5)',
+      !provCycle.ok && provCycle.errors.some((e) => e.includes('dependency cycle detected')));
+
+    // S11 / D8: Base-version conflict protection
+    const durVault = fs.mkdtempSync(path.join(os.tmpdir(), 'ssss-bundle-dur-'));
+    try {
+      const v1Envelope = {
+        type: 'operation', workspace_id: 'ws-dur', idempotency_key: 'v1-init',
+        path: 'rules/managed.md', actor: { role: 'system' },
+        content: '---\ntype: rule\ntitle: Base Rule\ndescription: Base version.\ntimestamp: 2026-07-02T00:00:00Z\nname: Base Rule\n---\nBase content.\n',
+      };
+      const v1Res = await engine.processOperation(v1Envelope, durVault);
+      check('v1 initial document commits cleanly', v1Res.success);
+      const v1Hash = 'sha256:' + crypto.createHash('sha256').update(Buffer.from(v1Envelope.content, 'utf8')).digest('hex');
+
+      // Local edit: someone modifies the document locally
+      const v2LocalEnvelope = {
+        type: 'operation', workspace_id: 'ws-dur', idempotency_key: 'v2-local',
+        path: 'rules/managed.md', actor: { role: 'admin' },
+        content: '---\ntype: rule\ntitle: Base Rule\ndescription: Modified locally.\ntimestamp: 2026-07-03T00:00:00Z\nname: Base Rule\n---\nModified locally.\n',
+      };
+      const v2Res = await engine.processOperation(v2LocalEnvelope, durVault);
+      check('local edit v2 commits cleanly', v2Res.success);
+
+      // Attempt to deliver an older/divergent content with expected_before_hash === v1Hash
+      const staleDeliveryEnvelope = {
+        type: 'operation', workspace_id: 'ws-dur', idempotency_key: 'stale-delivery',
+        path: 'rules/managed.md', actor: { role: 'system' },
+        expected_before_hash: v1Hash,
+        content: '---\ntype: rule\ntitle: Base Rule\ndescription: Stale update.\ntimestamp: 2026-07-04T00:00:00Z\nname: Base Rule\n---\nStale delivery.\n',
+      };
+      const staleRes = await engine.processOperation(staleDeliveryEnvelope, durVault);
+      check('stale delivery with outdated expected_before_hash fails with version_conflict (S11/D8)',
+        staleRes.success === false && staleRes.error?.code === 'version_conflict');
+
+      // Verify that local edit survived
+      const diskContent = fs.readFileSync(path.join(durVault, 'rules/managed.md'), 'utf8');
+      check('local edit survives intact after rejected stale delivery (S11/D8)',
+        diskContent.includes('Modified locally.'));
+    } finally {
+      fs.rmSync(durVault, { recursive: true, force: true });
+    }
+
+    // Phase 4 Deliverables: S5 upgradeBundle, migration record, tenant_private refusal
+    const upgradeVault = fs.mkdtempSync(path.join(os.tmpdir(), 'ssss-bundle-upg-'));
+    try {
+      // Baseline bundle v1.0.0
+      const v1Files = [
+        {
+          path: 'rules/terms.md',
+          content: '---\ntype: rule\ntitle: Terms v1\ndescription: Baseline terms.\ntimestamp: 2026-07-02T00:00:00Z\nname: Terms v1\n---\nTerms v1 content.\n',
+        },
+        {
+          path: 'workflows/support.md',
+          content: '---\ntype: workflow\ntitle: Support Flow\ndescription: Support.\ntimestamp: 2026-07-02T00:00:00Z\nname: Support Flow\n---\nSupport body.\n',
+        },
+      ];
+      const v1Bundle = {
+        manifest: {
+          name: 'test-app',
+          description: 'Test application bundle',
+          version: '1.0.0',
+          exported_at: '2026-07-02T00:00:00Z',
+          ssss_core_version: '0.9',
+          required_extensions: [],
+          export_profile: 'template',
+          primitive_inventory: { rule: 1, workflow: 1 },
+          provisioning: [],
+          parameters: [],
+          file_count: 2,
+          provenance: { content_hash: contentHash(v1Files), exporter: DEFAULT_EXPORTER },
+        },
+        files: v1Files,
+      };
+
+      // Provision and import baseline v1
+      const provV1 = provisionBundle(v1Bundle, { workspaceId: 'ws-upg-test' });
+      const importV1 = await importBundle(provV1.plan, upgradeVault, engine);
+      check('upgrade fixture baseline v1 imports cleanly', importV1.ok && importV1.committed === 2);
+
+      // Operator creates a tenant_private task document in the vault
+      const tenantTaskEnvelope = {
+        type: 'operation',
+        workspace_id: 'ws-upg-test',
+        idempotency_key: 'tenant-ticket-1',
+        path: 'tasks/ticket-101.md',
+        actor: { role: 'admin' },
+        content: '---\ntype: task\ntitle: Customer Ticket 101\ndescription: Urgent assistance.\ntimestamp: 2026-07-03T00:00:00Z\nname: Ticket 101\nstatus: pending\npriority: urgent\ncategory: support\n---\nTenant private customer message.\n',
+      };
+      const taskRes = await engine.processOperation(tenantTaskEnvelope, upgradeVault);
+      check('tenant_private task commits into upgrade vault', taskRes.success);
+
+      // Build next bundle v1.1.0 with structural updates
+      const v2Files = [
+        {
+          path: 'rules/terms.md',
+          content: '---\ntype: rule\ntitle: Terms v2\ndescription: Updated terms for v2.\ntimestamp: 2026-07-04T00:00:00Z\nname: Terms v2\n---\nUpdated Terms v2 content.\n',
+        },
+        {
+          path: 'workflows/support.md',
+          content: '---\ntype: workflow\ntitle: Support Flow\ndescription: Support.\ntimestamp: 2026-07-02T00:00:00Z\nname: Support Flow\n---\nSupport body.\n', // unchanged
+        },
+        {
+          path: 'rules/refunds.md',
+          content: '---\ntype: rule\ntitle: Refund Policy\ndescription: New refund rules.\ntimestamp: 2026-07-04T00:00:00Z\nname: Refund Policy\n---\nNew refund policy.\n', // newly added structural file
+        },
+      ];
+      const v2Bundle = {
+        manifest: {
+          name: 'test-app',
+          description: 'Test application bundle',
+          version: '1.1.0',
+          exported_at: '2026-07-04T00:00:00Z',
+          ssss_core_version: '0.9',
+          required_extensions: [],
+          export_profile: 'template',
+          primitive_inventory: { rule: 2, workflow: 1 },
+          provisioning: [],
+          parameters: [],
+          file_count: 3,
+          provenance: { content_hash: contentHash(v2Files), exporter: DEFAULT_EXPORTER },
+        },
+        files: v2Files,
+      };
+
+      // Plan upgrade
+      const upgPlan = upgradeBundle(v1Bundle, v2Bundle, {
+        workspaceId: 'ws-upg-test',
+        registryDir: REGISTRY_DIR,
+      });
+      check('upgradeBundle generates plan with patch and migration (D6)',
+        upgPlan.ok && upgPlan.patchesCount === 1 && upgPlan.operationsCount === 2);
+
+      // Apply upgrade to vault
+      const upgImport = await importBundle(upgPlan.plan, upgradeVault, engine);
+      check('upgrade import applies structural changes and records migration (S5)',
+        upgImport.ok && upgImport.committed === 3);
+
+      // Verify structural document is updated
+      const updatedTerms = fs.readFileSync(path.join(upgradeVault, 'rules/terms.md'), 'utf8');
+      check('structural document was updated by upgrade patch (S5)',
+        updatedTerms.includes('Terms v2') && updatedTerms.includes('Updated Terms v2 content.'));
+
+      // Verify newly added structural file was created
+      check('new structural document was created during upgrade (S5)',
+        fs.existsSync(path.join(upgradeVault, 'rules/refunds.md')));
+
+      // Verify migration primitive record exists on disk
+      check('migration primitive record was committed during upgrade (D6)',
+        fs.existsSync(path.join(upgradeVault, upgPlan.migration.path)));
+
+      // Verify tenant_private document remains completely untouched
+      const tenantTaskDisk = fs.readFileSync(path.join(upgradeVault, 'tasks/ticket-101.md'), 'utf8');
+      check('tenant_private task document is completely untouched after upgrade (S5)',
+        tenantTaskDisk.includes('Tenant private customer message.'));
+
+      // Violating patch rejected: attempt to patch tenant_private file with intent: 'upgrade'
+      const badUpgradeEnvelope = {
+        type: 'patch',
+        workspace_id: 'ws-upg-test',
+        idempotency_key: 'bad-upg-patch',
+        path: 'tasks/ticket-101.md',
+        intent: 'upgrade',
+        actor: { role: 'system' },
+        patches: { title: 'Overwritten Ticket' },
+      };
+      const badRes = await engine.processOperation(badUpgradeEnvelope, upgradeVault);
+      check('engine refuses upgrade envelope targeting tenant_private document (S5/D6)',
+        badRes.success === false && badRes.error?.code === 'forbidden');
+
+      // Verify tenant task is still untouched after rejected attempt
+      const tenantTaskAfterBad = fs.readFileSync(path.join(upgradeVault, 'tasks/ticket-101.md'), 'utf8');
+      check('tenant_private document remains intact after engine rejected violating upgrade patch (S5/D6)',
+        tenantTaskAfterBad.includes('Customer Ticket 101') && !tenantTaskAfterBad.includes('Overwritten Ticket'));
+    } finally {
+      fs.rmSync(upgradeVault, { recursive: true, force: true });
+    }
+  } finally {
+    fs.rmSync(multiVault, { recursive: true, force: true });
   }
 
   let pass = 0;
@@ -924,6 +1255,78 @@ async function runCliSmokeConformance() {
     check('ssss migrate 0.8-to-0.9 dry-run emits backup manifest without writes',
       migrateOut.dry_run === true && migrateOut.writes_performed === 0 && Array.isArray(migrateOut.backup_manifest),
       JSON.stringify(migrateOut));
+
+    const v1Path = path.join(tmp, 'v1.ucw.json');
+    execFileSync('node', [
+      path.join(__dirname, 'ssss.mjs'),
+      'export', vault,
+      '--out', v1Path,
+      '--profile', 'template',
+    ]);
+    const upgDryOut = JSON.parse(execFileSync('node', [
+      path.join(__dirname, 'ssss.mjs'),
+      'upgrade', v1Path,
+      '--vault', vault,
+      '--from', v1Path,
+      '--dry-run',
+      '--json',
+    ], { encoding: 'utf8' }));
+    check('ssss upgrade --dry-run reports 0 needed patches for identical version',
+      upgDryOut.ok === true && upgDryOut.patches_count === 0,
+      JSON.stringify(upgDryOut));
+
+    // ssss serve smoke
+    const serveVault = path.join(tmp, 'serve-vault');
+    fs.mkdirSync(serveVault, { recursive: true });
+    const serveInstance = createServer({ vault: serveVault, token: 'smoke-token', registryDir: REGISTRY_DIR });
+    await new Promise((resolve) => serveInstance.listen(0, '127.0.0.1', resolve));
+    const servePort = serveInstance.address().port;
+    try {
+      const healthRes = await fetch(`http://127.0.0.1:${servePort}/health`);
+      const healthData = await healthRes.json();
+      check('ssss serve health endpoint returns 200 with ok and version',
+        healthRes.status === 200 && healthData.ok === true && typeof healthData.version === 'string',
+        JSON.stringify(healthData));
+
+      const serveOpRes = await fetch(`http://127.0.0.1:${servePort}/v1/operations`, {
+        method: 'POST',
+        headers: { 'content-type': 'application/json', authorization: 'Bearer smoke-token' },
+        body: JSON.stringify({
+          type: 'operation',
+          workspace_id: 'ws-smoke',
+          path: 'rules/smoke.md',
+          idempotency_key: 'smoke-serve-1',
+          actor: { role: 'admin', agent_id: 'smoke-agent' },
+          content: '---\ntype: rule\nname: "Smoke Rule"\ntitle: "Smoke Rule"\ndescription: "Smoke test."\ntimestamp: 2026-07-02T00:00:00Z\n---\nRule.\n',
+        }),
+      });
+      const serveOpData = await serveOpRes.json();
+      check('ssss serve commits valid operation envelope with 201 Created',
+        serveOpRes.status === 201 && serveOpData.success === true,
+        JSON.stringify(serveOpData));
+    } finally {
+      await new Promise((resolve) => serveInstance.close(resolve));
+    }
+
+    // ssss bridge smoke
+    const bridgeVault = path.join(tmp, 'bridge-vault');
+    fs.mkdirSync(bridgeVault, { recursive: true });
+    const bridgeInput = JSON.stringify({
+      type: 'operation',
+      workspace_id: 'ws-smoke',
+      path: 'rules/bridge-rule.md',
+      idempotency_key: 'smoke-bridge-1',
+      actor: { role: 'admin', agent_id: 'smoke-agent' },
+      content: '---\ntype: rule\nname: "Bridge Rule"\ntitle: "Bridge Rule"\ndescription: "Smoke test."\ntimestamp: 2026-07-02T00:00:00Z\n---\nRule.\n',
+    });
+    const bridgeOut = JSON.parse(execFileSync('node', [
+      path.join(__dirname, 'ssss.mjs'),
+      'bridge',
+      '--vault', bridgeVault,
+    ], { input: bridgeInput, encoding: 'utf8' }));
+    check('ssss bridge executes operation over stdin/stdout JSON',
+      bridgeOut.success === true && bridgeOut.path === 'rules/bridge-rule.md',
+      JSON.stringify(bridgeOut));
   } finally {
     fs.rmSync(tmp, { recursive: true, force: true });
   }
@@ -935,6 +1338,73 @@ async function runCliSmokeConformance() {
   }
   console.log(`\n  ${pass}/${checks.length} CLI smoke checks passed`);
   return pass === checks.length;
+}
+
+/**
+ * Cross-language wire protocol and bridge conformance (spec §6.8).
+ * Proves that:
+ *   1. The reference HTTP server (ssss serve) passes 100% of canonical fixtures via POST /v1/operations.
+ *   2. The subprocess bridge (ssss bridge) passes 100% of canonical fixtures via stdin/stdout JSON.
+ */
+async function runWireAndBridgeConformance(doc) {
+  const checks = [];
+  const check = (name, cond, detail = '') => { checks.push({ name, cond, detail }); };
+
+  // 1. HTTP Wire Contract Conformance (ssss serve, spec §6.8)
+  const serveVault = fs.mkdtempSync(path.join(os.tmpdir(), 'ssss-wire-conformance-'));
+  try {
+    const server = createServer({ vault: serveVault, token: 'wire-test-token', registryDir: REGISTRY_DIR });
+    await new Promise((resolve) => server.listen(0, '127.0.0.1', resolve));
+    const port = server.address().port;
+    try {
+      const endpoint = `http://127.0.0.1:${port}/v1/operations`;
+      let pass = 0;
+      for (const f of doc.fixtures) {
+        const headers = { 'content-type': 'application/json', authorization: 'Bearer wire-test-token' };
+        const res = await fetch(endpoint, { method: 'POST', headers, body: JSON.stringify(f.request) });
+        const body = await res.json().catch(() => ({}));
+        const want = f.expected_response || {};
+        const okSuccess = want.success == null || body.success === want.success;
+        const okStatus = f.expected_http_status == null || res.status === f.expected_http_status;
+        if (okSuccess && okStatus) pass++;
+      }
+      check(`reference HTTP server passes canonical fixtures (${pass}/${doc.fixtures.length}, spec §6.8)`,
+        pass === doc.fixtures.length,
+        `${pass}/${doc.fixtures.length} passed`);
+    } finally {
+      await new Promise((resolve) => server.close(resolve));
+    }
+  } finally {
+    fs.rmSync(serveVault, { recursive: true, force: true });
+  }
+
+  // 2. Subprocess Stdin-JSON Bridge Conformance (ssss bridge, spec §6.8)
+  const bridgeVault = fs.mkdtempSync(path.join(os.tmpdir(), 'ssss-bridge-conformance-'));
+  try {
+    let pass = 0;
+    for (const f of doc.fixtures) {
+      const stdout = execFileSync('node', [path.join(__dirname, 'ssss.mjs'), 'bridge', '--vault', bridgeVault], {
+        input: JSON.stringify(f.request),
+        encoding: 'utf8',
+      });
+      const body = JSON.parse(stdout.trim());
+      const want = f.expected_response || {};
+      const okSuccess = want.success == null || body.success === want.success;
+      if (okSuccess) pass++;
+    }
+    check(`subprocess bridge passes canonical fixtures (${pass}/${doc.fixtures.length}, spec §6.8)`,
+      pass === doc.fixtures.length,
+      `${pass}/${doc.fixtures.length} passed`);
+  } finally {
+    fs.rmSync(bridgeVault, { recursive: true, force: true });
+  }
+
+  let passCount = 0;
+  for (const c of checks) {
+    if (c.cond) { passCount++; console.log(`  ✅ ${c.name}`); }
+    else console.log(`  ❌ ${c.name}${c.detail ? ` — ${c.detail}` : ''}`);
+  }
+  return passCount === checks.length;
 }
 
 /**
@@ -1155,9 +1625,11 @@ async function main() {
     const bundleOk = await runBundleConformance();
     console.log('\nRunning CLI smoke conformance (scripts/ssss.mjs) ...');
     const cliSmokeOk = await runCliSmokeConformance();
+    console.log('\nRunning cross-language wire & bridge conformance (spec §6.8) ...');
+    const wireBridgeOk = await runWireAndBridgeConformance(doc);
     process.exit(
       engineOk && runtimeOk && operationRegressionOk && assetPointerOk && extensionRegistryOk &&
-      semanticOk && kernel09Ok && bundleOk && cliSmokeOk ? 0 : 1
+      semanticOk && kernel09Ok && bundleOk && cliSmokeOk && wireBridgeOk ? 0 : 1
     );
   } else {
     console.log('\nℹ  No --endpoint/--engine given; ran structural + registry validation only.');

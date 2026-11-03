@@ -16,6 +16,7 @@ const HELP = usage({
     ['--vault <dir>', 'Target vault directory (created if missing). Required.'],
     ['--plan <file>', 'Import a pre-built plan (from `ssss provision`) instead of the bundle.'],
     ['--param <k=v>', 'Bind a bundle parameter (repeatable).'],
+    ['--dependency <id=file>', 'Provide a dependency bundle (repeatable).'],
     ['--workspace <id>', 'Target workspace id (default: ws-provision).'],
     ['--prefix <path>', 'Place every file under this path prefix (id-remap).'],
     ['--dry-run', 'Validate every envelope without committing.'],
@@ -30,7 +31,7 @@ const HELP = usage({
 
 export async function run(argv) {
   if (wantsHelp(argv)) { console.log(HELP); return; }
-  const { positionals, flags } = parseArgs(argv, { booleans: ['dry-run'], multi: ['param'] });
+  const { positionals, flags } = parseArgs(argv, { booleans: ['dry-run'], multi: ['param', 'dependency'] });
   // Extension namespaces this import must resolve. Seeded from the bundle's own
   // `required_extensions` so the engine loads exactly the namespace the vault was
   // exported against, rather than every extension in the registry directory.
@@ -51,11 +52,30 @@ export async function run(argv) {
     const bundle = JSON.parse(fs.readFileSync(file, 'utf8'));
     const declared = bundle?.manifest?.required_extensions;
     if (Array.isArray(declared) && declared.length) registryNames = declared;
+
+    const dependencies = {};
+    for (const dep of flags.dependency || []) {
+      const eq = dep.indexOf('=');
+      let id = null;
+      let depPath = dep;
+      if (eq !== -1) {
+        id = dep.slice(0, eq);
+        depPath = dep.slice(eq + 1);
+      }
+      if (!fs.existsSync(depPath)) die(`no such dependency file: ${depPath}`);
+      let depBundle;
+      try { depBundle = JSON.parse(fs.readFileSync(depPath, 'utf8')); }
+      catch (err) { die(`dependency ${depPath} is not valid JSON: ${err.message}`); }
+      id = id || depBundle.manifest?.name || depBundle.manifest?.id || path.basename(depPath, '.json');
+      dependencies[id] = depBundle;
+    }
+
     const prov = provisionBundle(bundle, {
       parameters: parseKeyValues(flags.param),
       workspaceId: flags.workspace || 'ws-provision',
       pathPrefix: flags.prefix || '',
       dryRun: !!flags['dry-run'],
+      dependencies,
     });
     if (!prov.ok) {
       if (prov.unresolved.length) console.error(`✗ unresolved parameter(s): ${prov.unresolved.join(', ')}`);

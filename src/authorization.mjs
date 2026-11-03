@@ -25,14 +25,36 @@ export function requiredCapabilities(definition, action) {
   return [`${primitive}:${action}`];
 }
 
+function matchPathGlob(pattern, filePath) {
+  if (!pattern || !filePath) return false;
+  if (pattern === filePath || pattern === '**' || pattern === '*') return true;
+  const escaped = pattern
+    .replace(/[.+^${}()|[\]\\]/g, '\\$&')
+    .replace(/\*\*/g, '___DOUBLE_STAR___')
+    .replace(/\*/g, '[^/]*')
+    .replace(/___DOUBLE_STAR___/g, '.*');
+  return new RegExp(`^${escaped}$`).test(filePath);
+}
+
 /**
  * Does a granted capability cover a required one? Exact match, `*:*`, or a
  * trailing-`*` prefix: `ssss:*` covers every core capability and
- * `ssss:assistant:*` covers every action on assistants.
+ * `ssss:assistant:*` covers every action on assistants. Supports optional
+ * path scoping with `@<glob>`, e.g. `ssss:rule:*@rules/marketing/**`.
  */
-export function capabilityCovers(granted, required) {
-  if (granted === required || granted === '*:*') return true;
-  return typeof granted === 'string' && granted.endsWith(':*') && required.startsWith(granted.slice(0, -1));
+export function capabilityCovers(granted, required, targetPath = null) {
+  let grantCapability = granted;
+  let pathPattern = null;
+  if (typeof granted === 'string' && granted.includes('@')) {
+    const atIndex = granted.indexOf('@');
+    grantCapability = granted.slice(0, atIndex);
+    pathPattern = granted.slice(atIndex + 1);
+  }
+  if (pathPattern !== null) {
+    if (!targetPath || !matchPathGlob(pathPattern, targetPath)) return false;
+  }
+  if (grantCapability === required || grantCapability === '*:*') return true;
+  return typeof grantCapability === 'string' && grantCapability.endsWith(':*') && required.startsWith(grantCapability.slice(0, -1));
 }
 
 export function createCapabilityAuthorizer(options = {}) {
@@ -51,8 +73,9 @@ export function createCapabilityAuthorizer(options = {}) {
     ]);
     const granted = new Set(principal.capabilities || []);
     if (principal.kind === 'system' && options.systemBypass !== false) return { allowed: true, required: [...required] };
+    const targetPath = context.path || null;
     const missing = [...required].filter((capability) =>
-      ![...granted].some((grant) => capabilityCovers(grant, capability)));
+      ![...granted].some((grant) => capabilityCovers(grant, capability, targetPath)));
     if (missing.length) return { allowed: false, required: [...required], missing, reason: `Missing capabilities: ${missing.join(', ')}.` };
     if (context.requiresHumanConfirmation && principal.kind !== 'human') {
       return { allowed: false, required: [...required], reason: 'A verified human confirmation is required.' };
