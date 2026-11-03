@@ -7,6 +7,27 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.14.2] - 2026-11-02
+### Added
+- **Canonical JSON Schema Draft 2020-12 Definitions (`JSON_SCHEMA_EXPORT`)**:
+  - `schemas/core-registry.schema.json`: Formal JSON Schema Draft 2020-12 defining the full structure of `registry/core.json` and extension registries (document primitives, contract primitives, universal frontmatter, portability classes and export profiles, bundle manifest specifications, provisioning steps and relations, runtime contracts, and semantic search fields).
+  - `schemas/bundle.schema.json`: Formal JSON Schema Draft 2020-12 defining the container format for Universal Cloud Workspace (`.ucw`) transport bundles, covering `manifest`, `files`, `dependencies`, `parameters`, `provisioning`, `provenance`, and optional `branding`.
+  - `registry/core.json`: Updated `$schema` URI to point to `https://ssss.dev/schemas/core-registry.schema.json`.
+- **Zero-Dependency Schema Validation**:
+  - `src/schema-validator.mjs`: High-performance, recursive JSON Schema Draft 2020-12 validator in pure Node ESM supporting `type` unions, `properties`, `additionalProperties`, `required`, `items`, `enum`, `pattern`, and local `$defs`/`$ref` pointers.
+  - Exported `./schema-validator` and `./schemas/*` via package exports and added `"schemas"` to npm package distribution files.
+- **CLI Schema Inspection & Export**:
+  - `scripts/cmd-schema.mjs`: Added `ssss schema core`, `ssss schema bundle`, and `ssss schema export [--out <dir>]` subcommands to output and export canonical JSON Schemas.
+- **Automated Conformance Sweeps**:
+  - `scripts/conformance-09.mjs`: Integrated automated schema validation checks into continuous test suites, verifying `registry/core.json` and `conformance/reference-bundle.ucw.json` against canonical schemas with negative mutation testing.
+- **Specification and Backlog Hygiene**:
+  - `docs/ssss-spec.md`: Documented canonical JSON Schema references in §5.1 and §16.1.
+  - Resolved and closed all outstanding host deferral items in `docs/projects/DEFERRED_BACKLOG.md`.
+
+### Behavior changes hosts should check
+- Tools and IDEs may validate `registry/core.json` and `.ucw` bundle files directly against `schemas/core-registry.schema.json` and `schemas/bundle.schema.json`.
+- The CLI command `ssss schema export` is now available to export canonical schema definitions for external consumption.
+
 ## [0.14.1] - 2026-11-02
 ### Added
 - **Core primitive aliasing (`role` ↔ `security_role`, `thread` ↔ `conversation`)**:

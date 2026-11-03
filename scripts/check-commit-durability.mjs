@@ -306,6 +306,7 @@ async function checkRecoveryTriggers(root) {
   const untouched = read(live, 'rules/live.md').includes('in flight');
   holder.child.kill('SIGKILL');
   const signal = await holder.exited;
+  await new Promise((resolve) => setTimeout(resolve, 50));
   const afterKill = await fileKernel(live).recover();
   check('recovery skips an intent whose writer is alive',
     whileAlive.length === 1 && whileAlive[0].outcome === 'in_flight' && untouched, JSON.stringify(whileAlive));

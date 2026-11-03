@@ -1,5 +1,5 @@
 {
-  "$schema": "https://ssss.dev/registry/v1",
+  "$schema": "https://ssss.dev/schemas/core-registry.schema.json",
   "registry": "core",
   "spec_version": "0.9",
   "description": "The canonical SSSS core registry and semantic application-kernel contract. Core primitives are qualified as ssss:<name>; applications define namespaced primitives through layered extension registries without copying or redefining core behavior.",

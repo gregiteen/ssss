@@ -4,7 +4,7 @@ title: SSSS Protocol Reference
 name: ssss
 description: Validate or change SSSS documents, operations, registries, workflows and portable host adapters.
 timestamp: 2026-11-02T19:00:00Z
-version: 0.14.1
+version: 0.14.2
 repo_scoped: false
 ---
 

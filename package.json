@@ -1,6 +1,6 @@
 {
   "name": "@gregiteen/ssss-cli",
-  "version": "0.14.1",
+  "version": "0.14.2",
   "description": "CLI tools and the reference engine for the Structured Semantic Syntax System",
   "main": "src/engine.mjs",
   "exports": {
@@ -32,6 +32,8 @@
     "./conformance/fixtures.json": "./conformance/fixtures.json",
     "./conformance/reference-bundle.ucw.json": "./conformance/reference-bundle.ucw.json",
     "./registry/core.json": "./registry/core.json",
+    "./schema-validator": "./src/schema-validator.mjs",
+    "./schemas/*": "./schemas/*",
     "./package.json": "./package.json"
   },
   "bin": {
@@ -43,6 +45,7 @@
   },
   "files": [
     "src",
+    "schemas",
     "types",
     "scripts",
     "registry",

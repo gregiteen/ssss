@@ -1,0 +1,386 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ssss.dev/schemas/core-registry.schema.json",
+  "title": "SSSS Core Registry Schema",
+  "description": "JSON Schema for SSSS core and extension registries (spec §5).",
+  "type": "object",
+  "required": [
+    "registry",
+    "spec_version",
+    "description",
+    "document_primitives"
+  ],
+  "properties": {
+    "$schema": {
+      "type": "string"
+    },
+    "registry": {
+      "type": "string"
+    },
+    "spec_version": {
+      "type": "string"
+    },
+    "description": {
+      "type": "string"
+    },
+    "conformance": {
+      "type": "string"
+    },
+    "document_primitives": {
+      "type": "object",
+      "additionalProperties": {
+        "$ref": "#/$defs/primitiveDefinition"
+      }
+    },
+    "contract_primitives": {
+      "type": "object",
+      "additionalProperties": {
+        "$ref": "#/$defs/contractPrimitive"
+      }
+    },
+    "universal_frontmatter": {
+      "type": "object",
+      "required": ["required"],
+      "properties": {
+        "required": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "recommended_okf": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "recommended_semantic": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "spec_ref": {
+          "type": "string"
+        }
+      }
+    },
+    "portability": {
+      "type": "object",
+      "required": ["classes", "export_profiles"],
+      "properties": {
+        "description": { "type": "string" },
+        "classes": {
+          "type": "object",
+          "additionalProperties": { "type": "string" }
+        },
+        "export_profiles": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "object",
+            "required": ["includes"],
+            "properties": {
+              "includes": {
+                "type": "array",
+                "items": { "type": "string" }
+              },
+              "excludes": {
+                "type": "array",
+                "items": { "type": "string" }
+              },
+              "resource_bound": { "type": "string" },
+              "note": { "type": "string" }
+            }
+          }
+        },
+        "conformance": { "type": "string" },
+        "spec_ref": { "type": "string" }
+      }
+    },
+    "bundle": {
+      "type": "object",
+      "required": [
+        "container",
+        "structure",
+        "manifest_required_fields",
+        "provenance_required_fields"
+      ],
+      "properties": {
+        "description": { "type": "string" },
+        "container": { "type": "string" },
+        "structure": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "file_sort": { "type": "string" },
+        "manifest_required_fields": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "manifest_optional_fields": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "provenance_required_fields": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "provenance_optional_fields": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "content_hash": { "type": "string" },
+        "parameter_fields": {
+          "type": "object",
+          "required": ["required"],
+          "properties": {
+            "required": {
+              "type": "array",
+              "items": { "type": "string" }
+            },
+            "optional": {
+              "type": "array",
+              "items": { "type": "string" }
+            },
+            "source_enum": {
+              "type": "array",
+              "items": { "type": "string" }
+            },
+            "note": { "type": "string" }
+          }
+        },
+        "conformance": { "type": "string" },
+        "spec_ref": { "type": "string" }
+      }
+    },
+    "provisioning": {
+      "type": "object",
+      "required": [
+        "verbs",
+        "step_required_fields",
+        "system_enum",
+        "mode_enum"
+      ],
+      "properties": {
+        "description": { "type": "string" },
+        "verbs": {
+          "type": "object",
+          "additionalProperties": { "type": "string" }
+        },
+        "step_required_fields": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "step_optional_fields": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "system_enum": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "mode_enum": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "edge_relations": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "install_modes": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "id_remap": { "type": "string" },
+        "upgrade": { "type": "string" },
+        "conformance": { "type": "string" },
+        "spec_ref": { "type": "string" }
+      }
+    },
+    "runtime": {
+      "type": "object",
+      "required": [
+        "trigger_types",
+        "misfire_policies",
+        "concurrency_policies",
+        "task_instantiation_fields",
+        "run_statuses",
+        "idempotency_basis"
+      ],
+      "properties": {
+        "description": { "type": "string" },
+        "trigger_types": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "misfire_policies": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "concurrency_policies": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "task_instantiation_fields": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "run_statuses": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "idempotency_basis": { "type": "string" },
+        "spec_ref": { "type": "string" }
+      }
+    },
+    "semantic": {
+      "type": "object",
+      "required": [
+        "version",
+        "identity_fields",
+        "surface_fields",
+        "relation_fields",
+        "renderable_fields",
+        "language_pattern",
+        "safe_default"
+      ],
+      "properties": {
+        "version": { "type": "integer" },
+        "identity_fields": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "surface_fields": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "relation_fields": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "renderable_fields": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "language_pattern": { "type": "string" },
+        "safe_default": { "type": "string" },
+        "spec_ref": { "type": "string" }
+      }
+    },
+    "reserved_keys": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "host_field_prefix": { "type": "string" },
+    "spec_ref_reserved": { "type": "string" }
+  },
+  "$defs": {
+    "primitiveDefinition": {
+      "type": "object",
+      "required": [
+        "family",
+        "append_only",
+        "portability",
+        "required_fields"
+      ],
+      "properties": {
+        "family": {
+          "type": "string"
+        },
+        "canonical_filename": {
+          "type": ["string", "null"]
+        },
+        "filename_convention": {
+          "type": "string"
+        },
+        "append_only": {
+          "type": "boolean"
+        },
+        "portability": {
+          "type": "string",
+          "enum": ["structural", "tenant_private", "resource_bound"]
+        },
+        "required_fields": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "required_when": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "array",
+            "items": { "type": "string" }
+          }
+        },
+        "enums": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "array",
+            "items": { "type": "string" }
+          }
+        },
+        "patterns": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          }
+        },
+        "immutable_fields": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "references": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "object",
+            "properties": {
+              "allowed_types": {
+                "type": "array",
+                "items": { "type": "string" }
+              },
+              "disallowed_types": {
+                "type": "array",
+                "items": { "type": "string" }
+              },
+              "allowed_portability": {
+                "type": "array",
+                "items": { "type": "string" }
+              },
+              "must_exist": {
+                "type": "boolean"
+              },
+              "hash_field": {
+                "type": "string"
+              }
+            }
+          }
+        },
+        "aliases": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "deprecated": {
+          "type": "boolean"
+        },
+        "deprecation_notice": {
+          "type": "string"
+        },
+        "resource": {
+          "type": "object",
+          "properties": {
+            "kind": { "type": "string" },
+            "provision_relation": { "type": "string" }
+          }
+        },
+        "scopes": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "spec_ref": {
+          "type": "string"
+        }
+      }
+    },
+    "contractPrimitive": {
+      "type": "object",
+      "required": ["purpose", "spec_ref"],
+      "properties": {
+        "purpose": { "type": "string" },
+        "spec_ref": { "type": "string" }
+      }
+    }
+  }
+}

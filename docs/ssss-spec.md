@@ -261,8 +261,9 @@ primitive — it implements the subset its product requires — but any primitiv
 | `primitive` | meta | structural | A governed, versioned definition for a namespaced SSSS primitive. |
 
 The **Portability** column is the primitive's default portability class (§5.5); a host
-resolves it from `registry/core.json`. Extension registries assign their own primitives a
-class — notably `resource_bound` for things like domains and phone numbers.
+resolves it from `registry/core.json`. The canonical machine-readable registry conforms to the
+JSON Schema (Draft 2020-12) published in `schemas/core-registry.schema.json`. Extension registries
+assign their own primitives a class — notably `resource_bound` for things like domains and phone numbers.
 
 ### 5.2 Contract Primitives
 
@@ -1869,7 +1870,9 @@ A bundle is a JSON object with three top-level members:
 ```
 
 `files` MUST be sorted by `path` (§16.3 order) so that two exports of the same vault state
-are identical and content-hashable (§16.3, `provenance.content_hash`).
+are identical and content-hashable (§16.3, `provenance.content_hash`). The normative JSON Schema
+(Draft 2020-12) for `.ucw` bundle containers is published in `schemas/bundle.schema.json` and
+exportable via the CLI command `ssss schema bundle`.
 
 ### 16.2 The Manifest
 

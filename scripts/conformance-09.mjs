@@ -33,6 +33,7 @@ import { MemoryIdempotencyStore, FileIdempotencyStore, runIdempotencyContract } 
 import { capabilityCovers, createCapabilityAuthorizer } from '../src/authorization.mjs';
 import { createEngine } from '../src/engine.mjs';
 import { validateVerifiedPrincipal } from '../src/authorization.mjs';
+import { validateJsonSchema } from '../src/schema-validator.mjs';
 
 async function rejects(promise, pattern) {
   try { await promise; return false; } catch (error) { return pattern.test(error.message); }
@@ -438,6 +439,32 @@ async function checkCapabilities(root, check) {
     (await writeScoped('ps-2', 'rules/engineering/lint.md', doc('rule', 'Lint'))).error?.code === 'forbidden');
 }
 
+function checkJsonSchemas(check) {
+  const coreRegistry = JSON.parse(fs.readFileSync(path.resolve('registry/core.json'), 'utf8'));
+  const coreSchema = JSON.parse(fs.readFileSync(path.resolve('schemas/core-registry.schema.json'), 'utf8'));
+  const coreResult = validateJsonSchema(coreRegistry, coreSchema);
+  check('schema: registry/core.json validates against schemas/core-registry.schema.json', coreResult.valid, coreResult.errors?.[0]?.message);
+
+  const bundle = JSON.parse(fs.readFileSync(path.resolve('conformance/reference-bundle.ucw.json'), 'utf8'));
+  const bundleSchema = JSON.parse(fs.readFileSync(path.resolve('schemas/bundle.schema.json'), 'utf8'));
+  const bundleResult = validateJsonSchema(bundle, bundleSchema);
+  check('schema: reference-bundle.ucw.json validates against schemas/bundle.schema.json', bundleResult.valid, bundleResult.errors?.[0]?.message);
+
+  const badCore = { ...coreRegistry };
+  delete badCore.spec_version;
+  const badCoreResult = validateJsonSchema(badCore, coreSchema);
+  check('schema: core registry schema rejects missing spec_version', !badCoreResult.valid && badCoreResult.errors.some((e) => e.path.includes('spec_version')));
+
+  const badPortability = JSON.parse(JSON.stringify(coreRegistry));
+  badPortability.document_primitives.memory.portability = 'illegal_class';
+  const badPortResult = validateJsonSchema(badPortability, coreSchema);
+  check('schema: core registry schema rejects invalid portability enum', !badPortResult.valid && badPortResult.errors.some((e) => e.path.includes('portability')));
+
+  const badBundle = { files: [] };
+  const badBundleResult = validateJsonSchema(badBundle, bundleSchema);
+  check('schema: bundle schema rejects missing manifest', !badBundleResult.valid && badBundleResult.errors.some((e) => e.path.includes('manifest')));
+}
+
 // Resource hooks (spec §6.3): every prepare ends in exactly one finalize or
 // reconcile, and nothing after the event append may undo the commit.
 async function checkResourceLifecycle(check) {
@@ -785,6 +812,7 @@ export async function runKernel09Conformance() {
     checkFrontmatterSubset(check);
   checkRequiredPresence(check);
     await checkCapabilities(temp, check);
+    checkJsonSchemas(check);
   } finally {
     fs.rmSync(temp, { recursive: true, force: true });
   }

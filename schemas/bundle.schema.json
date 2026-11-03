@@ -1,0 +1,259 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ssss.dev/schemas/bundle.schema.json",
+  "title": "SSSS Universal Cloud Workspace (.ucw) Bundle Schema",
+  "description": "JSON Schema for SSSS transport bundles and manifests (spec §16).",
+  "type": "object",
+  "required": [
+    "manifest",
+    "files"
+  ],
+  "properties": {
+    "manifest": {
+      "$ref": "#/$defs/bundleManifest"
+    },
+    "files": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/bundleFile"
+      }
+    },
+    "branding": {
+      "type": "object"
+    }
+  },
+  "$defs": {
+    "bundleFile": {
+      "type": "object",
+      "required": [
+        "path",
+        "content"
+      ],
+      "properties": {
+        "path": {
+          "type": "string"
+        },
+        "content": {
+          "type": "string"
+        }
+      }
+    },
+    "bundleManifest": {
+      "type": "object",
+      "required": [
+        "name",
+        "description",
+        "version",
+        "exported_at",
+        "ssss_core_version",
+        "required_extensions",
+        "export_profile",
+        "primitive_inventory",
+        "provisioning",
+        "file_count",
+        "provenance"
+      ],
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "description": {
+          "type": "string"
+        },
+        "version": {
+          "type": "string"
+        },
+        "exported_at": {
+          "type": "string"
+        },
+        "ssss_core_version": {
+          "type": "string"
+        },
+        "required_extensions": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "export_profile": {
+          "type": "string",
+          "enum": ["backup", "template", "sale"]
+        },
+        "primitive_inventory": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "integer"
+          }
+        },
+        "dependencies": {
+          "type": "object",
+          "properties": {
+            "primitives": {
+              "type": "array",
+              "items": { "type": "string" }
+            },
+            "extensions": {
+              "type": "array",
+              "items": { "type": "string" }
+            },
+            "migrations": {
+              "type": "array",
+              "items": { "type": "string" }
+            },
+            "integrity": {
+              "type": "object",
+              "properties": {
+                "content_hash": { "type": "string" },
+                "ssss_core_version": { "type": "string" }
+              }
+            },
+            "bundles": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "id": { "type": "string" },
+                  "name": { "type": "string" },
+                  "version": { "type": "string" },
+                  "installMode": {
+                    "type": "string",
+                    "enum": ["optional", "recommended", "required"]
+                  }
+                }
+              }
+            }
+          }
+        },
+        "provisioning": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/provisioningStep"
+          }
+        },
+        "parameters": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/provisioningParameter"
+          }
+        },
+        "file_count": {
+          "type": "integer"
+        },
+        "provenance": {
+          "type": "object",
+          "required": [
+            "content_hash",
+            "exporter"
+          ],
+          "properties": {
+            "content_hash": {
+              "type": "string"
+            },
+            "exporter": {
+              "type": "string"
+            },
+            "signature": {
+              "type": "string"
+            }
+          }
+        },
+        "source_workspace_id": {
+          "type": "string"
+        },
+        "branding": {
+          "type": "object"
+        }
+      }
+    },
+    "provisioningStep": {
+      "type": "object",
+      "required": [
+        "id",
+        "label",
+        "system",
+        "mode",
+        "required"
+      ],
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "label": {
+          "type": "string"
+        },
+        "system": {
+          "type": "string",
+          "enum": [
+            "workspace",
+            "branding",
+            "email",
+            "phone",
+            "domains",
+            "accounts",
+            "deployments",
+            "marketplace",
+            "tabs",
+            "automation"
+          ]
+        },
+        "mode": {
+          "type": "string",
+          "enum": [
+            "existing",
+            "provision",
+            "install",
+            "generate",
+            "configure"
+          ]
+        },
+        "required": {
+          "type": "boolean"
+        },
+        "notes": {
+          "type": "string"
+        }
+      }
+    },
+    "provisioningParameter": {
+      "type": "object",
+      "required": [
+        "key",
+        "label",
+        "type",
+        "scope",
+        "source"
+      ],
+      "properties": {
+        "key": {
+          "type": "string"
+        },
+        "label": {
+          "type": "string"
+        },
+        "type": {
+          "type": "string"
+        },
+        "scope": {
+          "type": "string"
+        },
+        "source": {
+          "type": "string",
+          "enum": ["user", "llm", "graph", "system"]
+        },
+        "required": {
+          "type": "boolean"
+        },
+        "description": {
+          "type": "string"
+        },
+        "defaultValue": {},
+        "options": {
+          "type": "array"
+        },
+        "dependsOn": {
+          "type": "string"
+        }
+      }
+    }
+  }
+}

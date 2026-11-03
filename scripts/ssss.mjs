@@ -41,6 +41,7 @@ Authoring, wire protocol & conformance:
   bridge [options]      Execute operations over stdin/stdout JSON (spec §6.8).
   primitive <verb>      Create, validate, inspect, migrate, or emit types.
   registry <verb>       Compose, lock, or verify an effective registry.
+  schema <verb>         Output or export canonical JSON Schemas (core, bundle).
   adapter conformance   Run machine-readable adapter contract suites.
   migrate 0.8-to-0.9    Diagnose and plan a non-destructive 0.9 migration.
   autolink [dir]        Generate OKF wiki links across a vault.
@@ -72,6 +73,7 @@ const MODULES = {
   semantic: './cmd-semantic.mjs',
   primitive: './cmd-primitive.mjs',
   registry: './cmd-registry.mjs',
+  schema: './cmd-schema.mjs',
   adapter: './cmd-adapter.mjs',
   migrate: './cmd-migrate.mjs',
   serve: './cmd-serve.mjs',
