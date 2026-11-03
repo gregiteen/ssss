@@ -5,7 +5,7 @@
 import crypto from 'node:crypto';
 import { parseDocument, serializeDocument } from './frontmatter.mjs';
 import { createValidator } from './validator.mjs';
-import { isAppendType, isSafeDocumentPath, resolvePortability, resolvePrimitiveDefinition } from './registry.mjs';
+import { isAppendType, isSafeDocumentPath, resolvePortability, resolvePrimitiveDefinition, isSamePrimitiveType } from './registry.mjs';
 import { createCapabilityAuthorizer, validateVerifiedPrincipal } from './authorization.mjs';
 import { createCanonicalEvent, idempotentEventId } from './events.mjs';
 import { MemoryIdempotencyStore } from './idempotency.mjs';
@@ -284,7 +284,7 @@ export function createKernel(options = {}) {
         nextContent = envelope.content;
         nextData = validation.data;
       }
-      if (currentData?.type && currentData.type !== nextData.type) {
+      if (currentData?.type && !isSamePrimitiveType(registrySet, currentData.type, nextData.type)) {
         return failure('validation_failed', envelope, operationId, ['Operation may not change an existing document type.'], [{ field: 'type', issue: 'Use an explicit migration.' }]);
       }
       // Replaying an identical full operation is a no-op, not a replace. This must
@@ -317,7 +317,7 @@ export function createKernel(options = {}) {
       if (!current) return failure('not_found', envelope, operationId, ['Patch target does not exist.'], [{ field: 'path', issue: 'Target not found.' }]);
       definition = resolvePrimitiveDefinition(registrySet, declaredType);
       if (!definition) return failure('validation_failed', envelope, operationId, [`Unknown SSSS primitive '${declaredType}'.`], [{ field: 'type', issue: 'Unknown primitive.' }]);
-      if (Object.hasOwn(envelope.patches, 'type') && envelope.patches.type !== currentData.type) {
+      if (Object.hasOwn(envelope.patches, 'type') && !isSamePrimitiveType(registrySet, envelope.patches.type, currentData.type)) {
         return failure('validation_failed', envelope, operationId, ['Patch may not change document type.'], [{ field: 'type', issue: 'Use an explicit migration.' }]);
       }
       nextData = { ...currentData, ...Object.fromEntries(Object.entries(envelope.patches).filter(([key]) => key !== '__body__')) };

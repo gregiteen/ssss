@@ -319,11 +319,109 @@ async function checkCapabilities(root, check) {
   await write('lr-1', 'roles/editor/ROLE.md', role('editor', ['"write:rule"']), 'system');
   await write('lr-2', 'roles/owner/ROLE.md', role('owner', ['"write:*"']), 'system');
   await write('lr-3', 'roles/typed/ROLE.md', role('typed', ['"*:assistant"']), 'system');
+  await write('lr-rw', 'roles/rolewriter/ROLE.md', role('rolewriter', ['"write:role"']), 'system');
   check('legacy roles: write:<type> grants writes to that type', (await write('lr-4', 'rules/a.md', doc('rule', 'A'), 'editor')).success);
   check('legacy roles: write:<type> denies other types', (await write('lr-5', 'assistants/b/ASSISTANT.md', doc('assistant', 'B'), 'editor')).error?.code === 'forbidden');
   check('legacy roles: *:<type> grants writes to that type', (await write('lr-6', 'assistants/c/ASSISTANT.md', doc('assistant', 'C'), 'typed')).success);
   check('legacy roles: write:* grants writes to every type', (await write('lr-7', 'workflows/d/WORKFLOW.md', doc('workflow', 'D'), 'owner')).success);
   check('legacy roles: an unknown role is forbidden, not promoted', (await write('lr-8', 'rules/e.md', doc('rule', 'E'), 'ghost')).error?.code === 'forbidden');
+  check('legacy roles: write:role grants writes to security_role (alias unification)',
+    (await write('lr-aliased-1', 'roles/sec/ROLE.md', role('sec', ['"write:rule"']), 'rolewriter')).success);
+
+  const roleDoc = (name, permissions) => `---\ntype: role\ntitle: "${name}"\ndescription: "Canonical role."\ntimestamp: "2026-09-24T00:00:00Z"\nname: "${name}"\npermissions: [${permissions.join(', ')}]\n---\n`;
+  const replaceRes = await write('lr-aliased-replace', 'roles/sec/ROLE.md', roleDoc('sec', ['"write:rule"', '"write:task"']), 'rolewriter');
+  check('kernel mutation: replace security_role with role succeeds (alias unification)', replaceRes.success);
+
+  const illegalTypeChange = await write('lr-illegal-type', 'roles/sec/ROLE.md', doc('assistant', 'SecAsst'), 'owner');
+  check('kernel mutation: replace role with assistant fails closed',
+    illegalTypeChange.error?.code === 'validation_failed' &&
+    illegalTypeChange.error?.message?.includes('Operation may not change an existing document type.'));
+
+  const convDoc = `---\ntype: conversation\ntitle: "Thread"\ndescription: "Chat transcript."\ntimestamp: "2026-09-24T00:00:00Z"\nthread_id: "t-1"\n---\n\nInitial message.\n`;
+  await engine.processOperation({ type: 'operation', workspace_id: 'w', idempotency_key: 'conv-init', path: 'threads/t1/CONVERSATION.md', content: convDoc, actor: { role: 'system' } }, vault);
+  const patchRes = await engine.processOperation({
+    type: 'patch', workspace_id: 'w', idempotency_key: 'conv-patch-alias', path: 'threads/t1/CONVERSATION.md',
+    patches: { type: 'thread', __body__: 'New reply.' },
+    actor: { role: 'system' },
+  }, vault);
+  check('kernel mutation: patch conversation with type thread succeeds (alias unification)', patchRes.success);
+
+  const regTypes = engine._registry.types;
+  check('core registry: release, model, page, conflict declare deprecated: true',
+    regTypes.get('release')?.deprecated === true &&
+    regTypes.get('model')?.deprecated === true &&
+    regTypes.get('page')?.deprecated === true &&
+    regTypes.get('conflict')?.deprecated === true);
+
+  let selfAliasRejected = false;
+  try {
+    composeRegistries({
+      core: {
+        registry: 'ssss',
+        version: '0.14.0',
+        universal_fields: ['type'],
+        portability: { classes: { structural: {} } },
+        document_primitives: {
+          rule: { family: 'core', append_only: false, portability: 'structural', required_fields: ['type'], aliases: ['rule'] },
+        },
+      },
+      extensions: [],
+    });
+  } catch (err) {
+    selfAliasRejected = err.message.includes('cannot alias itself');
+  }
+  check('core registry: self-alias on a primitive is rejected', selfAliasRejected);
+
+  let asymmetricAliasRejected = false;
+  try {
+    composeRegistries({
+      core: {
+        registry: 'ssss',
+        version: '0.14.0',
+        universal_fields: ['type'],
+        portability: { classes: { structural: {} } },
+        document_primitives: {
+          rule: { family: 'core', append_only: false, portability: 'structural', required_fields: ['type'], aliases: ['assistant'] },
+          assistant: { family: 'core', append_only: false, portability: 'structural', required_fields: ['type'] },
+        },
+      },
+      extensions: [],
+    });
+  } catch (err) {
+    asymmetricAliasRejected = err.message.includes('collides with existing primitive');
+  }
+  check('core registry: non-mutual core alias collision is rejected', asymmetricAliasRejected);
+
+  const floorAuthorizer = createCapabilityAuthorizer({
+    policyFloors: { 'ssss:role': { create: ['governance:elevated'] } },
+  });
+  const secRoleDef = regTypes.get('security_role');
+  const floorBlocked = await floorAuthorizer({
+    principal: {
+      id: 'u1',
+      kind: 'agent',
+      workspaceIds: ['w'],
+      capabilities: ['ssss:security_role:create'],
+      authentication: { provider: 'token', assurance: 'verified' },
+    },
+    workspaceId: 'w',
+    definition: secRoleDef,
+    action: 'create',
+  });
+  const floorAllowed = await floorAuthorizer({
+    principal: {
+      id: 'u1',
+      kind: 'agent',
+      workspaceIds: ['w'],
+      capabilities: ['ssss:security_role:create', 'governance:elevated'],
+      authentication: { provider: 'token', assurance: 'verified' },
+    },
+    workspaceId: 'w',
+    definition: secRoleDef,
+    action: 'create',
+  });
+  check('authorization: policyFloors on ssss:role apply when mutating security_role alias',
+    floorBlocked.allowed === false && floorBlocked.missing?.includes('governance:elevated') && floorAllowed.allowed === true);
 
   const pathPrincipal = {
     id: 'scoped-user',
@@ -431,6 +529,27 @@ async function checkResourceLifecycle(check) {
   check('references: a reference to an allowed type is accepted', resolved.success);
   check('references: a reference to a disallowed type is rejected', wrongType.error?.code === 'validation_failed');
   check('references: a patch cannot repoint a reference at a missing document', repointed.error?.code === 'validation_failed');
+
+  const withRoleRefs = createValidator({ extensions: [{
+    registry: 'acme', extends: 'core',
+    document_primitives: {
+      grant_doc: {
+        family: 'extension', append_only: false, portability: 'structural', required_fields: ['type', 'name', 'role_ref'],
+        references: { role_ref: { allowed_types: ['role'] } },
+      },
+      deny_role_doc: {
+        family: 'extension', append_only: false, portability: 'structural', required_fields: ['type', 'name', 'target_ref'],
+        references: { target_ref: { disallowed_types: ['role'] } },
+      },
+    },
+  }] });
+  const roleRefKernel = createKernel({ vfs: new MemoryVfs(), eventStore: new MemoryEventStore(), validator: withRoleRefs });
+  const writeRef = (key, pathName, content) => roleRefKernel.execute({ type: 'operation', workspace_id: 'w', idempotency_key: key, path: pathName, content }, { principal });
+  await writeRef('rr-1', 'roles/admin.md', `---\ntype: security_role\ntitle: "Admin"\ndescription: "D"\ntimestamp: "2026-09-24T00:00:00Z"\nrole_id: "admin"\nname: "Admin"\npermissions: ["*:*"]\n---\n`);
+  const allowedViaAlias = await writeRef('rr-2', 'grants/g1.md', `---\ntype: grant_doc\ntitle: "G"\ndescription: "D"\ntimestamp: "2026-09-24T00:00:00Z"\nname: "G"\nrole_ref: "roles/admin.md"\n---\n`);
+  const disallowedViaAlias = await writeRef('rr-3', 'denies/d1.md', `---\ntype: deny_role_doc\ntitle: "D"\ndescription: "D"\ntimestamp: "2026-09-24T00:00:00Z"\nname: "D"\ntarget_ref: "roles/admin.md"\n---\n`);
+  check('references: allowed_types role accepts aliased security_role target', allowedViaAlias.success);
+  check('references: disallowed_types role rejects aliased security_role target', disallowedViaAlias.error?.code === 'validation_failed');
 
   // Every failure carries a symbolic code that maps to the §6.5 status table.
   const plain = createKernel({ vfs: new MemoryVfs(), eventStore: new MemoryEventStore(), leaseStore: new MemoryLeaseStore() });

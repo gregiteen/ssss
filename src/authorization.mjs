@@ -65,17 +65,45 @@ export function createCapabilityAuthorizer(options = {}) {
     if (principal.kind !== 'system' && !principal.workspaceIds.includes(workspaceId)) {
       return { allowed: false, reason: `Principal '${principal.id}' is not scoped to workspace '${workspaceId}'.` };
     }
-    const floorKey = definition?.qualified_type || definition?.primitive_id || definition?.type;
+    const namespace = definition?.namespace || 'ssss';
+    const aliases = Array.isArray(definition?.aliases) ? definition.aliases : [];
+    const floorKeys = new Set(
+      [
+        definition?.qualified_type,
+        definition?.primitive_id,
+        definition?.type,
+        ...aliases.flatMap((alias) => [
+          alias,
+          alias.includes(':') ? alias : `${namespace}:${alias}`,
+        ]),
+      ].filter(Boolean),
+    );
+    const floorCapabilities = [...floorKeys].flatMap((key) => policyFloors[key]?.[action] || []);
     const required = new Set([
       ...requiredCapabilities(definition, action),
-      ...(policyFloors[floorKey]?.[action] || []),
+      ...floorCapabilities,
       ...(context.policyFloor || []),
     ]);
     const granted = new Set(principal.capabilities || []);
     if (principal.kind === 'system' && options.systemBypass !== false) return { allowed: true, required: [...required] };
     const targetPath = context.path || null;
+    const defPrefixes = [...new Set([definition?.qualified_type, definition?.primitive_id, definition?.type].filter(Boolean))];
     const missing = [...required].filter((capability) =>
-      ![...granted].some((grant) => capabilityCovers(grant, capability, targetPath)));
+      ![...granted].some((grant) => {
+        if (capabilityCovers(grant, capability, targetPath)) return true;
+        if (!aliases.length) return false;
+        const matchedPrefix = defPrefixes.find((prefix) => capability.startsWith(`${prefix}:`));
+        if (!matchedPrefix) return false;
+        const actionTail = capability.slice(matchedPrefix.length + 1);
+        return aliases.some((alias) => {
+          const qualifiedAlias = alias.includes(':') ? alias : `${namespace}:${alias}`;
+          const bareAlias = alias.includes(':') ? alias.slice(alias.indexOf(':') + 1) : alias;
+          return (
+            capabilityCovers(grant, `${qualifiedAlias}:${actionTail}`, targetPath) ||
+            capabilityCovers(grant, `${bareAlias}:${actionTail}`, targetPath)
+          );
+        });
+      }));
     if (missing.length) return { allowed: false, required: [...required], missing, reason: `Missing capabilities: ${missing.join(', ')}.` };
     if (context.requiresHumanConfirmation && principal.kind !== 'human') {
       return { allowed: false, required: [...required], reason: 'A verified human confirmation is required.' };

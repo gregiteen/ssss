@@ -45,6 +45,7 @@ const ENGINE_ENFORCED_KEYS = [
   'immutable_fields',
   'references',
   'append_only',
+  'aliases',
 ];
 
 // Keys that are real and load-bearing but are intentionally consumed
@@ -58,6 +59,8 @@ const KNOWN_NON_ENGINE_KEYS = new Set([
   'portability', // consumed by src/registry.mjs resolvePortability() + src/bundle.mjs export filtering, not write-time validation
   'resource', // extension-defined resource_bound metadata, consumed by src/bundle.mjs provisioning
   'description', // human documentation on a primitive definition, same role as `notes`; never enforced at write time
+  'deprecated', // documentation / catalog deprecation status; consumed by tool displays and spec generation, not write-time validation
+  'deprecation_notice', // human guidance on migration path for deprecated primitives; consumed by documentation
   // Product-side projection metadata. The SSSS engine never reads these: they are
   // consumed by the host application's own projector to decide which target tables
   // a document feeds and how (see festech.live SsssGenericProjector.ts). Kept in the

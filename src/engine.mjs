@@ -39,7 +39,17 @@ export function legacyRoleCapabilities(permissions, registrySet) {
     if (permission === 'write:*' || permission === '*:*') { capabilities.add('*:*'); continue; }
     const match = permission.match(/^(write|\*):(.+)$/);
     const definition = match && resolvePrimitiveDefinition(registrySet, match[2]);
-    if (definition?.qualified_type) capabilities.add(`${definition.qualified_type}:*`);
+    if (definition?.qualified_type) {
+      capabilities.add(`${definition.qualified_type}:*`);
+      const prefix = definition.qualified_type.includes(':')
+        ? definition.qualified_type.split(':')[0]
+        : 'ssss';
+      for (const alias of definition.aliases || []) {
+        capabilities.add(`${prefix}:${alias}:*`);
+        capabilities.add(`write:${alias}`);
+        capabilities.add(`*:${alias}`);
+      }
+    }
   }
   return [...capabilities];
 }

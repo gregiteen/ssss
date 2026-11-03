@@ -87,6 +87,7 @@
       "portability": "structural",
       "required_fields": ["type", "name", "permissions"],
       "optional_fields": ["description"],
+      "aliases": ["security_role"],
       "notes": "A named set of capabilities used for role-based access control (RBAC). Canonical form of security_role.",
       "spec_ref": "§5.4 role"
     },
@@ -97,6 +98,8 @@
       "portability": "structural",
       "required_fields": ["type", "name", "permissions"],
       "optional_fields": ["description"],
+      "aliases": ["role"],
+      "notes": "A named set of capabilities used for role-based access control (RBAC). Legacy alias of role.",
       "spec_ref": "§5.4 security_role"
     },
     "task": {
@@ -149,6 +152,8 @@
       "append_only": false,
       "portability": "structural",
       "required_fields": ["type", "model_id", "provider"],
+      "deprecated": true,
+      "deprecation_notice": "Inert catalog primitive. Modern hosts configure models through provider runtime settings.",
       "spec_ref": "§5.4 model"
     },
     "thread": {
@@ -158,6 +163,7 @@
       "portability": "tenant_private",
       "required_fields": ["type", "thread_id"],
       "optional_fields": ["workspace_id", "user_id", "status", "turn_count", "created_at"],
+      "aliases": ["conversation"],
       "notes": "An append-only multi-turn chat transcript. Canonical form of conversation.",
       "spec_ref": "§5.4 thread"
     },
@@ -167,6 +173,8 @@
       "append_only": true,
       "portability": "tenant_private",
       "required_fields": ["type", "thread_id"],
+      "aliases": ["thread"],
+      "notes": "An append-only multi-turn chat transcript. Legacy alias of thread.",
       "spec_ref": "§5.4 conversation"
     },
     "run": {
@@ -186,6 +194,8 @@
       "portability": "tenant_private",
       "required_fields": ["type", "conflict_id", "status", "new_slug", "existing_slug", "detected_at"],
       "enums": { "status": ["pending", "resolved"] },
+      "deprecated": true,
+      "deprecation_notice": "Inert meta primitive. Memory collision handling is managed by host memory kernels.",
       "spec_ref": "§5.4 conflict"
     },
     "page": {
@@ -194,6 +204,8 @@
       "append_only": false,
       "portability": "structural",
       "required_fields": ["type", "slug", "name", "sandbox_entry"],
+      "deprecated": true,
+      "deprecation_notice": "Inert sandbox primitive with iframe assumptions. Superseded by asset and modern UI primitives.",
       "spec_ref": "§5.4 page"
     },
     "migration": {
@@ -210,6 +222,8 @@
       "append_only": false,
       "portability": "structural",
       "required_fields": ["type", "release_id", "version", "schema_version", "summary", "released_at"],
+      "deprecated": true,
+      "deprecation_notice": "Inert meta primitive. Release tracking is managed by bundle and package manifests.",
       "spec_ref": "§5.4 release"
     },
     "primitive": {

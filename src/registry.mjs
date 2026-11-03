@@ -16,7 +16,7 @@ import { fileURLToPath } from 'node:url';
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const DEFAULT_REGISTRY_DIR = path.resolve(__dirname, '..', 'registry');
 
-const APPEND_TYPES = new Set(['conversation', 'run']);
+const APPEND_TYPES = new Set(['conversation', 'run', 'thread']);
 const SAFE_REGISTRY_NAME = /^[a-z][a-z0-9_-]{0,63}$/;
 const SAFE_TYPE_NAME = /^(?:[a-z][a-z0-9_-]{0,63}:)?[a-z][a-z0-9_-]{0,127}$/;
 const SAFE_FIELD_NAME = /^[A-Za-z_][A-Za-z0-9_-]*$/;
@@ -52,6 +52,13 @@ function validatePrimitiveDefinition(name, def, source, portabilityClasses) {
   assertStringArray(def.required_fields, `${source}: primitive '${name}' required_fields`);
   assertStringArray(def.optional_fields, `${source}: primitive '${name}' optional_fields`);
   assertStringArray(def.immutable_fields, `${source}: primitive '${name}' immutable_fields`);
+  assertStringArray(def.aliases, `${source}: primitive '${name}' aliases`);
+  if (def.deprecated !== undefined && typeof def.deprecated !== 'boolean') {
+    throw new Error(`${source}: primitive '${name}' deprecated must be a boolean.`);
+  }
+  if (def.deprecation_notice !== undefined && typeof def.deprecation_notice !== 'string') {
+    throw new Error(`${source}: primitive '${name}' deprecation_notice must be a string.`);
+  }
 
   assertRecord(def.required_when, `${source}: primitive '${name}' required_when`);
   for (const [condition, fields] of Object.entries(def.required_when || {})) {
@@ -157,6 +164,33 @@ export function composeRegistries({ core, extensions: extensionInputs = [] } = {
     aliases.set(`ssss:${name}`, name);
   }
 
+  for (const [name, def] of Object.entries(core.document_primitives || {})) {
+    for (const alias of def.aliases || []) {
+      if (!isPrimitiveTypeName(alias)) {
+        throw new Error(`core registry: primitive '${name}' has unsafe alias '${alias}'.`);
+      }
+      const bareAlias = alias.startsWith('ssss:') ? alias.slice('ssss:'.length) : alias;
+      const qualifiedAlias = alias.includes(':') ? alias : `ssss:${alias}`;
+      if (bareAlias === name) {
+        throw new Error(`core registry: primitive '${name}' cannot alias itself.`);
+      }
+      if (types.has(bareAlias)) {
+        const peer = types.get(bareAlias);
+        const peerAliases = (peer.aliases || []).map((a) => (a.startsWith('ssss:') ? a.slice('ssss:'.length) : a));
+        if (!peerAliases.includes(name)) {
+          throw new Error(`core registry: primitive alias '${alias}' on '${name}' collides with existing primitive '${bareAlias}'.`);
+        }
+        continue;
+      }
+      if ((aliases.has(bareAlias) && aliases.get(bareAlias) !== name) ||
+          (aliases.has(qualifiedAlias) && aliases.get(qualifiedAlias) !== name)) {
+        throw new Error(`core registry: primitive alias '${alias}' collides with an existing primitive.`);
+      }
+      aliases.set(bareAlias, name);
+      aliases.set(qualifiedAlias, name);
+    }
+  }
+
   for (const [index, item] of extensionInputs.entries()) {
     const { source, value: ext } = normalizeExtensionInput(item, index);
     if (!SAFE_REGISTRY_NAME.test(ext.registry || '')) {
@@ -232,6 +266,14 @@ export function composeRegistries({ core, extensions: extensionInputs = [] } = {
           );
         }
       }
+      const aliasOverlap = (constraint.allowed_types || []).filter((allowed) =>
+        (constraint.disallowed_types || []).some((disallowed) => isSamePrimitiveType(registrySet, allowed, disallowed))
+      );
+      if (aliasOverlap.length) {
+        throw new Error(
+          `registry '${def.registry}' primitive '${def.type}' reference '${field}' both allows and forbids (via alias): ${aliasOverlap.join(', ')}.`
+        );
+      }
     }
   }
 
@@ -295,6 +337,42 @@ export function resolvePrimitiveDefinition(registrySet, type) {
   if (direct) return direct;
   const local = registrySet.aliases?.get(type);
   return local ? registrySet.types.get(local) || null : null;
+}
+
+/**
+ * Return all equivalent primitive definitions for a type or definition
+ * (the definition itself plus any definitions linked via `aliases`).
+ */
+export function resolveEquivalentDefinitions(registrySet, typeOrDef) {
+  const base = typeof typeOrDef === 'string'
+    ? resolvePrimitiveDefinition(registrySet, typeOrDef)
+    : typeOrDef;
+  if (!base) return [];
+  const seen = new Map([[base.qualified_type || base.type, base]]);
+  for (const alias of base.aliases || []) {
+    const target = resolvePrimitiveDefinition(registrySet, alias);
+    if (target && !seen.has(target.qualified_type || target.type)) {
+      seen.set(target.qualified_type || target.type, target);
+    }
+  }
+  return [...seen.values()];
+}
+
+/**
+ * Return true if two primitive type identifiers resolve to the same canonical
+ * primitive definition (either exact match, qualified match, or mutual alias).
+ */
+export function isSamePrimitiveType(registrySet, typeA, typeB) {
+  if (typeA === typeB) return true;
+  if (!typeA || !typeB) return false;
+  const defA = resolvePrimitiveDefinition(registrySet, typeA);
+  const defB = resolvePrimitiveDefinition(registrySet, typeB);
+  if (!defA || !defB) return false;
+  if (defA.qualified_type === defB.qualified_type) return true;
+  const equivalentsA = resolveEquivalentDefinitions(registrySet, defA);
+  if (equivalentsA.some((d) => d.qualified_type === defB.qualified_type)) return true;
+  const equivalentsB = resolveEquivalentDefinitions(registrySet, defB);
+  return equivalentsB.some((d) => d.qualified_type === defA.qualified_type);
 }
 
 /**
@@ -472,14 +550,15 @@ export function validateReferenceConstraints(typeDef, data, resolveReference, ty
       continue;
     }
     const referencedType = referenced.data?.type;
+    const registrySurface = { types, aliases: types.aliases };
     if (!lookupType(referencedType)) {
       issues.push({ field, issue: `Referenced document declares unknown type '${referencedType || '(missing)'}'.` });
       continue;
     }
-    if (constraint.allowed_types && !constraint.allowed_types.includes(referencedType)) {
+    if (constraint.allowed_types && !constraint.allowed_types.some((allowed) => isSamePrimitiveType(registrySurface, allowed, referencedType))) {
       issues.push({ field, issue: `Referenced type '${referencedType}' is not allowed.` });
     }
-    if (constraint.disallowed_types?.includes(referencedType)) {
+    if (constraint.disallowed_types?.some((disallowed) => isSamePrimitiveType(registrySurface, disallowed, referencedType))) {
       issues.push({ field, issue: `Referenced type '${referencedType}' is forbidden.` });
     }
     const referencedPortability = resolvePortability(lookupType(referencedType), referenced.data);

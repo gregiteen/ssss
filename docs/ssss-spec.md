@@ -250,14 +250,14 @@ primitive — it implements the subset its product requires — but any primitiv
 | `assistant` | actor | structural | The definition of an AI assistant/persona. |
 | `workflow` | work | structural | A reusable **task template**: a defined procedure. Firing a workflow submits a `task`. |
 | `trigger` | work | structural | A standalone schedule or event-driven trigger that fires a workflow. |
-| `model` | catalog | structural | The definition of an inference model. |
+| `model` | catalog | structural | The definition of an inference model (deprecated). |
 | `thread` | transcript | tenant_private | An append-only chat transcript. |
 | `conversation` | transcript | tenant_private | An append-only chat transcript. Legacy alias of `thread`. |
 | `run` | transcript | tenant_private | An append-only workflow execution record. |
-| `conflict` | meta | tenant_private | A record of two contradicting primitives, blocking promotion. |
-| `page` | capability | structural | A VFS-native sandboxed custom workspace page. |
+| `conflict` | meta | tenant_private | A record of two contradicting primitives, blocking promotion (deprecated). |
+| `page` | capability | structural | A VFS-native sandboxed custom workspace page (deprecated). |
 | `migration` | meta | structural | An SSSS schema migration state record. |
-| `release` | meta | structural | An SSSS system schema version release record. |
+| `release` | meta | structural | An SSSS system schema version release record (deprecated). |
 | `primitive` | meta | structural | A governed, versioned definition for a namespaced SSSS primitive. |
 
 The **Portability** column is the primitive's default portability class (§5.5); a host
@@ -282,7 +282,7 @@ Document primitives are either:
   entirely (`memory`, `skill`, `rule`, `security_role`, `task`, `assistant`,
   `workflow`, `model`, `conflict`, `page`, `migration`, `release`, `primitive`).
 - **Append-type** — the file is an ordered, append-only log; writes add records to
-  the body and MUST NOT rewrite prior records (`conversation`, `run`).
+  the body and MUST NOT rewrite prior records (`thread`, `conversation`, `run`).
 
 Append-type documents MUST be mutated only by appending. A host MUST reject an
 operation that would rewrite or remove existing records of an append-type document.
@@ -629,7 +629,7 @@ Maintains support assistants and records support events.
 
 #### `model`
 
-The definition of an inference model.
+The definition of an inference model. Deprecated: inert catalog primitive; modern hosts configure models through provider runtime settings.
 
 REQUIRED: `type`, `model_id`, `provider`.
 
@@ -731,7 +731,7 @@ Collected 12 messages.
 
 #### `conflict`
 
-A record of two contradicting primitives. Blocks promotion until resolved.
+A record of two contradicting primitives. Blocks promotion until resolved. Deprecated: inert meta primitive; memory collision handling is managed by host memory kernels.
 
 REQUIRED: `type`, `conflict_id`, `status` (`pending|resolved`), `new_slug`,
 `existing_slug`, `detected_at`.
@@ -752,7 +752,7 @@ detected_at: 2026-05-16T18:30:00Z
 
 #### `page`
 
-A VFS-native sandboxed custom workspace page.
+A VFS-native sandboxed custom workspace page. Deprecated: inert sandbox primitive with iframe assumptions; superseded by asset and modern UI primitives.
 
 REQUIRED: `type`, `slug`, `name`, `sandbox_entry`.
 
@@ -791,7 +791,7 @@ description: "Add vector_embedding field"
 
 #### `release`
 
-An SSSS system schema version release.
+An SSSS system schema version release. Deprecated: inert meta primitive; release tracking is managed by bundle and package manifests.
 
 REQUIRED: `type`, `release_id`, `version`, `schema_version`, `summary`, `released_at`.
 

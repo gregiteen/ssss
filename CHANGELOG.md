@@ -7,6 +7,27 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.14.1] - 2026-11-02
+### Added
+- **Core primitive aliasing (`role` ↔ `security_role`, `thread` ↔ `conversation`)**:
+  - `registry/core.json`: Reciprocal `aliases` declared on `role` (`security_role`) and `thread` (`conversation`).
+  - `src/registry.mjs`: `composeRegistries()` executes two passes to register and validate core primitive aliases, enforcing mutual symmetry when aliasing existing primitives, rejecting self-aliases, and disallowing collisions with unrelated primitives.
+  - `src/registry.mjs`: `resolveEquivalentDefinitions()` and `isSamePrimitiveType()` resolve equivalence across canonical and alias types.
+  - `src/registry.mjs`: `validateReferenceConstraints()` resolves `allowed_types` and `disallowed_types` across primitive aliases.
+  - `src/kernel.mjs`: Operation replace and patch type-mutation guards accept equivalent primitive aliases transparently without requiring an explicit migration.
+  - `src/engine.mjs`: `legacyRoleCapabilities()` expands permissions across declared aliases for `role` and `security_role`.
+  - `src/authorization.mjs`: `createCapabilityAuthorizer()` enforces `policyFloors` across primitive aliases and matches capability grants across aliases for primitive actions.
+- **Core primitive deprecation metadata**:
+  - `registry/core.json`: Declared `"deprecated": true` and `"deprecation_notice"` on inert primitives `release`, `model`, `page`, and `conflict`.
+  - `src/registry.mjs`: `validatePrimitiveDefinition()` validates optional boolean `deprecated` and string `deprecation_notice`.
+  - `docs/ssss-spec.md`: Documented core primitive aliases (§5.1, §5.3, §5.4) and deprecation metadata.
+  - Synchronized managed portable core SSSS skill package (`skills/ssss/`, `.agent/skills/ssss/`) with `0.14.1` reference materials.
+
+### Behavior changes hosts should check
+- Replacing or patching a document from `role` to `security_role` (or `security_role` to `role`), or `thread` to `conversation`, is now accepted by kernel type-mutation guards.
+- Reference constraints with `allowed_types: ["role"]` accept targets of type `security_role`, and `disallowed_types: ["role"]` reject targets of type `security_role`.
+- Policy floors configured on `ssss:role` or `role` are applied when mutating documents of type `security_role`.
+
 ## [0.14.0] - 2026-11-02
 ### Added
 - **Parameter bindings & Resource bindings (D2, D4)**: `provisionBundle` supports `x_bind` in template frontmatter and resource bindings (`bindings` array with `relation`, `field`, `mode`), with type validation and parameter substitution.
