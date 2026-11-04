@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.14.4] - 2026-11-04
+### Fixed
+- **`ssss conformance --engine` crashed in every consumer repository (`CONFORMANCE_CWD_INDEPENDENCE`)**:
+  - `scripts/conformance-09.mjs`: `checkJsonSchemas()` resolved `registry/core.json`, `schemas/core-registry.schema.json`, `schemas/bundle.schema.json` and `conformance/reference-bundle.ucw.json` from `process.cwd()`. Those assets ship inside this package, so any consumer running the gate from its own project root — which is the normal case, and always the case for repositories whose registry lives at a non-default path such as `--registry vault-registry` — died with `ENOENT` before reaching the kernel checks. The paths are now resolved relative to the module via `fileURLToPath(import.meta.url)`, matching the convention already used by `check-commit-durability.mjs` and `check-docs-parity.mjs`.
+  - Added `scripts/check-conformance-cwd-independence.mjs`, wired into `npm test`: runs the real gate from a temporary directory containing none of those assets, and additionally asserts that no `path.resolve()` on a package asset path is reintroduced. Verified to fail with the original code and pass with the fix.
+
 ## [0.14.3] - 2026-11-03
 ### Added
 - **Fail-Closed JSON Schema Validation & Validator Hardening (`SCHEMA_VALIDATION_HARDENING`)**:

@@ -3,6 +3,7 @@ import crypto from 'node:crypto';
 import { execFileSync, spawn, spawnSync } from 'node:child_process';
 import os from 'node:os';
 import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { definePrimitive, definitionsToExtensionRegistry } from '../src/primitive.mjs';
 import {
   composeRegistries,
@@ -440,13 +441,19 @@ async function checkCapabilities(root, check) {
 }
 
 function checkJsonSchemas(check) {
-  const coreRegistry = JSON.parse(fs.readFileSync(path.resolve('registry/core.json'), 'utf8'));
-  const coreSchema = JSON.parse(fs.readFileSync(path.resolve('schemas/core-registry.schema.json'), 'utf8'));
+  // These assets ship inside this package. Resolve them relative to this module
+  // rather than the caller's cwd, so the check works when an installed
+  // `ssss conformance` runs from a consumer repository that has no registry/,
+  // schemas/ or conformance/ of its own (the registry it uses may also live at
+  // a different path entirely, as with --registry vault-registry).
+  const assets = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
+  const coreRegistry = JSON.parse(fs.readFileSync(path.join(assets, 'registry/core.json'), 'utf8'));
+  const coreSchema = JSON.parse(fs.readFileSync(path.join(assets, 'schemas/core-registry.schema.json'), 'utf8'));
   const coreResult = validateJsonSchema(coreRegistry, coreSchema);
   check('schema: registry/core.json validates against schemas/core-registry.schema.json', coreResult.valid, coreResult.errors?.[0]?.message);
 
-  const bundle = JSON.parse(fs.readFileSync(path.resolve('conformance/reference-bundle.ucw.json'), 'utf8'));
-  const bundleSchema = JSON.parse(fs.readFileSync(path.resolve('schemas/bundle.schema.json'), 'utf8'));
+  const bundle = JSON.parse(fs.readFileSync(path.join(assets, 'conformance/reference-bundle.ucw.json'), 'utf8'));
+  const bundleSchema = JSON.parse(fs.readFileSync(path.join(assets, 'schemas/bundle.schema.json'), 'utf8'));
   const bundleResult = validateJsonSchema(bundle, bundleSchema);
   check('schema: reference-bundle.ucw.json validates against schemas/bundle.schema.json', bundleResult.valid, bundleResult.errors?.[0]?.message);
 
