@@ -4,7 +4,7 @@ title: "OpenWiki — SSSS"
 description: "Root index for the SSSS reference-implementation OpenWiki: distinguishes the SSSS spec/registry/kernel/bundle/runtime/semantic layer from the Total Recall brain/IDE operational layer and routes into the concept, workflow, operations, and integrations pages."
 tags: [ssss, openwiki, index, reference-implementation, total-recall]
 verified:
-  - by: openwiki/0.7.2
+  - by: openwiki/0.7.3
     at: 2026-11-03T07:15:54.702Z
 ---
 

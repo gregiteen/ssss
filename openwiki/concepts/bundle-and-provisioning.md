@@ -2,9 +2,6 @@
 type: "Reference"
 title: "Bundle format & provisioning contract"
 openwiki_generated: true
-verified:
-  - by: openwiki/0.7.2
-    at: 2026-11-03T07:15:54.702Z
 ---
 
 

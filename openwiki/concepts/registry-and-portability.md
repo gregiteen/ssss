@@ -3,9 +3,6 @@ type: Concept
 title: Registry, portability & schemas
 description: How a registry-driven type system resolves document primitives, enforces field/reference/portability constraints with no per-type code, and how portability classes drive export profiles that strip private data and reduce bound resources to requirements.
 tags: [registry, portability, json-schema, frontmatter, validation, extensions, exports]
-verified:
-  - by: openwiki/0.7.2
-    at: 2026-11-03T07:15:54.702Z
 ---
 
 # Registry, portability & schemas
