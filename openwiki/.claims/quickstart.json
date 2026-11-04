@@ -1,0 +1,80 @@
+{
+  "schemaVersion": 1,
+  "pageVersion": "sha256:9e792b1315be6e2c5f9e05238b82275c49935c4a30da70adfe99a8d45710c9c0",
+  "claims": [
+    {
+      "id": "claim_dba4f93606c846f084b80fd796d0e6e1",
+      "statement": "SSSS provides a database-free, Markdown-first schema and mutation contract for AI-agent state, enabling portable and tradeable agent bundles.",
+      "evidence": [
+        {
+          "resource": "repo://README.md#L3-L6",
+          "version": "repo-lines-v1:sha256:8b2ae74c9d13576e8bf68df70e70fb41db26ac8508adc964f977cc76e8da007e:eyJzZWxlY3RlZExpbmVDb3VudCI6NCwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiODE1YzJmMDgzYTE4NzVmZDhlNTI5MjZiZGMyYWZiM2QxYjFiMGRkYmE0MjJjZjBmNWUzNTBiMWU5MTlkZDY0NyIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiMzcwNjMxMTBiYzBkNGY2YjhmMWUyYmMzMWE4NmVlYjMzNTA5NzFhYzYyMjkzZWMzNzMwZTExZjM5ZmFmNjg5OSIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjIsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiZjgyNzdiNDRjZjlmYTU2YmVjMzYxZjVkYzdmYWY1ZmQzZGE3OWU0Y2M2YjRjNzM3MjA5NDhiMjFiMmFjN2I0NSIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiNThhNTA2YWNjNzI3OGE3MjYxNTQxNzUxYzI4ZjVhZDBmYTRhZTk3Mjc2N2E2YzA3ZDc2ZDI0ZDgxZDUyMWQ3NSJ9"
+        }
+      ]
+    },
+    {
+      "id": "claim_ce8418f1632f441f92d0d98959567170",
+      "statement": "SSSS defines document primitives as typed Markdown files with YAML frontmatter that are validated against a registry rather than requiring hand-written code.",
+      "evidence": [
+        {
+          "resource": "repo://README.md#L12-L13",
+          "version": "repo-lines-v1:sha256:1867983b5b92433682c8d3f501c4c3b47b3f14ec6543d860703c09fc3253eaa2:eyJzZWxlY3RlZExpbmVDb3VudCI6MiwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiNWJjOWEzMGUyY2NjOTU4OTViNjk3ZDU5ZmRmZGE3OTJhMGY5ZDk3NDcxZmRiNjA4YTQzNTdjMGEyOTU1NWY3NiIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiMTRhZmU0MTQyMzMwMTQwNTgyYWY1ZjVlY2RjMmUxODVhNzdiYzUxZTcxMmNmOTIwZTc4YWZkNjk5NzIxMDIzZSIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiMWQ2MmE3YTMyZWIxZWZlYWZlNWI3Yjg4ZDU0ODU0MmEzNmRhZjg0YWM2ZDgxMTkyYjI5OGM4ZjM2NGRiNThkYiIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiZGNjMzAwZWQxOGRkM2M4MzZkMzA0MmUzZTVjZTA2NWUzYWNjYzI0NjVmNjJjODkwZWEwY2Q5MTMyNTE1ZGIyNCJ9"
+        }
+      ]
+    },
+    {
+      "id": "claim_523248da8ea3417a87a4bb55cdee45ac",
+      "statement": "SSSS implements an Operation Contract with four envelope types (operation, patch, event, delete) for mutating a vault, ensuring idempotency replay and audit capabilities.",
+      "evidence": [
+        {
+          "resource": "repo://README.md#L14-L14",
+          "version": "repo-lines-v1:sha256:984919ed6ccdd6ad267f4d0a12185ca4f8fc1673e0b6f93417b7c5465fc7e2f6:eyJzZWxlY3RlZExpbmVDb3VudCI6MSwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiOTg0OTE5ZWQ2Y2NkZDZhZDI2N2Y0ZDBhMTIxODVjYTRmOGZjMTY3M2UwYjZmOTM0MTdiN2M1NDY1ZmM3ZTJmNiIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiOTg0OTE5ZWQ2Y2NkZDZhZDI2N2Y0ZDBhMTIxODVjYTRmOGZjMTY3M2UwYjZmOTM0MTdiN2M1NDY1ZmM3ZTJmNiIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiYjQ1MjgyYjBhNGZlZmY1MDFkYzIyMzlmOGEyNGQwNDczZTgwYjc0NzE3YWZhNWVkNGQwMDI3MjI4NWJkM2E0YyIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiNDcwZjMzYWNiYjNiOGI1NjVlMWY4MzA1ZTlmYzhiMGVkMzM5NWU4NjJmNDM5NmFjZDRmYmE5M2EwZGIyOWE1YSJ9"
+        }
+      ]
+    },
+    {
+      "id": "claim_7b07ba899e524eb1b5967f9d9d0a935e",
+      "statement": "The SSSS Workflow Runtime Contract derives idempotent event/task/run envelopes from the vault for workflows and standalone triggers.",
+      "evidence": [
+        {
+          "resource": "repo://README.md#L15-L15",
+          "version": "repo-lines-v1:sha256:2dd474c328e12f1bd604945b263f5645c85fe75472fb413d938e4549061ca957:eyJzZWxlY3RlZExpbmVDb3VudCI6MSwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiMmRkNDc0YzMyOGUxMmYxYmQ2MDQ5NDViMjYzZjU2NDVjODVmZTc1NDcyZmI0MTNkOTM4ZTQ1NDkwNjFjYTk1NyIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiMmRkNDc0YzMyOGUxMmYxYmQ2MDQ5NDViMjYzZjU2NDVjODVmZTc1NDcyZmI0MTNkOTM4ZTQ1NDkwNjFjYTk1NyIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiMWUwY2I5NzdmNWE2ZmFiYmQ3YzgzMWEwZjA3ZGFmNTJiZWJmZWY4NWEwMThkN2E3MWE1MmRhN2YxMzQ2M2M4MSIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiMmE3NDU0ZjE4M2ExZDc3N2M1YjEwYzA0MWRjZmEzZGY4MDIwNWYyZTE0NTNjOTA5NWUwYmYxZTlmZjNmMzI4NCJ9"
+        }
+      ]
+    },
+    {
+      "id": "claim_142ed1f2b83c44e1b73a90c0a0f9b0dc",
+      "statement": "SSSS provides a multilingual semantic runtime with deterministic lexical evidence, injected multilingual embeddings, and runtime rendering with symbolic controls fixed.",
+      "evidence": [
+        {
+          "resource": "repo://README.md#L16-L17",
+          "version": "repo-lines-v1:sha256:6dac06d5bd8b6f0a222ea121d38b7ac36bd304a78d92a8b8184b67ab9b1f8d64:eyJzZWxlY3RlZExpbmVDb3VudCI6MiwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiNTUyMjRhNDc5NjBkZTM5MGQwYTQyNjcyOGJlOGU5MzRhZjU3NmY1ZTIxMWUxNDRmMmM1MzA4Nzk2YzI3NzdjNyIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiMDUzMzllYTk3YWEyOGQ0ZDVkYWMzODhhNDk2MjMwNzRiY2U5YzA1ZmFiMjU5MjdkZGI2NThhZDc5YzgyNmU4MyIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiYTg0YTEwMjA0MTU2MDQzOGNmZTI4ZmM1MjMwMDJhMWEzYWIyNjAwNWNjNmM2ZmVmN2ViMGIxMjgyZjllMGMwMiIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiZWMxZjBjYTZmZjY4N2VlN2NlY2U2YWZlMGNmM2ZiMWEyMzk0ZDdiMjk5ODhkZGJlOGFhODViZmQ1MTFmZjAwYiJ9"
+        }
+      ]
+    },
+    {
+      "id": "claim_cea8168d7dda40debe33ff5cd9284fc8",
+      "statement": "SSSS classifies every primitive as structural, tenant_private, or resource_bound to enable vault sharing without leaking private data.",
+      "evidence": [
+        {
+          "resource": "repo://README.md#L18-L19",
+          "version": "repo-lines-v1:sha256:df91b2c7cb34c39e16d67a1a76d3df28b607a312dcc7a5d4ebb26985815bd7bb:eyJzZWxlY3RlZExpbmVDb3VudCI6MiwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiMDFiYTQ3MTljODBiNmZlOTExYjA5MWE3YzA1MTI0YjY0ZWVlY2U5NjRlMDljMDU4ZWY4Zjk4MDVkYWNhNTQ2YiIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiZjA1NDdkYjM4MDEyMTkxZjBiNDljN2RiNWVkMTRkYzhkYTAzOWMxOTYwYmQ2OTQ1NGY3YjZhODE0MTRlYWJjNCIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiNDcwZjMzYWNiYjNiOGI1NjVlMWY4MzA1ZTlmYzhiMGVkMzM5NWU4NjJmNDM5NmFjZDRmYmE5M2EwZGIyOWE1YSIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiMzc3ZDcwMmIwYTllYjZmMGY2ZjQyNzQyMWQyZjVkZGZjM2UzZDU1ZDMxZTFmYmI3ZTUzMjZhZDFlZDA5MTdkZiJ9"
+        }
+      ]
+    },
+    {
+      "id": "claim_433aad5110bc4efba33884ed744bbbd5",
+      "statement": "SSSS defines the .ucw bundle format and provisioning contract to support export, import, provisioning, and upgrading of vaults across environments.",
+      "evidence": [
+        {
+          "resource": "repo://README.md#L20-L21",
+          "version": "repo-lines-v1:sha256:63bc5183675bcc407658fa6e5401bb15a498d39ec3d107ce8bf9117c4e814447:eyJzZWxlY3RlZExpbmVDb3VudCI6MiwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiMDFiYTQ3MTljODBiNmZlOTExYjA5MWE3YzA1MTI0YjY0ZWVlY2U5NjRlMDljMDU4ZWY4Zjk4MDVkYWNhNTQ2YiIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiZWM2ZGU5MDgyYjc4Mjg0MDI4ZWY1MGRmNmY1OTRjOTVhOTE2NzY4N2YwNzgyZmI2OGE5ZjI1MDI1YjIwN2JlNiIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiY2I1NTg2NjYyM2Q0NjA0MTNjZDM1NTYyMThmZGI3OTQ5ODE0YTM4ZDA1NTI5Njk3MDJiNjE0ZGRhOTY5YWVmZSIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiYTIzMDAyOGJhMTc1YjJmMmU1NzFhNDk2M2M3MjE3OGU1YzhmMGI4YjliZjE2MWVjNWZkODRkZDQ5ODdmYTE4ZSJ9"
+        }
+      ]
+    }
+  ],
+  "verification": {
+    "by": "openwiki/0.7.3",
+    "at": "2026-11-03T07:15:54.702Z"
+  }
+}

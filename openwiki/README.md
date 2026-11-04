@@ -6,6 +6,16 @@ tags: [ssss, openwiki, index, reference-implementation, total-recall]
 verified:
   - by: openwiki/0.7.3
     at: 2026-11-03T07:15:54.702Z
+sources:
+  - id: openwiki-source-8037e2358a2c4f9b2c722a11
+    resource: repo://AGENTS.md
+  - id: openwiki-source-144fe0acf160c16ff2dd7859
+    resource: repo://docs/help/overview.md
+  - id: openwiki-source-5b54a58d1b51cd490b0e7162
+    resource: repo://package.json
+  - id: openwiki-source-23775c3de52f3ab95a13cb8b
+    resource: repo://README.md
+generated: { by: "openwiki/0.7.3", at: "2026-11-03T07:15:54.702Z" }
 ---
 
 # OpenWiki — SSSS
@@ -23,12 +33,12 @@ distinct layers that coexist in the repo.
 | **Total Recall brain / IDE** | The operational surface that runs the repo as a Total Recall brain: IDE instruction injection (`AGENTS.md`, `CLAUDE.md`, `.cursor/rules`, `GEMINI.md`), durable memory, skills, and credentials. | The Total Recall CLI + plugins. |
 
 The SSSS layer is the subject of this OpenWiki. The brain/IDE layer is documented
-under [Total Recall brain, IDE & secrets](integrations/total-recall-and-ide.md).
+under [IDE connectors](ide.md), [Working memory](memory.md), [Skills](skills.md), and [Secrets](secrets.md).
 
 > **Secrets rule.** Never put API keys, tokens, or credential values in OpenWiki
 > pages or compiled IDE instruction files. Credentials go through the Total
 > Recall auth plugin (`total-recall auth secret …`) following `TR_SECRETS_BRAIN`.
-> See [Total Recall brain, IDE & secrets](integrations/total-recall-and-ide.md).
+> See [Secrets](secrets.md).
 
 ## What SSSS defines
 
@@ -108,35 +118,18 @@ the kernel, which owns all mutation semantics. See
   the `export → provision → import → upgrade` verbs, determinism, and
   idempotency.
 
-### Workflows
+### Architecture & Integrations
 
-- [Mutation & commit workflow](workflows/mutation-commit.md) — end-to-end
-  control/data flow for a single Operation Contract request through the kernel.
-- [Vault → bundle → tenant lifecycle](workflows/vault-lifecycle.md) — the
-  export → validate → inspect → provision → import → upgrade lifecycle and the
-  `ssss new` scaffold.
-- [Workflow runtime planning](workflows/workflow-runtime.md) — how triggers
-  become event/task/run envelopes; a planning layer, not a daemon.
-- [Semantic projection & search](workflows/semantic-index.md) — the
-  deterministic, privacy-safe semantic index and `ssss semantic`.
+- [Architecture Overview](architecture.md) — high-level system architecture, layers, and pipeline.
+- [Execution Engine](architecture/engine.md) — reference engine implementation, lifecycle stages, and execution flow.
+- [Host adapter contracts](integrations/host-adapters.md) — the host-injectable VFS, event store, lease, idempotency, intent, and projection adapters.
 
-### Operations
+### Total Recall & Operational Layer
 
-- [CLI & transports](operations/cli-and-transports.md) — the `ssss` CLI
-  dispatcher, the reference HTTP server, the stdin/stdout JSON bridge, and the
-  package `exports` subpaths.
-- [Conformance & test suites](operations/conformance-and-testing.md) —
-  `ssss conformance`, `npm test`, the durability suites, and the reference
-  bundle round-trip.
-
-### Integrations
-
-- [Host adapter contracts](integrations/host-adapters.md) — the
-  host-injectable VFS, event store, lease, idempotency, intent, and projection
-  adapters and their file-based reference implementations.
-- [Total Recall brain, IDE & secrets](integrations/total-recall-and-ide.md) —
-  the operational layer: IDE connectors, memory, skills, and credential
-  handling.
+- [IDE connectors](ide.md) — editor integration and tooling hooks.
+- [Working memory](memory.md) — SSSS memory vault primitives and lifecycle.
+- [Skills](skills.md) — portable skills and agent capabilities.
+- [Secrets](secrets.md) — secrets and credential isolation.
 
 ## Repository entry points
 

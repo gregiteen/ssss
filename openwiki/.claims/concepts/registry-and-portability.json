@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "pageVersion": "sha256:8a0812a4d3b314a71818ae24ad87336646f5b02c7d713abc0b2de43fd14fd2a6",
+  "pageVersion": "sha256:92cdddd2d33352afc782d82d8fce41d48e47d3fdd75994a5f181aa8b21aa4b78",
   "claims": [
     {
       "id": "claim_be2b165aa3f449298142345d4d7de3fc",
@@ -191,20 +191,6 @@
       ]
     },
     {
-      "id": "claim_5cd0eedf9104447e8ad632aea9b8187d",
-      "statement": "The conformance reference bundle (conformance/reference-bundle.ucw.json) is a sale-profile export whose primitive_inventory contains only structural and resource types (no task), whose resources/domain.md carries binds: REQUIREMENT and x_portability: resource_bound, and whose manifest declares a domains provisioning step and a domain parameter for the buyer to satisfy.",
-      "evidence": [
-        {
-          "resource": "repo://conformance/reference-bundle.ucw.json#L116-L119",
-          "version": "repo-lines-v1:sha256:4afff9911cfb7357784dba2add5ffd30683f81c7b8f64faa29b803e0f1e0b264:eyJzZWxlY3RlZExpbmVDb3VudCI6NCwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiZjljYTg5MWJmZjdhYzFmN2NlYWFlNDBlZjA1MTA2NmJlOWVmZTQ3YjRlNDI4MWU4NmMzMTliZTJjNTVlYmNlNCIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiMWYwY2RiOTcyYTdiZmI3ZWQyNDZmOWZmNjcyMzg1ZTU1ZjQ5NjhmYzExMDQzZGM1YjY4NGQ1MWRmYTMxZGJjYiIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiMjkyMTE2MzE0OTgwNzg0ZmNjMmUyZDc4MjhhZDUwNzRhMjI0MzU4NTI5MzdmNzJkMmYyNmVmNmM1YmI5OWRkMSIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiYzJmYjIzNWY0NzYwYWQzMmJiMTRlNWQ3NTY3NDRhNjk1MGU4ODE5YjdkMGFmNTdlM2Q1MDI3Y2FmODBlYjljMCJ9"
-        },
-        {
-          "resource": "repo://conformance/reference-bundle.ucw.json#L9-L97",
-          "version": "repo-lines-v1:sha256:4446b96d8b43b8d338f5eb225bfee780ff2d942a3bb139226112f45a6092b393:eyJzZWxlY3RlZExpbmVDb3VudCI6ODksImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6Ijg4NGZiNTE3NTcwMDcxYjNmMmRhMWNkNWU0NGZhYTkwOTBlZWIwMGI0ZjdjOTZiNjcwYTQzYTVjZmU3OTIxMGQiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQ4OTNmNDBlMzc4MWViODk2YzgyZDA0NmEwODA2N2ExMWUzNWNkZjJmMWRmYWYyNmZlYTkwYjhkYjY2NzY0MTMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImRkMTU4NjEwOThhYjU0NDY0MjYzMTA5ZmU2YzU2YjllYzYxYTViYjY1ZWQ2ZWQ1N2U0Y2FhMDQ3MjE2NmEzODgiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImYwOWVlZDkyMWU1NjNiZmNjNTc0YjJlMGMyZDQ0ZjIxZmI2MTE5YThjYmZjMzI3ODljMWQ0NTk3OTY3NjM4ZjQifQ"
-        }
-      ]
-    },
-    {
       "id": "claim_235727dd0e9f4c02a6d567d6cce2a8cb",
       "statement": "composeRegistryLayers composes named ownership layers (installed/repository/workspace/user) as a flat composition with source labels and enforces policy floors: a primitive's declared capabilities must be a superset of each floor's required capabilities, so a layer cannot weaken a policy floor.",
       "evidence": [
@@ -226,7 +212,7 @@
     }
   ],
   "verification": {
-    "by": "openwiki/0.7.2",
+    "by": "openwiki/0.7.3",
     "at": "2026-11-03T07:15:54.702Z"
   }
 }

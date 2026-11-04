@@ -3,6 +3,29 @@ type: Concept
 title: Registry, portability & schemas
 description: How a registry-driven type system resolves document primitives, enforces field/reference/portability constraints with no per-type code, and how portability classes drive export profiles that strip private data and reduce bound resources to requirements.
 tags: [registry, portability, json-schema, frontmatter, validation, extensions, exports]
+verified:
+  - by: openwiki/0.7.3
+    at: 2026-11-03T07:15:54.702Z
+sources:
+  - id: openwiki-source-4c08542e2dd81ff9f4aa53de
+    resource: repo://registry/core.json
+  - id: openwiki-source-dd952db8d3217594407176bc
+    resource: repo://schemas/bundle.schema.json
+  - id: openwiki-source-e835cc8ed8a2d536bcad3c74
+    resource: repo://schemas/core-registry.schema.json
+  - id: openwiki-source-af605f82946d4de6a8f309a6
+    resource: repo://src/bundle.mjs
+  - id: openwiki-source-254ce8ee6fbe47611ee87776
+    resource: repo://src/frontmatter.mjs
+  - id: openwiki-source-36165f6231c21139253801fa
+    resource: repo://src/primitive.mjs
+  - id: openwiki-source-f90d4cc4e5fe713bf843ecab
+    resource: repo://src/registry.mjs
+  - id: openwiki-source-e4363994ba334b7fc2d028a7
+    resource: repo://src/schema-validator.mjs
+  - id: openwiki-source-4c2556cdfd3bd6ac59242390
+    resource: repo://src/validator.mjs
+generated: { by: "openwiki/0.7.3", at: "2026-11-03T07:15:54.702Z" }
 ---
 
 # Registry, portability & schemas
@@ -23,6 +46,7 @@ This page covers four things that all flow from that registry:
 4. **The primitive-definition API** that lets an extension author a rich primitive and compile it down to an executable registry entry.
 
 Related: [Bundle format & provisioning](bundle-and-provisioning.md) consumes the registry to
+<!-- openwiki: broken internal link [operation-contract.md] file "operation-contract.md" does not exist. Fix the href or restore the target, then delete this comment. -->
 filter and reduce files during export; [Operation contract](operation-contract.md) validates
 envelopes through the same `validateDataConstraints` path.
 

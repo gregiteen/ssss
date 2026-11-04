@@ -6,6 +6,34 @@ tags: [ssss, architecture, kernel, operation-contract, bundle, lifecycle, adapte
 verified:
   - by: openwiki/0.7.3
     at: 2026-11-03T07:15:54.702Z
+sources:
+  - id: openwiki-source-ee6f2c093e3f1e590cc627eb
+    resource: repo://docs/ssss-spec.md
+  - id: openwiki-source-5b54a58d1b51cd490b0e7162
+    resource: repo://package.json
+  - id: openwiki-source-23775c3de52f3ab95a13cb8b
+    resource: repo://README.md
+  - id: openwiki-source-af605f82946d4de6a8f309a6
+    resource: repo://src/bundle.mjs
+  - id: openwiki-source-d6d0e346d30b438d57874669
+    resource: repo://src/engine.mjs
+  - id: openwiki-source-0c2b4a1b2eeb651cc60db69b
+    resource: repo://src/events.mjs
+  - id: openwiki-source-7c64ab92d0c8b4dbfa248776
+    resource: repo://src/http.mjs
+  - id: openwiki-source-da9c6724682eee6abde6c4d3
+    resource: repo://src/idempotency.mjs
+  - id: openwiki-source-1830cfbde0971229d48300c4
+    resource: repo://src/kernel.mjs
+  - id: openwiki-source-f90d4cc4e5fe713bf843ecab
+    resource: repo://src/registry.mjs
+  - id: openwiki-source-3ce6cb399dbe6bef7e264466
+    resource: repo://src/runtime.mjs
+  - id: openwiki-source-8b83cb929fdf5a1fd381671d
+    resource: repo://src/semantic.mjs
+  - id: openwiki-source-4c2556cdfd3bd6ac59242390
+    resource: repo://src/validator.mjs
+generated: { by: "openwiki/0.7.3", at: "2026-11-03T07:15:54.702Z" }
 ---
 
 # SSSS system architecture
@@ -19,9 +47,7 @@ provisioned into a fresh tenant. For the per-layer concepts, see
 [Bundle and provisioning](concepts/bundle-and-provisioning.md),
 [Operation Contract](concepts/operation-contract.md),
 [Registry and portability](concepts/registry-and-portability.md), and
-[Host adapters](integrations/host-adapters.md); for the workflows, see
-[Mutation commit](workflows/mutation-commit.md) and
-[Vault lifecycle](workflows/vault-lifecycle.md).
+[Host adapters](integrations/host-adapters.md).
 
 ## The two layers in the repository
 
@@ -236,8 +262,7 @@ Key invariants of the flow:
   the response, never rollbacks, because the append-only log already says the
   mutation happened.
 
-See [Mutation commit](workflows/mutation-commit.md) for the operational view of
-this pipeline.
+See [Operation Contract](concepts/operation-contract.md) for the operational view of this pipeline.
 
 ## The vault → bundle → tenant lifecycle
 
@@ -287,9 +312,7 @@ nothing on a second run.*
    structural patches. `tenant_private` documents are immutable during upgrades;
    the kernel rejects an `intent: 'upgrade'` envelope that would modify one.
 
-See [Bundle and provisioning](concepts/bundle-and-provisioning.md) and
-[Vault lifecycle](workflows/vault-lifecycle.md) for the concept and workflow
-detail.
+See [Bundle and provisioning](concepts/bundle-and-provisioning.md) for the concept and workflow detail.
 
 ## Extension and conformance
 
@@ -297,6 +320,4 @@ A host extends SSSS by composing an extension registry (`ssss registry compose`)
 and injecting adapters that satisfy the §6.7 contracts; it never forks the
 kernel. Conformance is fixed by the fixtures in `conformance/` (`ssss
 conformance`), which every host must pass, and the `ssss adapter conformance`
-suite for the VFS, lease, and idempotency contracts. See
-[Registry and portability](concepts/registry-and-portability.md) and
-[Host adapters](integrations/host-adapters.md).
+suite for the VFS, lease, and idempotency contracts. See [Registry and portability](concepts/registry-and-portability.md) and [Host adapters](integrations/host-adapters.md).

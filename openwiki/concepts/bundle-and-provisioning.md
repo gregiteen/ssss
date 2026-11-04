@@ -2,6 +2,27 @@
 type: "Reference"
 title: "Bundle format & provisioning contract"
 openwiki_generated: true
+verified:
+  - by: openwiki/0.7.3
+    at: 2026-11-03T07:15:54.702Z
+sources:
+  - id: openwiki-source-37cd88c89f71e9ab3ec7327b
+    resource: repo://conformance/README.md
+  - id: openwiki-source-416391d5b4b26a4ed5858d58
+    resource: repo://conformance/reference-bundle.ucw.json
+  - id: openwiki-source-97926ccd14bb86634caee3c5
+    resource: repo://docs/help/export.md
+  - id: openwiki-source-84d56d04820591764514b77e
+    resource: repo://docs/help/import.md
+  - id: openwiki-source-dee8b94f27da73e8c52bbaa5
+    resource: repo://docs/help/provisioning.md
+  - id: openwiki-source-4c08542e2dd81ff9f4aa53de
+    resource: repo://registry/core.json
+  - id: openwiki-source-dd952db8d3217594407176bc
+    resource: repo://schemas/bundle.schema.json
+  - id: openwiki-source-af605f82946d4de6a8f309a6
+    resource: repo://src/bundle.mjs
+generated: { by: "openwiki/0.7.3", at: "2026-11-03T07:15:54.702Z" }
 ---
 
 
@@ -237,14 +258,18 @@ replay.
 - `ssss provision`, `ssss import` — see `docs/help/provision.md`,
   `docs/help/import.md`.
 - The bundle/provisioning vocabulary is declared in
+<!-- openwiki: broken internal link [../registry/core.json] file "../registry/core.json" does not exist. Fix the href or restore the target, then delete this comment. -->
   [`registry/core.json`](../registry/core.json) under the `bundle` and
   `provisioning` contracts.
 - The canonical reference bundle lives at
+<!-- openwiki: broken internal link [../conformance/reference-bundle.ucw.json] file "../conformance/reference-bundle.ucw.json" does not exist. Fix the href or restore the target, then delete this comment. -->
   [`conformance/reference-bundle.ucw.json`](../conformance/reference-bundle.ucw.json)
   and is round-tripped by `ssss conformance --engine`.
 
+<!-- openwiki: broken internal link [operation-contract.md] file "operation-contract.md" does not exist. Fix the href or restore the target, then delete this comment. -->
 See also the [Operation Contract](operation-contract.md) (§6 envelopes and the
 engine replay path), [Registry & portability](registry-and-portability.md)
 (§5.5 portability classes and the registry), and
+<!-- openwiki: broken internal link [../operations/conformance-and-testing.md] file "../operations/conformance-and-testing.md" does not exist. Fix the href or restore the target, then delete this comment. -->
 [Conformance & testing](../operations/conformance-and-testing.md) (the
 shared fixture suite and the reference-bundle round-trip).
