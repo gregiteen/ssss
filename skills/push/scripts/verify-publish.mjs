@@ -56,3 +56,24 @@ if (problems.length) {
   process.exit(1);
 }
 console.log(`✅ ${PACKAGE}@${version} is on npm as latest, built from tag v${version} (${tagCommit}).`);
+
+console.log('\n--- Propagating Release Across Fleet Brains & Nodes ---');
+try {
+  console.log('Running: total-recall update --all-brains --apply');
+  execFileSync('total-recall', ['update', '--all-brains', '--apply'], { stdio: 'inherit' });
+  console.log('ok: total-recall update --all-brains --apply');
+} catch (err) {
+  console.error('❌ Failed running total-recall update --all-brains --apply:', err.message);
+  process.exit(1);
+}
+
+try {
+  console.log('Running: node skills/ssss/core/scripts/maintain.mjs --apply');
+  execFileSync('node', ['skills/ssss/core/scripts/maintain.mjs', '--apply'], { stdio: 'inherit' });
+  console.log('ok: node skills/ssss/core/scripts/maintain.mjs --apply');
+} catch (err) {
+  console.error('❌ Failed running maintain.mjs --apply:', err.message);
+  process.exit(1);
+}
+
+console.log(`\n🎉 Full fleet propagation complete for ${PACKAGE}@${version}.`);

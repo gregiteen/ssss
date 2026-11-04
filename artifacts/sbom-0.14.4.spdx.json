@@ -5,7 +5,7 @@
   "name": "@gregiteen/ssss-cli-0.14.4",
   "documentNamespace": "https://github.com/gregiteen/ssss/sbom/0.14.4",
   "creationInfo": {
-    "created": "2026-11-04T20:16:54.397Z",
+    "created": "2026-11-04T20:43:02.900Z",
     "creators": [
       "Tool: ssss-generate-sbom"
     ]
@@ -547,7 +547,7 @@
       "checksums": [
         {
           "algorithm": "SHA256",
-          "checksumValue": "91431902f3f48d04224daf56b0b4b06ef47be904ea477484f9e80d2658e80ed4"
+          "checksumValue": "17744e1be143a350e0173cd481a63fd4d64d3593ef8fdd48c0314260c84fad51"
         }
       ]
     },
@@ -610,7 +610,7 @@
       "checksums": [
         {
           "algorithm": "SHA256",
-          "checksumValue": "96c6479ad06b84c5f7ffd8bb05bff414dbb8c22a040ec1f1c05d8fa4fdbd976e"
+          "checksumValue": "e0243e3beed644ea18268b2eee9411a9995edb7921f6284d22f7c6e781ec94be"
         }
       ]
     },
@@ -664,7 +664,7 @@
       "checksums": [
         {
           "algorithm": "SHA256",
-          "checksumValue": "4976c9615482f257fd023761dd3ef36b5aa278305ff22ae110295fe4945f5d4c"
+          "checksumValue": "f2ea3cd9570074c0140447dacdd13b0575d2e14e435715530aa309c68deff085"
         }
       ]
     },

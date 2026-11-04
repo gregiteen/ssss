@@ -42,10 +42,14 @@ Run them in order. Stop at the first failure and report it. Don't skip ahead.
    "Behavior changes hosts should check".
 3. **Bump and restamp.**
    ```bash
-   ./scripts/release.sh <version>             # VERSION, package.json, lockfile, CHANGELOG section
-   node scripts/build-reference-bundle.mjs    # restamps the exporter version
-   node scripts/generate-sbom.mjs             # writes artifacts/sbom-<version>.spdx.json
+   ./scripts/release.sh <version>
    ```
+   This automatically:
+   - Bumps `VERSION`, `package.json`, `package-lock.json`, and prepares `CHANGELOG.md`.
+   - Synchronizes `skills/ssss/SKILL.md`, `skills/ssss/core/SKILL.md`, and references.
+   - Restamps `conformance/reference-bundle.ucw.json`.
+   - Generates `artifacts/sbom-<version>.spdx.json`.
+   - Propagates the portable `ssss` skill across all fleet repositories via `maintain.mjs --apply`.
 4. **Preflight.** `node skills/push/scripts/preflight-release.mjs` must print
    `ok` for every check. It strictly enforces:
    - **Phase 1: Code Quality Gates** — skill validation, registry-engine parity, the full conformance suite, and clean git diff.
@@ -75,13 +79,15 @@ Run them in order. Stop at the first failure and report it. Don't skip ahead.
    ```
    If publish fails with 401/403/404, run `npm whoami`. If it isn't
    `gregiteen`, stop and tell the user to log in. Do not type credentials or OTPs.
-8. **Confirm.** npm can take a few minutes to show a new version, and
+8. **Confirm and propagate.** npm can take a few minutes to show a new version, and
    `npm view` returns 404 until it does. That is expected, not a failure.
    ```bash
    node skills/push/scripts/verify-publish.mjs <version>
    ```
-   It waits for the version to appear, then checks that its `gitHead` equals the
-   `v<version>` tag commit and that `latest` points at it.
+   It waits for the version to appear, checks that its `gitHead` equals the
+   `v<version>` tag commit and that `latest` points at it, and then automatically
+   executes `total-recall update --all-brains --apply` to update the package across
+   all registered brains and nodes on the fleet.
 
 ## Report
 
