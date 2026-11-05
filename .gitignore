@@ -3,14 +3,12 @@ node_modules/
 
 # Local agent state; skill packages remain versionable
 .claude/
-.agent/*
-!.agent/skills/
-.agent/skills/**/.git/
-.agent/skills/**/.check.lock
-.agent/skills/**/reports/
-.agent/skills/total-recall/
-.agents/*
-!.agents/skills/
+.agent/
+.agents/
+.hermes/
+.cursor/
+.cursorrules
+AGENTS.md
 .remember/
 .gemini/
 INSTRUCTIONS.md
@@ -33,3 +31,9 @@ CLAUDE.md
 .env
 .env.local
 .env.*.local
+
+# Internal project records live in a private repository, cloned here
+docs/projects/
+
+# OpenWiki run state
+openwiki/.run.json

@@ -2,39 +2,43 @@
   "schemaVersion": 1,
   "pages": {
     "/openwiki/README.md": {
+      "gitHead": "9f7af49bb8888deef18bd463ca6ab57fd96fd1fb",
+      "sourceFingerprint": "sha256:09a33c970243fa0474e45d120703db4d9448af69fc4c306a75f0df07bd8b8019",
       "pageVersion": "sha256:f8675f1e78503d67611bbe30dee59c4d66a96f78b677b15182b6ed8cf3ef3614",
       "completedBy": "openwiki/0.7.3",
-      "completedRunId": "fe5c5bd7-a2e8-4e71-bbef-f7dc53761a00",
-      "gitHead": "9f7af49bb8888deef18bd463ca6ab57fd96fd1fb",
-      "sourceFingerprint": "sha256:09a33c970243fa0474e45d120703db4d9448af69fc4c306a75f0df07bd8b8019"
+      "completedRunId": "fe5c5bd7-a2e8-4e71-bbef-f7dc53761a00"
     },
     "/openwiki/architecture.md": {
+      "gitHead": "9f7af49bb8888deef18bd463ca6ab57fd96fd1fb",
+      "sourceFingerprint": "sha256:09a33c970243fa0474e45d120703db4d9448af69fc4c306a75f0df07bd8b8019",
       "pageVersion": "sha256:cd092a3a421f9579167b863949750c5df4ad574157b492ef7258e54bd4617a0f",
       "completedBy": "openwiki/0.7.3",
-      "completedRunId": "fe5c5bd7-a2e8-4e71-bbef-f7dc53761a00",
-      "gitHead": "9f7af49bb8888deef18bd463ca6ab57fd96fd1fb",
-      "sourceFingerprint": "sha256:09a33c970243fa0474e45d120703db4d9448af69fc4c306a75f0df07bd8b8019"
+      "completedRunId": "fe5c5bd7-a2e8-4e71-bbef-f7dc53761a00"
     },
     "/openwiki/concepts/bundle-and-provisioning.md": {
+      "gitHead": "9f7af49bb8888deef18bd463ca6ab57fd96fd1fb",
+      "sourceFingerprint": "sha256:09a33c970243fa0474e45d120703db4d9448af69fc4c306a75f0df07bd8b8019",
       "pageVersion": "sha256:c875b149c145287e55859b56256430a5403aaa3c5c11df030eac229af6854f16",
       "completedBy": "openwiki/0.7.3",
-      "completedRunId": "fe5c5bd7-a2e8-4e71-bbef-f7dc53761a00",
-      "gitHead": "9f7af49bb8888deef18bd463ca6ab57fd96fd1fb",
-      "sourceFingerprint": "sha256:09a33c970243fa0474e45d120703db4d9448af69fc4c306a75f0df07bd8b8019"
+      "completedRunId": "fe5c5bd7-a2e8-4e71-bbef-f7dc53761a00"
+    },
+    "/openwiki/concepts/operation-contract.md": {
+      "pageVersion": "sha256:0e059f2e0d77cf05635676f708a33ff5ef7cd9cf683a90ba05e9a1ce46602c45",
+      "gitHead": "9f7af49bb8888deef18bd463ca6ab57fd96fd1fb"
     },
     "/openwiki/concepts/registry-and-portability.md": {
+      "gitHead": "9f7af49bb8888deef18bd463ca6ab57fd96fd1fb",
+      "sourceFingerprint": "sha256:09a33c970243fa0474e45d120703db4d9448af69fc4c306a75f0df07bd8b8019",
       "pageVersion": "sha256:92cdddd2d33352afc782d82d8fce41d48e47d3fdd75994a5f181aa8b21aa4b78",
       "completedBy": "openwiki/0.7.3",
-      "completedRunId": "fe5c5bd7-a2e8-4e71-bbef-f7dc53761a00",
-      "gitHead": "9f7af49bb8888deef18bd463ca6ab57fd96fd1fb",
-      "sourceFingerprint": "sha256:09a33c970243fa0474e45d120703db4d9448af69fc4c306a75f0df07bd8b8019"
+      "completedRunId": "fe5c5bd7-a2e8-4e71-bbef-f7dc53761a00"
     },
     "/openwiki/quickstart.md": {
+      "gitHead": "9f7af49bb8888deef18bd463ca6ab57fd96fd1fb",
+      "sourceFingerprint": "sha256:09a33c970243fa0474e45d120703db4d9448af69fc4c306a75f0df07bd8b8019",
       "pageVersion": "sha256:9e792b1315be6e2c5f9e05238b82275c49935c4a30da70adfe99a8d45710c9c0",
       "completedBy": "openwiki/0.7.3",
-      "completedRunId": "fe5c5bd7-a2e8-4e71-bbef-f7dc53761a00",
-      "gitHead": "9f7af49bb8888deef18bd463ca6ab57fd96fd1fb",
-      "sourceFingerprint": "sha256:09a33c970243fa0474e45d120703db4d9448af69fc4c306a75f0df07bd8b8019"
+      "completedRunId": "fe5c5bd7-a2e8-4e71-bbef-f7dc53761a00"
     }
   }
 }
