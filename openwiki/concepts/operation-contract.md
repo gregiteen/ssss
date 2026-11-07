@@ -3,9 +3,6 @@ type: concept
 title: Operation Contract & mutation kernel
 description: The spec §6 Operation Contract — the four envelope types, the kernel.execute stages from auth through event append, idempotency replay vs. conflict, the symbolic ERROR_CODES, and the capability authorization model.
 tags: [ssss, operation-contract, kernel, mutation, idempotency, authorization, events, lease, error-codes]
-verified:
-  - by: openwiki/0.7.2
-    at: 2026-11-03T07:15:54.702Z
 sources:
   - id: openwiki-source-df38a27105bc472c2a78ab83
     resource: repo://docs/help/roles.md

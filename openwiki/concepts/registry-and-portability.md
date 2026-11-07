@@ -23,9 +23,6 @@ sources:
   - id: openwiki-source-4c2556cdfd3bd6ac59242390
     resource: repo://src/validator.mjs
 generated: { by: "openwiki/0.7.3", at: "2026-11-05T03:00:17.523Z" }
-verified:
-  - by: openwiki/0.7.3
-    at: 2026-11-05T03:00:17.523Z
 ---
 
 # Registry, portability & schemas

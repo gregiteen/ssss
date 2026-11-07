@@ -7,9 +7,6 @@ sources:
   - id: openwiki-source-23775c3de52f3ab95a13cb8b
     resource: repo://README.md
 generated: { by: "openwiki/0.7.3", at: "2026-11-03T07:15:54.702Z" }
-verified:
-  - by: openwiki/0.7.3
-    at: 2026-11-05T03:00:17.523Z
 ---
 
 # Quickstart

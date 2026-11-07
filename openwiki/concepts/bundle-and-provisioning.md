@@ -20,9 +20,6 @@ sources:
   - id: openwiki-source-af605f82946d4de6a8f309a6
     resource: repo://src/bundle.mjs
 generated: { by: "openwiki/0.7.3", at: "2026-11-05T03:00:17.523Z" }
-verified:
-  - by: openwiki/0.7.3
-    at: 2026-11-05T03:00:17.523Z
 ---
 
 

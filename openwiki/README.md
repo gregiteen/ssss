@@ -5,7 +5,7 @@ description: "Root index for the SSSS reference-implementation OpenWiki: disting
 tags: [ssss, openwiki, index, reference-implementation, total-recall]
 verified:
   - by: openwiki/0.7.3
-    at: 2026-11-05T03:00:17.523Z
+    at: 2026-11-07T21:30:52.865Z
 sources:
   - id: openwiki-source-8037e2358a2c4f9b2c722a11
     resource: repo://AGENTS.md
