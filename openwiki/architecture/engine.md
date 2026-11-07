@@ -3,6 +3,7 @@ type: architecture
 title: SSSS Engine Architecture  
 description: Core architecture and components of the SSSS engine  
 tags: [architecture, engine]  
+generated: { by: "openwiki/0.7.3", at: "2026-11-05T03:00:17.523Z" }
 ---
 
 ## Overview
@@ -36,12 +37,15 @@ The main entrypoints for the SSSS Engine are defined in `src/engine.mjs`. These 
 The SSSS Engine interacts with several other components within the system:
 
 - **Kernel**: The engine relies on the kernel for low-level system operations and resource management.  
+<!-- openwiki: broken internal link [../kernel.md] file "../kernel.md" does not exist. Fix the href or restore the target, then delete this comment. -->
   → See [Kernel Architecture](../kernel.md) for details.
 
 - **Contracts**: The engine uses contracts to define the interfaces and protocols for task execution and workflow management.  
+<!-- openwiki: broken internal link [../concepts/contracts.md] file "../concepts/contracts.md" does not exist. Fix the href or restore the target, then delete this comment. -->
   → See [Contracts Concepts](../concepts/contracts.md) for details.
 
 - **Lifecycle Management**: The engine integrates with the lifecycle management system to handle the initiation, execution, and termination of workflows.  
+<!-- openwiki: broken internal link [../workflows/lifecycle.md] file "../workflows/lifecycle.md" does not exist. Fix the href or restore the target, then delete this comment. -->
   → See [Workflow Lifecycle](../workflows/lifecycle.md) for details.
 
 ## Configuration

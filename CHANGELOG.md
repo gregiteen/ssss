@@ -7,6 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.14.5] - 2026-11-07
+### Fixed
+- **A dry run no longer changes anything on disk.** Previewing an operation used to create the vault and event directories, take intent locks, run commit recovery and store an idempotency record. A preview now opens storage without creating it, reads a missing event directory as empty, and writes none of those.
+
+### Behavior changes hosts should check
+- A `dry_run` operation now fails with `Pending commit recovery` when an unsettled commit exists, instead of repairing it. Run a real operation or `recover` first.
+- `FileSystemVfs` and `JsonlEventStore` accept `createRoot: false`. A missing root is then allowed, and a symlink on the way to it is refused.
+
+### Changed
+- Only `skills/ssss` ships in this repository. The other skills moved to private storage.
+- `npm test` now runs `scripts/check-public-repo.mjs`, which fails if private names or internal files reach the public tree.
+
 ## [0.14.4] - 2026-11-04
 ### Fixed
 - **`ssss conformance --engine` crashed in every consumer repository (`CONFORMANCE_CWD_INDEPENDENCE`)**:
@@ -24,8 +36,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **App-Local Extension Scaffolding & Isolation**:
   - `scripts/cmd-new.mjs`: Added `--extension <name>` option to scaffold app-specific primitive extensions directly into `registry/extensions/<name>.json`, with isolated generated tests and strict name validation.
   - `src/registry.mjs`: `loadRegistries()` supports app repositories carrying only `registry/extensions/`, automatically composing with the package core registry.
-  - Decoupled proprietary app extensions (`festech.json`, `field-crm.json`, `defaults.json`) from `registry/extensions/` to maintain a 100% vendor-neutral standard.
-  - Updated canonical reference bundle ([`conformance/reference-bundle.ucw.json`](file:///Users/gregoryiteen/github/ssss/conformance/reference-bundle.ucw.json)) to use standard core `resource` primitive.
+  - Decoupled proprietary app extensions (app-owned JSON files) from `registry/extensions/` to maintain a 100% vendor-neutral standard.
+  - Updated canonical reference bundle (`conformance/reference-bundle.ucw.json`) to use standard core `resource` primitive.
 - **Documentation Parity & OpenWiki Sync in Release Pipeline**:
   - `scripts/sync-docs.mjs` and `scripts/check-docs-parity.mjs`: Automatically synchronize CLI command lists, help topics, and primitive counts into `docs/help/overview.md` and enforce 100% doc parity.
   - Initialized and ingested canonical knowledge graph hubs into `openwiki/`.
@@ -85,7 +97,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Base-version precondition & conflict protection (D8)**: `importBundle` assigns `expected_before_hash`; kernel enforces match at Stage 3, preventing regression of concurrent local edits.
 - **Structural bundle upgrade (D6)**: `upgradeBundle` and `ssss upgrade` CLI produce structural patches and `migration` primitive records; engine fail-closed refusal of `tenant_private` targets for upgrade envelopes.
 - **Cross-language HTTP wire protocol & reference server (G3)**: Spec §6.8 HTTP wire transport, `ssss serve` reference server with bearer token authentication (`Authorization: Bearer <token>`), health check (`GET /health`), and canonical HTTP status mapping matching `ERROR_STATUS`.
-- **Subprocess stdin-JSON bridge (G3)**: `ssss bridge` command for non-JS hosts (e.g. Python Dabber CRM), supporting single JSON object, JSON array batch, and streaming NDJSON with `--stream`.
+- **Subprocess stdin-JSON bridge (G3)**: `ssss bridge` command for non-JS hosts (e.g. Python), supporting single JSON object, JSON array batch, and streaming NDJSON with `--stream`.
 - **Projection adapter conformance suite (G4)**: `runProjectionContract` in `@gregiteen/ssss-cli/projections` and `projection_memory` in `ssss adapter conformance`, covering log rebuild, incremental apply parity, drift detection, and replay idempotency.
 - **Path-scoped capability grants (G5)**: Capability authorizer supports `<capability>@<glob>` format (e.g. `ssss:rule:*@rules/marketing/**`) enforced at Stage 5 authorization.
 
@@ -580,7 +592,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   Proves the §5.5 keystone: structural + resource_bound files ship, the `tenant_private`
   ticket record is dropped. Round-tripped (validate → provision → import → re-import) by
   `ssss conformance --engine`; 6/6 bundle/provisioning checks pass alongside the 9 fixtures.
-- **`language_convention` documented (spec §11.7)** — the festech-shipped, `structural`
+- **`language_convention` documented (spec §11.7)** — the extension-owned, `structural`
   presentation-overlay primitive, formally placed in the semantic layer.
 - **CLI command surface for the full lifecycle** — `ssss export`, `validate`, `inspect`,
   `provision`, and `import` wire the bundle/provisioning verbs to the command line, plus
@@ -602,13 +614,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   over these classes; `template`/`sale` exports MUST drop all `tenant_private` primitives.
   Files MAY override their type default with `x_portability`. Lifted and generalized from
   the legacy ad-hoc export filter in `WorkspaceVfsPackageService`.
-- **`delete` envelope (spec §6.2)** — promoted from festech's `SsssOperationService` into
+- **`delete` envelope (spec §6.2)** — promoted from a host implementation into
   the canonical Operation Contract as the fourth envelope type. Removes a replace-type file,
   rejects append-type targets, and emits a deletion event for audit. Idempotent.
 - **Reference engine (`src/engine.mjs`, `src/registry.mjs`, `src/frontmatter.mjs`)** — the
   canonical, dependency-free `@gregiteen/ssss-cli` Operation Contract engine. Harvested from total-recall
   (§6.3 pipeline, idempotency replay from the audit log, `buildRepair`/§9 repair blocks) and
-  festech (`delete` envelope, `resolveContainedPath` path-traversal guard, registry-driven
+  a host implementation (`delete` envelope, `resolveContainedPath` path-traversal guard, registry-driven
   content validation). Validates content against `registry/core.json` + `registry/extensions/*`
   with no per-type code and no Zod/YAML dependency. Runs all 9 conformance fixtures in-process
   via `ssss conformance --engine` (now wired into `npm test`).

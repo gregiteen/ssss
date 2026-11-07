@@ -17,8 +17,6 @@ shared test suite every implementation MUST pass to claim conformance (spec §12
 
 | Implementation | SSSS surface | Core primitives | Extensions |
 |----------------|--------------|-----------------|------------|
-| **festech.live** | `SsssOperationService` + `SsssLeaseService`, Postgres event log, ~4,024 vault files | integration audit required for core v0.7 | 118 app primitives |
-| **ultrachat** | SQL `ssss_core_contract` + hardening migrations, `SsssApiClient`, ~1,110 vault files | (audit pending) | app primitives |
 | **total-recall** | Markdown-native kernel, `validate-schema.mjs`, memory vault | memory-centric subset | memory categories |
 
 ## How to run
@@ -49,7 +47,7 @@ primitives in [`../registry/core.json`](../registry/core.json), plus the `runtim
 (§11.8), `semantic` (§11.9), `bundle` (§16), and `provisioning` contracts. Every conformant
 implementation maps to the same core.
 
-Applications **extend** the core with their own primitives (festech has 118 —
+Applications **extend** the core with their own primitives (for example
 `meeting`, `phone_number`, `inventory_item`, `language_convention`, …). Extensions:
 
 - MUST NOT redefine or shadow a core type.
@@ -65,12 +63,12 @@ These are real divergences found between the canonical spec and shipped
 implementations. Each needs a decision (amend the spec via §15, or fix the impl)
 before v1.0.
 
-| # | Item | Spec says | festech impl does | Proposed resolution |
+| # | Item | Spec says | Host implementation does | Proposed resolution |
 |---|------|-----------|-------------------|---------------------|
 | 1 | **`delete` envelope** | §6.2 defines only `operation`, `patch`, `event`. | Implements a 4th envelope type `delete` (remove a VFS file). | ✅ **Resolved (v0.3).** §6.2 now defines `delete` as the canonical 4th envelope; the reference engine and fixture-009 cover it. |
 | 2 | **Error codes** | §6.5 lists `401, 403, 409, 422, 500`. | Also returns `400` (invalid request / path traversal) and `404` (patch/delete target missing). | ✅ **Resolved.** §6.5 now lists `400` and `404` alongside the original five; `conformance/fixtures.json`'s `error_codes` block already documented all seven. |
-| 3 | **Registry source of truth** | §5 defines primitives in prose. | festech keeps a 131-entry `primitive-registry.json`; ultrachat encodes the contract in SQL migrations. | ✅ **Resolved.** Canonical machine-readable core now lives in `registry/core.json` + `registry/extensions/*`; the reference engine validates against it (registry-driven, no per-type code). Apps re-derive in Track F. |
-| 4 | **`language_convention` primitive** | Not in §5. §11.1 forbids translating control keys. | festech registers a `language_convention` primitive (multilingual authoring). | ✅ **Resolved (v0.4).** Documented in §11.7 as a `structural` presentation-overlay primitive (extension-owned). It never translates control keys — semantic-at-presentation, deterministic-at-validation. |
+| 3 | **Registry source of truth** | §5 defines primitives in prose. | One host keeps a 131-entry `primitive-registry.json`; another encodes the contract in SQL migrations. | ✅ **Resolved.** Canonical machine-readable core now lives in `registry/core.json` + `registry/extensions/*`; the reference engine validates against it (registry-driven, no per-type code). Apps re-derive in Track F. |
+| 4 | **`language_convention` primitive** | Not in §5. §11.1 forbids translating control keys. | A host registers a `language_convention` primitive (multilingual authoring). | ✅ **Resolved (v0.4).** Documented in §11.7 as a `structural` presentation-overlay primitive (extension-owned). It never translates control keys — semantic-at-presentation, deterministic-at-validation. |
 
 The point of this directory: drift like the above is invisible when each app keeps
 its own copy of "the standard." Centralizing the fixtures + core registry here, and

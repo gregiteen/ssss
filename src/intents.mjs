@@ -162,6 +162,11 @@ export class FileIntentJournal {
     }, this.lockOptions);
   }
 
+  /** A preview must not acquire intent locks or repair unsettled documents. */
+  hasPending() {
+    return this.#checkRoot({ create: false }) && fs.readdirSync(this.root).some((entry) => INTENT_FILE.test(entry));
+  }
+
   /**
    * Resolve every intent whose writer is gone. Intents whose lock is held by
    * a live writer are reported as `in_flight` and left alone.

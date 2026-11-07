@@ -205,7 +205,13 @@ export function createKernel(options = {}) {
       return failure('unauthorized', envelope, operationId, ['Access denied: Verified principal is required.'], [{ field: 'principal', issue: 'Verified principal is required.' }]);
     }
 
-    try { await recoverOnce(); }
+    try {
+      if (envelope.dry_run && typeof intentJournal.hasPending === 'function') {
+        if (await intentJournal.hasPending()) return failure('internal_error', envelope, operationId, ['Pending commit recovery must finish before preview.']);
+      } else {
+        await recoverOnce();
+      }
+    }
     catch (error) { return failure('internal_error', envelope, operationId, [`Commit recovery failed: ${error.message}`]); }
 
     const requestHash = canonicalRequestHash(envelope, principal);
@@ -225,7 +231,9 @@ export function createKernel(options = {}) {
       // An event without a request hash cannot prove it was this request.
       if (committed.request_hash !== requestHash) return keyConflict();
       const response = responseFromEvent(envelope, committed);
-      try { await idempotencyStore.put(envelope.workspace_id, envelope.idempotency_key, { request_hash: requestHash, response }); } catch {}
+      if (!envelope.dry_run) {
+        try { await idempotencyStore.put(envelope.workspace_id, envelope.idempotency_key, { request_hash: requestHash, response }); } catch {}
+      }
       return { ...response, replay: true };
     };
     const replay = await settled();

@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "pageVersion": "sha256:cd092a3a421f9579167b863949750c5df4ad574157b492ef7258e54bd4617a0f",
+  "pageVersion": "sha256:2946b43f477ddcd89807257cf4797c8f1a3a1d9affa5c07faa0473241ebec0ae",
   "claims": [
     {
       "id": "claim_410cfda101464bfea4d622a3fbba4d3d",
@@ -39,8 +39,8 @@
       "statement": "Type validation is registry-driven rather than per-type code: a primitive's required_fields, append_only flag, immutable_fields, references, and portability class all come from registry/core.json plus extensions, so src/validator.mjs and src/registry.mjs validate any primitive (workflow, assistant, or a host extension) by resolving the declared type against the registry.",
       "evidence": [
         {
-          "resource": "repo://src/registry.mjs#L1-L10",
-          "version": "repo-lines-v1:sha256:b146a11bf0770daae7ddabe0067d995046f45852b18845485fd4158cf4794fda:eyJzZWxlY3RlZExpbmVDb3VudCI6MTAsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImVhZjIyY2YwNzMyNTkyYzI0NzE0MWNiZTYxZWZhMTEwMTI2MTJmNWEzMTIyYjlhZjliYmFmNTJmNTcyNGQxOTQiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6Ijk3MmE0MjkzODJiMmUxNDcxOGUwZTM3YjA1NzBhOGExNzAyOTkxZmNkODQ5OGNkODQwNjBhOGJmNGYwNTAxN2IiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjowLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjQ3YmE2NjlkY2M5N2ZjOWU3YWE3OTQ5MDY5NjEzYjhiOTI4ZmI5YjM5NmU1ZjQ2YTdiYzZkMDhkM2ZiMjliNDQifQ"
+          "resource": "repo://src/registry.mjs#L1-L9",
+          "version": "repo-lines-v1:sha256:d4264939026fa1701efcffe6738923a694619a10715479db80f5fedd840f1b4f:eyJzZWxlY3RlZExpbmVDb3VudCI6OSwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiZWFmMjJjZjA3MzI1OTJjMjQ3MTQxY2JlNjFlZmExMTAxMjYxMmY1YTMxMjJiOWFmOWJiYWY1MmY1NzI0ZDE5NCIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiOTcyYTQyOTM4MmIyZTE0NzE4ZTBlMzdiMDU3MGE4YTE3MDI5OTFmY2Q4NDk4Y2Q4NDA2MGE4YmY0ZjA1MDE3YiIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjAsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiZTNiMGM0NDI5OGZjMWMxNDlhZmJmNGM4OTk2ZmI5MjQyN2FlNDFlNDY0OWI5MzRjYTQ5NTk5MWI3ODUyYjg1NSIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiNDdiYTY2OWRjYzk3ZmM5ZTdhYTc5NDkwNjk2MTNiOGI5MjhmYjliMzk2ZTVmNDZhN2JjNmQwOGQzZmIyOWI0NCJ9"
         },
         {
           "resource": "repo://src/validator.mjs#L32-L63",
@@ -125,15 +125,15 @@
       "statement": "The .ucw bundle/provisioning layer (src/bundle.mjs) implements three pure-ish verbs (exportBundle: vault + profile → bundle, pure; provisionBundle: bundle + params → replayable plan; importBundle: plan + engine → committed state, idempotent), with portability filtering reading the registry §5.5 classes so sale/template profiles drop tenant_private data and reduce resource_bound fields to REQUIREMENT placeholders, and import deriving its idempotency key from workspace, target path, and content digest so re-running import commits nothing.",
       "evidence": [
         {
-          "resource": "repo://src/bundle.mjs#L1-L15",
-          "version": "repo-lines-v1:sha256:779aa305145e268c44ff332093fcb40736abb0a2c8695f7c6dc02c04421f9be6:eyJzZWxlY3RlZExpbmVDb3VudCI6MTUsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImVhZjIyY2YwNzMyNTkyYzI0NzE0MWNiZTYxZWZhMTEwMTI2MTJmNWEzMTIyYjlhZjliYmFmNTJmNTcyNGQxOTQiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6Ijk3MmE0MjkzODJiMmUxNDcxOGUwZTM3YjA1NzBhOGExNzAyOTkxZmNkODQ5OGNkODQwNjBhOGJmNGYwNTAxN2IiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjowLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjQ3YmE2NjlkY2M5N2ZjOWU3YWE3OTQ5MDY5NjEzYjhiOTI4ZmI5YjM5NmU1ZjQ2YTdiYzZkMDhkM2ZiMjliNDQifQ"
+          "resource": "repo://src/bundle.mjs#L1-L14",
+          "version": "repo-lines-v1:sha256:c9c2ba88c01608b6b2373cf888df882e37bdc081603957ad593455aa2a368384:eyJzZWxlY3RlZExpbmVDb3VudCI6MTQsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImVhZjIyY2YwNzMyNTkyYzI0NzE0MWNiZTYxZWZhMTEwMTI2MTJmNWEzMTIyYjlhZjliYmFmNTJmNTcyNGQxOTQiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6Ijk3MmE0MjkzODJiMmUxNDcxOGUwZTM3YjA1NzBhOGExNzAyOTkxZmNkODQ5OGNkODQwNjBhOGJmNGYwNTAxN2IiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjowLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjQ3YmE2NjlkY2M5N2ZjOWU3YWE3OTQ5MDY5NjEzYjhiOTI4ZmI5YjM5NmU1ZjQ2YTdiYzZkMDhkM2ZiMjliNDQifQ"
         },
         {
-          "resource": "repo://src/bundle.mjs#L105-L120",
+          "resource": "repo://src/bundle.mjs#L104-L119",
           "version": "repo-lines-v1:sha256:2f6b1fd63814a20f0c0569fbd5ac709b3fd71d3b53d309616bce5b85556f3f14:eyJzZWxlY3RlZExpbmVDb3VudCI6MTYsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImFjOTk2YzhhY2ZlNDhjZWY1YzdhY2MyZTE0YTRlYzhkZmU3YTA2OGQ0NzI0NTgwZGM0NWI2ODg4YmViYzg0ZTEiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImZiNTgwZTk2NGY4M2E0NzNmNDNkNDQzODQ2Mjk0OWQ2OGI1NjAwZmRhNzg3ZjE2Mzc0NWQwMGRlODljYmYzNmEiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImM2NjNhYjlmZDE4YmFkNTMxYzE0OTQ5Y2YwYzYzMzA4MDA0NDFiMzAzZjY4MGJkODk3ZWFmOGEzMTUyMjljYzQifQ"
         },
         {
-          "resource": "repo://src/bundle.mjs#L30-L51",
+          "resource": "repo://src/bundle.mjs#L29-L50",
           "version": "repo-lines-v1:sha256:5cc85c6121572bb796203489888b262f48a7e40e3732af7ad4ff9dd9a7254f41:eyJzZWxlY3RlZExpbmVDb3VudCI6MjIsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImNlZjQwZWU4YzQ3OTI3ZTk3MTM2ODJjM2ZmZmRiMTQ0NDM5ZGU2MjgxZDA1MjE0NWQ3NWVhNjE3YmFkZDQzYjMiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjRhOWEyYTYwNzc5N2Y0NGNjM2FhNTE0Nzc4OTA0YzkzMjQyOTRjOWQwYmM3ZmIwNWJmOGY4YWVlY2U4ZTc4MTEiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6Ijc4ZTRkYTA5Y2M3Yzc3NmI4NDc4YzlhY2IyMzcxMmNjNzhkYjg5ODJkZmIxZmI5ZTczMzNiMDE3OWM0ZjgyZDgifQ"
         }
       ]
@@ -219,6 +219,6 @@
   ],
   "verification": {
     "by": "openwiki/0.7.3",
-    "at": "2026-11-03T07:15:54.702Z"
+    "at": "2026-11-05T03:00:17.523Z"
   }
 }

@@ -784,11 +784,9 @@
     "500": "internal_error — Unexpected server error, VFS write failed, or DB transactional RPC error"
   },
   "implementations": [
-    "festech.live",
-    "ultrachat",
     "total-recall"
   ],
   "maintained_by": "SSSS standard (canonical: this repo)",
-  "provenance": "Seeded from the festech.live reference implementation, which authored the original shared contract; canonicalized here as the vendor-neutral source of truth.",
+  "provenance": "Seeded from the first host implementation of the shared contract; canonicalized here as the vendor-neutral source of truth.",
   "last_updated": "2026-09-24"
 }

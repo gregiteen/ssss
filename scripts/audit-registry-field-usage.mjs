@@ -63,7 +63,7 @@ const KNOWN_NON_ENGINE_KEYS = new Set([
   'deprecation_notice', // human guidance on migration path for deprecated primitives; consumed by documentation
   // Product-side projection metadata. The SSSS engine never reads these: they are
   // consumed by the host application's own projector to decide which target tables
-  // a document feeds and how (see festech.live SsssGenericProjector.ts). Kept in the
+  // a document feeds and how. Kept in the
   // extension registry so a product's projection contract travels with its types.
   'projection_strategy', 'projection_targets',
 ]);

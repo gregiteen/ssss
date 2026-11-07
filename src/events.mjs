@@ -3,7 +3,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import crypto from 'node:crypto';
 import { withFileLock } from './file-lock.mjs';
-import { fsyncDirectory } from './durable-fs.mjs';
+import { fsyncDirectory, resolveStorageRoot } from './durable-fs.mjs';
 
 // UUIDv5 namespace for event ids derived from idempotency keys.
 const IDEMPOTENT_EVENT_NAMESPACE = Buffer.from('6f1c2d9e4b7a4e0c9f35a1d8c3b2e7f4', 'hex');
@@ -176,8 +176,7 @@ export class JsonlEventStore {
   // are atomic across processes.
   #indexes = new Map();
   constructor(root, options = {}) {
-    fs.mkdirSync(root, { recursive: true });
-    this.root = fs.realpathSync(root);
+    this.root = resolveStorageRoot(root, options.createRoot !== false);
     this.lockOptions = options.lock || {};
     // Rotation cap in bytes per live log (SSSS_EVENT_MAX_BYTES, default 32 MiB,
     // 0 disables). Without it a single append-only log grows without bound --
@@ -346,7 +345,9 @@ export class JsonlEventStore {
     const files = options.workspaceId
       ? [...this.#archives(options.workspaceId), this.#file(options.workspaceId)]
       : (() => {
-          const names = fs.readdirSync(this.root).filter((name) => name.endsWith('.jsonl'));
+          let names;
+          try { names = fs.readdirSync(this.root); }
+          catch (error) { if (error.code === 'ENOENT') return []; throw error; }
           const workspaces = new Set();
           for (const name of names) {
             const m = /^([A-Za-z0-9][A-Za-z0-9._-]{0,127}?)(?:\.\d+)?\.jsonl$/.exec(name);

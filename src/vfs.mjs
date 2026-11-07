@@ -4,7 +4,7 @@ import path from 'node:path';
 import crypto from 'node:crypto';
 import { isSafeDocumentPath } from './registry.mjs';
 import { withFileLock } from './file-lock.mjs';
-import { fsyncDirectory, writeFileSyncDurable } from './durable-fs.mjs';
+import { fsyncDirectory, resolveStorageRoot, writeFileSyncDurable } from './durable-fs.mjs';
 import { FileIntentJournal } from './intents.mjs';
 
 /** Reserved FileSystemVfs directory for per-path write locks; never a document path. */
@@ -90,8 +90,7 @@ export class MemoryVfs {
 export class FileSystemVfs {
   constructor(root, options = {}) {
     if (!root) throw new Error('FileSystemVfs requires a root directory.');
-    fs.mkdirSync(root, { recursive: true });
-    this.root = fs.realpathSync(root);
+    this.root = resolveStorageRoot(root, options.createRoot !== false);
     this.lockOptions = options.lock || {};
     this.intentLockOptions = options.intentLock || {};
   }
@@ -123,11 +122,7 @@ export class FileSystemVfs {
       throw new VfsPathError(`VFS path '${vfsPath}' escapes the root.`);
     }
     let cursor = target;
-    while (!fs.existsSync(cursor)) {
-      const parent = path.dirname(cursor);
-      if (parent === cursor) break;
-      cursor = parent;
-    }
+    while (cursor !== this.root && !fs.existsSync(cursor)) cursor = path.dirname(cursor);
     if (fs.existsSync(cursor)) {
       const stat = fs.lstatSync(cursor);
       if (stat.isSymbolicLink()) throw new VfsPathError(`Symlinked VFS path is forbidden: '${vfsPath}'.`);

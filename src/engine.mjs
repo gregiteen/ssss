@@ -114,14 +114,14 @@ export function createEngine(options = {}) {
   const kernels = new Map();
   const legacyLease = typeof options.leaseStore === 'string' ? new LegacyLeaseAdapter(options.leaseStore) : options.leaseStore;
 
-  function bound(vaultRoot, eventLogDir) {
-    const key = `${path.resolve(vaultRoot)}\0${eventLogDir ? path.resolve(eventLogDir) : ''}`;
+  function bound(vaultRoot, eventLogDir, dryRun = false) {
+    const key = `${path.resolve(vaultRoot)}\0${eventLogDir ? path.resolve(eventLogDir) : ''}\0${dryRun ? 'preview' : 'write'}`;
     if (!kernels.has(key)) {
-      fs.mkdirSync(vaultRoot, { recursive: true });
       const eventRoot = eventLogDir || path.join(vaultRoot, '.events');
+      const open = { createRoot: !dryRun };
       kernels.set(key, createKernel({
-        vfs: new FileSystemVfs(vaultRoot),
-        eventStore: new JsonlEventStore(eventRoot),
+        vfs: new FileSystemVfs(vaultRoot, open),
+        eventStore: new JsonlEventStore(eventRoot, open),
         leaseStore: legacyLease,
         validator,
       }));
@@ -134,7 +134,7 @@ export function createEngine(options = {}) {
       const principal = options.verifyPrincipal
         ? await options.verifyPrincipal(envelope, callOptions)
         : legacyPrincipal(envelope, vaultRoot, callOptions, registrySet);
-      const response = await bound(vaultRoot, callOptions.eventLogDir).execute(envelope, {
+      const response = await bound(vaultRoot, callOptions.eventLogDir, Boolean(envelope.dry_run)).execute(envelope, {
         ...callOptions,
         principal,
         requireLease: legacyLease?.isRequired?.(envelope.workspace_id, envelope.path) || false,

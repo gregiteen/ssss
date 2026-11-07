@@ -1,4 +1,4 @@
-# SSSS portable core — 0.14.4
+# SSSS portable core — 0.14.5
 
 Verified against the SSSS owner package, registry and spec on 2026-11-03. Establish ground truth from the installed validator, composed registry plus lock, and actual host mutation path. Schema support does not prove a configured runner or provider integration.
 
@@ -15,4 +15,4 @@ Preserve portability classes: structural definitions, tenant-private data and re
 ## Verification
 Run relevant schema/registry/lock and operation conformance, with valid and invalid examples. Cover duplicate/conflicting idempotency (including retries answered from the event log), unsafe paths, unauthorized/expired actors, leases, append semantics, rollback and commit-intent crash recovery where changed. Use `ssss --help`, then operation-specific help; commands differ by installed version. Report exact package version, registry/lock identity and actual results. Keep secrets and private runtime data out of skill content, bundles and logs.
 
-Normative sources are bundled below from the owner release tag v0.14.4
+Normative sources are bundled below from the owner release tag v0.14.5

@@ -6,6 +6,30 @@ tags: [ssss, operation-contract, kernel, mutation, idempotency, authorization, e
 verified:
   - by: openwiki/0.7.2
     at: 2026-11-03T07:15:54.702Z
+sources:
+  - id: openwiki-source-df38a27105bc472c2a78ab83
+    resource: repo://docs/help/roles.md
+  - id: openwiki-source-4c08542e2dd81ff9f4aa53de
+    resource: repo://registry/core.json
+  - id: openwiki-source-b9a7b5715ff3674e0d2a2d96
+    resource: repo://src/authorization.mjs
+  - id: openwiki-source-d6d0e346d30b438d57874669
+    resource: repo://src/engine.mjs
+  - id: openwiki-source-0c2b4a1b2eeb651cc60db69b
+    resource: repo://src/events.mjs
+  - id: openwiki-source-7c64ab92d0c8b4dbfa248776
+    resource: repo://src/http.mjs
+  - id: openwiki-source-da9c6724682eee6abde6c4d3
+    resource: repo://src/idempotency.mjs
+  - id: openwiki-source-aed46f0c0880cea23f2f14dd
+    resource: repo://src/intents.mjs
+  - id: openwiki-source-1830cfbde0971229d48300c4
+    resource: repo://src/kernel.mjs
+  - id: openwiki-source-f90d4cc4e5fe713bf843ecab
+    resource: repo://src/registry.mjs
+  - id: openwiki-source-61e0fc596689d9db572d90ab
+    resource: repo://src/vfs.mjs
+generated: { by: "openwiki/0.7.3", at: "2026-11-05T03:00:17.523Z" }
 ---
 
 # Operation Contract & mutation kernel
@@ -13,6 +37,7 @@ verified:
 The Operation Contract (spec §6) is the only path by which a Markdown vault is
 mutated. A caller submits one of four envelope types — `operation`, `patch`,
 `event`, or `delete` — and the shared mutation kernel in
+<!-- openwiki: broken internal link [../src/kernel.mjs] file "../src/kernel.mjs" does not exist. Fix the href or restore the target, then delete this comment. -->
 [`src/kernel.mjs`](../src/kernel.mjs) owns the ordering and semantics that turn
 that envelope into either a committed canonical event or a symbolic failure code.
 Adapters (VFS, event store, idempotency store, lease store, authorizer,
@@ -31,6 +56,7 @@ for where the kernel sits in the stack.
 | `delete` | Tombstoning removal of a replace-type file | `vfs.remove` with the current version as precondition |
 
 The contract primitives are declared in
+<!-- openwiki: broken internal link [../registry/core.json] file "../registry/core.json" does not exist. Fix the href or restore the target, then delete this comment. -->
 [`registry/core.json`](../registry/core.json) under `contract_primitives`:
 `operation`, `patch`, `event`, `delete`, and `lease`. An `operation` on a path
 that ends with `/index.md` is a special case: the kernel resolves it to a
@@ -288,6 +314,7 @@ silently lost. A live writer's intent is never touched: the intent journal's
 per-path lock and the `INTENT_LOCK_DEFAULTS` (40 s timeout, 5 min stale
 threshold) ensure recovery never rolls back a commit that is still running.
 
+<!-- openwiki: broken internal link [../workflows/mutation-commit.md] file "../workflows/mutation-commit.md" does not exist. Fix the href or restore the target, then delete this comment. -->
 See [Mutation commit](../workflows/mutation-commit.md) for the operational view
 of this pipeline.
 
@@ -388,7 +415,9 @@ that satisfy these contracts; it never forks the kernel. See
   enforces.
 - [Host adapters](../integrations/host-adapters.md) — the VFS, event, lease, and
   idempotency adapter contracts.
+<!-- openwiki: broken internal link [../workflows/mutation-commit.md] file "../workflows/mutation-commit.md" does not exist. Fix the href or restore the target, then delete this comment. -->
 - [Mutation commit](../workflows/mutation-commit.md) — the operational view of
   this pipeline.
+<!-- openwiki: broken internal link [../docs/help/roles.md] file "../docs/help/roles.md" does not exist. Fix the href or restore the target, then delete this comment. -->
 - [`docs/help/roles.md`](../docs/help/roles.md) — the fail-closed RBAC model and
   the `system`/`admin`/absent role behaviors.

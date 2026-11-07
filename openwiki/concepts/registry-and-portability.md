@@ -3,9 +3,6 @@ type: Concept
 title: Registry, portability & schemas
 description: How a registry-driven type system resolves document primitives, enforces field/reference/portability constraints with no per-type code, and how portability classes drive export profiles that strip private data and reduce bound resources to requirements.
 tags: [registry, portability, json-schema, frontmatter, validation, extensions, exports]
-verified:
-  - by: openwiki/0.7.3
-    at: 2026-11-03T07:15:54.702Z
 sources:
   - id: openwiki-source-4c08542e2dd81ff9f4aa53de
     resource: repo://registry/core.json
@@ -25,7 +22,10 @@ sources:
     resource: repo://src/schema-validator.mjs
   - id: openwiki-source-4c2556cdfd3bd6ac59242390
     resource: repo://src/validator.mjs
-generated: { by: "openwiki/0.7.3", at: "2026-11-03T07:15:54.702Z" }
+generated: { by: "openwiki/0.7.3", at: "2026-11-05T03:00:17.523Z" }
+verified:
+  - by: openwiki/0.7.3
+    at: 2026-11-05T03:00:17.523Z
 ---
 
 # Registry, portability & schemas
@@ -46,7 +46,6 @@ This page covers four things that all flow from that registry:
 4. **The primitive-definition API** that lets an extension author a rich primitive and compile it down to an executable registry entry.
 
 Related: [Bundle format & provisioning](bundle-and-provisioning.md) consumes the registry to
-<!-- openwiki: broken internal link [operation-contract.md] file "operation-contract.md" does not exist. Fix the href or restore the target, then delete this comment. -->
 filter and reduce files during export; [Operation contract](operation-contract.md) validates
 envelopes through the same `validateDataConstraints` path.
 
@@ -129,7 +128,7 @@ load-time collision. Two scoping mechanisms handle this:
 - **`extensions/defaults.json`** — a manifest naming the set of extensions safe to compose
   together. When present and the caller does not pass `only`, exactly that set is loaded.
 - **`options.only`** — a caller that owns a specific vault's extensions passes an explicit set
-  (e.g. `['dabber']`); only those are loaded, and any named extension not present on disk is a
+  (e.g. `['example-app']`); only those are loaded, and any named extension not present on disk is a
   hard error.
 
 Without either, every extension is loaded and any duplicate name remains a hard error.

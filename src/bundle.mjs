@@ -1,11 +1,10 @@
 /**
  * The `.ucw` bundle format (§16) and the provisioning contract (§17).
  *
- * Harvested and canonicalized from ultrachat's `WorkspaceVfsPackageService`
- * (the export/package shape) and `server/types/workspace.ts` (the template
- * variable, provisioning-step, and edge-relation vocabularies). Generalized to
- * be registry-driven: portability filtering reads `registry/core.json` §5.5
- * rather than ultrachat's hard-coded capability booleans, and the primitive
+ * Generalized from a host's export shape and its template variable,
+ * provisioning-step and edge-relation vocabularies. Registry-driven: portability
+ * filtering reads `registry/core.json` §5.5 rather than hard-coded capability
+ * booleans, and the primitive
  * inventory counts by registry `type` rather than a closed category enum.
  *
  * Three pure-ish verbs (§17.1):

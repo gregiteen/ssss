@@ -3,9 +3,6 @@ type: system-architecture
 title: SSSS system architecture
 description: Layered architecture of the dependency-free SSSS reference implementation, from spec and registry through the mutation kernel and adapters to the runtime, semantic, and bundle layers, plus the vault→bundle→tenant lifecycle and the commit pipeline.
 tags: [ssss, architecture, kernel, operation-contract, bundle, lifecycle, adapters]
-verified:
-  - by: openwiki/0.7.3
-    at: 2026-11-03T07:15:54.702Z
 sources:
   - id: openwiki-source-ee6f2c093e3f1e590cc627eb
     resource: repo://docs/ssss-spec.md
@@ -34,6 +31,9 @@ sources:
   - id: openwiki-source-4c2556cdfd3bd6ac59242390
     resource: repo://src/validator.mjs
 generated: { by: "openwiki/0.7.3", at: "2026-11-03T07:15:54.702Z" }
+verified:
+  - by: openwiki/0.7.3
+    at: 2026-11-05T03:00:17.523Z
 ---
 
 # SSSS system architecture

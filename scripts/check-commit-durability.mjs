@@ -331,8 +331,37 @@ async function checkRecoveryTriggers(root) {
   await createEngine().processOperation({ ...put('eng-setup', 'rules/e.md', 'original'), actor: { role: 'system' } }, engineVault);
   const engineOriginal = read(engineVault, 'rules/e.md');
   crashIn(engineVault, put('eng-crash', 'rules/e.md', 'never committed'), 'before');
-  const engineRecovered = await createEngine().recover(engineVault);
+  const engine = createEngine();
+  const beforePreview = read(engineVault, 'rules/e.md');
+  const pending = intentFiles(engineVault);
+  const preview = await engine.processOperation({ ...put('eng-preview', 'rules/e.md', 'preview'), actor: { role: 'system' }, dry_run: true }, engineVault);
+  check('preview refuses pending recovery without changing the document or intent',
+    !preview.success && JSON.stringify(preview).includes('Pending commit recovery') && read(engineVault, 'rules/e.md') === beforePreview
+      && pending.length === 1 && JSON.stringify(intentFiles(engineVault)) === JSON.stringify(pending), JSON.stringify(preview));
+  const engineRecovered = await engine.recover(engineVault);
   check('the engine façade recovers a crashed write', engineRecovered[0]?.outcome === 'rolled_back' && read(engineVault, 'rules/e.md') === engineOriginal, JSON.stringify(engineRecovered));
+}
+
+async function checkReadOnlyPreviews(root) {
+  const vault = path.join(root, 'preview-vault');
+  const eventLogDir = path.join(root, 'preview-events');
+  const engine = createEngine();
+  const operation = { ...put('preview-key', 'rules/preview.md', 'preview'), actor: { role: 'system' } };
+  const preview = await engine.processOperation({ ...operation, dry_run: true }, vault, { eventLogDir });
+  check('preview on missing vault and event paths creates neither',
+    preview.success && preview.dry_run && preview.committed_at === null && !fs.existsSync(vault) && !fs.existsSync(eventLogDir), JSON.stringify(preview));
+
+  fs.mkdirSync(vault);
+  const inVault = await engine.processOperation({ ...operation, dry_run: true }, vault);
+  check('preview leaves an empty vault byte-for-byte empty, including the event root',
+    inVault.success && fs.readdirSync(vault).length === 0, JSON.stringify(inVault));
+
+  const committed = await engine.processOperation(operation, vault, { eventLogDir });
+  const log = path.join(eventLogDir, 'ws.jsonl');
+  const before = fs.readFileSync(log);
+  const replay = await engine.processOperation({ ...operation, dry_run: true }, vault, { eventLogDir });
+  check('preview uses the existing event log and preserves its bytes',
+    committed.success && replay.replay === true && replay.event_id === committed.event_id && fs.readFileSync(log).equals(before), JSON.stringify(replay));
 }
 
 async function checkFlushOrder(root) {
@@ -373,6 +402,7 @@ try {
   await section('bundle re-import', () => checkBundleReimport(root));
   await section('crash recovery', () => checkCrashRecovery(root));
   await section('recovery triggers', () => checkRecoveryTriggers(root));
+  await section('read-only previews', () => checkReadOnlyPreviews(root));
   await section('flush order', () => checkFlushOrder(root));
   await section('intent journal contracts', async () => {
     for (const [name, journal] of [['memory', new MemoryIntentJournal()], ['filesystem', new FileIntentJournal(path.join(root, 'journal'))]]) {

@@ -2,9 +2,6 @@
 type: "Reference"
 title: "Bundle format & provisioning contract"
 openwiki_generated: true
-verified:
-  - by: openwiki/0.7.3
-    at: 2026-11-03T07:15:54.702Z
 sources:
   - id: openwiki-source-37cd88c89f71e9ab3ec7327b
     resource: repo://conformance/README.md
@@ -22,7 +19,10 @@ sources:
     resource: repo://schemas/bundle.schema.json
   - id: openwiki-source-af605f82946d4de6a8f309a6
     resource: repo://src/bundle.mjs
-generated: { by: "openwiki/0.7.3", at: "2026-11-03T07:15:54.702Z" }
+generated: { by: "openwiki/0.7.3", at: "2026-11-05T03:00:17.523Z" }
+verified:
+  - by: openwiki/0.7.3
+    at: 2026-11-05T03:00:17.523Z
 ---
 
 
@@ -266,7 +266,6 @@ replay.
   [`conformance/reference-bundle.ucw.json`](../conformance/reference-bundle.ucw.json)
   and is round-tripped by `ssss conformance --engine`.
 
-<!-- openwiki: broken internal link [operation-contract.md] file "operation-contract.md" does not exist. Fix the href or restore the target, then delete this comment. -->
 See also the [Operation Contract](operation-contract.md) (§6 envelopes and the
 engine replay path), [Registry & portability](registry-and-portability.md)
 (§5.5 portability classes and the registry), and

@@ -28,7 +28,7 @@ ssss conformance --endpoint <url> --token <pat>   # run the fixtures against a l
 ## Endpoint mode
 
 `--endpoint` POSTs each fixture's `request` to a host's Operation Contract endpoint
-and diffs the response — this is how festech / ultrachat / total-recall prove they
-implement the *same* standard rather than three drifting copies.
+and diffs the response — this is how hosts prove they
+implement the *same* standard rather than drifting copies.
 
 See also: `conformance/README.md`, `ssss help runtime`, `ssss help provisioning`.

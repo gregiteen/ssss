@@ -3,6 +3,7 @@ type: host-adapter-contract
 title: Host adapter contracts
 description: The host-injectable adapter contracts behind the SSSS kernel—VFS, event store, lease store, idempotency store, intent journal, projection coordinator, guard, and UI registry—and their file-based reference implementations with cross-process file-lock concurrency.
 tags: [host-adapters, vfs, event-store, lease-store, idempotency, intent-journal, projections, file-locks, concurrency, durability]
+generated: { by: "openwiki/0.7.3", at: "2026-11-05T03:00:17.523Z" }
 ---
 
 # Host adapter contracts
@@ -16,6 +17,7 @@ implementations shipped in `src/` (memory and filesystem variants), with the
 cross-process file-lock semantics that make the filesystem variants safe to
 share across processes on one filesystem. The kernel wiring is described in
 [Architecture](../architecture.md) and the commit sequence in
+<!-- openwiki: broken internal link [../workflows/mutation-commit.md] file "../workflows/mutation-commit.md" does not exist. Fix the href or restore the target, then delete this comment. -->
 [Mutation commit](../workflows/mutation-commit.md).
 
 ```mermaid
@@ -408,5 +410,6 @@ Each adapter ships a contract runner (`runVfsContract`,
 `runIdempotencyContract`, `runLeaseContract`, `runIntentJournalContract`,
 `runProjectionContract`) invoked by `ssss adapter conformance`
 (`scripts/cmd-adapter.mjs`) and the kernel/adapter/UI conformance in
+<!-- openwiki: broken internal link [../operations/conformance-and-testing.md] file "../operations/conformance-and-testing.md" does not exist. Fix the href or restore the target, then delete this comment. -->
 `scripts/conformance-09.mjs`. See [Conformance and testing](../operations/conformance-and-testing.md)
 for the suites and how to run them against the reference engine or a live host.

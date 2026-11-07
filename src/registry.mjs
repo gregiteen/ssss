@@ -1,9 +1,8 @@
 /**
  * Registry-driven type resolution for the canonical SSSS engine.
  *
- * Harvested from festech's `SsssValidator` (which validates against a JSON
- * primitive registry rather than hardcoded schemas) and generalized to read the
- * canonical `registry/core.json` plus any `registry/extensions/*.json`. This is
+ * Validates against a JSON primitive registry rather than hardcoded schemas,
+ * reading the canonical `registry/core.json` plus any `registry/extensions/*.json`. This is
  * the validation authority for §9: a type's `required_fields`, `append_only`
  * flag, and `portability` class (§5.5) all come from the registry, so the engine
  * has no per-type code.
@@ -400,7 +399,7 @@ function loadExtensionDefaults(registryDir) {
 /**
  * Load the core registry and merge extension registries.
  *
- * `only` scopes the load to a set of registry names (e.g. `['dabber']`). A
+ * `only` scopes the load to a set of registry names (e.g. `['example-app']`). A
  * registry directory may hold extensions for unrelated products that legitimately
  * declare the same shared primitive name; loading them together is a load-time
  * collision (§5.6), so a caller that knows which extension a vault belongs to
